@@ -49,6 +49,7 @@ public class CourseSubject {
     
     void clearStudent(jTextField4){
         JtextField6(null)
+        hhhhhField6
     }
 
 }

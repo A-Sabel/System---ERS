@@ -46,5 +46,9 @@ public class CourseSubject {
     public boolean isIsLabRoom() {
         return isLabRoom;
     }
+    
+    void clearStudent(jTextField4){
+        JtextField6(null)
+    }
 
 }

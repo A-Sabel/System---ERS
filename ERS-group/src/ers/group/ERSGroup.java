@@ -15,8 +15,11 @@ public class ERSGroup {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        // TODO code application logic here
-        System.out.println("hello");
+    SubjectLoader loader = new SubjectLoader();
+    loader.loadFromTextFile("ERS-group/src/ers/group/master files/courseSubject.txt");
+    for (CourseSubject s : loader.getAllSubjects()) {
+        System.out.println("Subject: " + s.getCourseSubjectName() + "| Units: " + s.getUnits() );
+        }
     }
-    
+
 }

@@ -1,6 +1,5 @@
 package ers.group;
 
-<<<<<<< HEAD
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -101,33 +100,4 @@ public class Section {
             System.out.println("Error saving sections to file: " + e.getMessage());
         }
     }
-    
 }
-=======
-import java.util.ArrayList;
-import java.util.List;
-
-public class Section {
-    private final String sectionID;
-    private final int maxStudents;
-    private final List<String> studentIDs = new ArrayList<>();
-    private Schedule schedule;
-
-    public Section(String sectionID, int maxStudents, Schedule schedule) {
-        this.sectionID = sectionID;
-        this.maxStudents = maxStudents;
-        this.schedule = schedule;
-    }
-
-    public String getSectionID() { return sectionID; }
-    public int getMaxStudents() { return maxStudents; }
-    public List<String> getStudentIDs() { return studentIDs; }
-    public Schedule getSchedule() { return schedule; }
-
-    public void addStudent(String studentID) {
-        if (!studentIDs.contains(studentID)) {
-            studentIDs.add(studentID);
-        }
-    }
-}
->>>>>>> 2cf12c3 (Add enrollment)

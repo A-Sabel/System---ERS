@@ -4,14 +4,14 @@ import java.io.*;
 import java.util.*;
 
 public class SubjectLoader {
-    private Map<String, CourseSubject> subjectMap = new HashMap<>();
+    private Map<String, CourseSubject> subjectMap = new LinkedHashMap<>();
     public void loadFromTextFile(String filePath) {
         try (Scanner scanner = new Scanner(new File(filePath))) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
                 if (line.trim().isEmpty()) continue;
                 String[] parts = line.split(",");
-                // Format: ID, Name, Units, MaxStudents, isLab, PreReqIDs(semi-colon separated)
+                // Format: ID, Name, Units, MaxStudents, isLab, Prerequisite, YearLevel, Semester
                 String id = parts[0];
                 String name = parts[1];
                 int units = Integer.parseInt(parts[2]);

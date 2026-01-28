@@ -33,6 +33,8 @@ public class CourseSubject {
         this.units = units;
         this.studentCount = studentCount;
         this.isLabRoom = isLabRoom;
+        this.yearLevel = yearLevel;
+        this.semester = semester;
         this.prerequisites = new ArrayList<>();
     }
 
@@ -66,6 +68,21 @@ public class CourseSubject {
         String status = isScheduled ? "[Scheduled]" : "[Pending]";
         return String.format("%s %s (%s) - Units: %d, Capacity: %d", 
                 status, courseSubjectID, courseSubjectName, units, studentCount);
-}
+    }
+    
+    public String getPrerequisitesString() {
+        if (prerequisites.isEmpty()) {
+            return "No prerequisites";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < prerequisites.size(); i++) {
+            CourseSubject pre = prerequisites.get(i);
+            sb.append(pre.courseSubjectID).append(" ").append(pre.courseSubjectName);
+            if (i < prerequisites.size() - 1) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
+    }
 }
 

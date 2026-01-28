@@ -4,37 +4,87 @@
  */
 package ers.group;
 
-/**
- *
- * @author Andrea Ysabela
- */
+import java.util.Scanner;
 public class ERSGroup {
- 
 
     /**
      * @param args the command line arguments
      */
-    public static void main(String[] args) {
+
+    public static void mainMenu() {
+        Scanner scanner = new Scanner(System.in);
+        boolean running = true;
+        while (running) {
+            System.out.println("\n=== ERS Group Main Menu ===");
+            System.out.println("1. Load Course Subjects");
+            System.out.println("2. Load Teachers");
+            System.out.println("3. Load Rooms");
+            System.out.println("4. Load All Data");
+            System.out.println("5. Exit");
+            System.out.print("Enter your choice: ");
+            int choice = scanner.nextInt();
+            switch (choice) {
+                case 1:
+                    loadAndDisplayCourses();
+                    break;
+                case 2:
+                    loadAndDisplayTeachers();
+                    break;
+                case 3:
+                    loadAndDisplayRooms();
+                    break;
+                case 4:
+                    loadAndDisplayAll();
+                    break;
+                case 5:
+                    System.out.println("Exiting ERS System...");
+                    running = false;
+                    break;
+                default:
+                    System.out.println("Invalid choice. Please try again.");
+            }
+        }
+        scanner.close();
+    }
+    
+    public static void loadAndDisplayCourses() {
         CourseSubjectFileLoader courseLoader = new CourseSubjectFileLoader();
         courseLoader.load("ERS-group/src/ers/group/master files/courseSubject.txt");
         for (CourseSubject s : courseLoader.getAllSubjects()) {
             System.out.println("Subject: " + s.getCourseSubjectID() + " " + s.getCourseSubjectName() + "| Units: " + s.getUnits() + 
                 "\nPrerequisites: " + s.getPrerequisitesString() + "| SY: " + s.getYearLevel() + " - " + s.getSemester() + "\n");
         }
-
+    }
+    
+    public static void loadAndDisplayTeachers() {
+        CourseSubjectFileLoader courseLoader = new CourseSubjectFileLoader();
+        courseLoader.load("ERS-group/src/ers/group/master files/courseSubject.txt");
+        
         TeacherFileLoader teacherLoader = new TeacherFileLoader();
         teacherLoader.load("ERS-group/src/ers/group/master files/teachers.txt");
         for (Teachers t : teacherLoader.getAllTeachers()) {
             System.out.println("Teacher: " + t.getTeacherID() + " " + t.getTeacherName() + 
                 "\nSubjects: " + t.getQualifiedSubjectNames(courseLoader.getSubjectMap()) + "\n");
         }
-
-        RoomsFileLoader roomLoader = new RoomsFileLoader();
+    }
+    
+    public static void loadAndDisplayRooms() {
+        RoomFileLoader roomLoader = new RoomFileLoader();
         roomLoader.load("ERS-group/src/ers/group/master files/rooms.txt");
         for (Rooms r : roomLoader.getAllRooms()) {
             System.out.println("Room: " + r.getRoomID() + " " + r.getRoomName() + 
                 "| Capacity: " + r.getCapacity() + "\n");
         }
+    }
+    
+    public static void loadAndDisplayAll() {
+        loadAndDisplayCourses();
+        loadAndDisplayTeachers();
+        loadAndDisplayRooms();
+    }
+
+    public static void main(String[] args) {
+        mainMenu();
     }
 
 }

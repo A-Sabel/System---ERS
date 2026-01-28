@@ -110,7 +110,7 @@ class TeacherFileLoader extends BaseFileLoader {
     }
 }
 
-class RoomsFileLoader extends BaseFileLoader {
+class RoomFileLoader extends BaseFileLoader {
     private final List<Rooms> allRooms = new ArrayList<>();
     
     @Override

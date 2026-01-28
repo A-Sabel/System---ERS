@@ -1,0 +1,20 @@
+CS101,Programming 1,5,5,true,NONE
+CS102,Computer Fundamentals,3,5,false,NONE
+CS103,Discrete Mathematics,3,5,false,NONE
+CS104,Introduction to IT Systems,2,5,false,NONE
+CS105,Ethics in Computing,2,5,false,NONE
+CS201,Programming 2,5,5,true,CS101
+CS202,Object-Oriented Programming,5,5,true,CS105
+CS203,Web Technologies,3,5,false,CS104
+CS204,Linear Algebra for Computing,3,5,false,CS103
+CS205,Human-Computer Interaction,2,5,false,NONE
+CS301,Data Structures and Algorithms,5,5,true,CS201
+CS302,Design and Analysis of Algorithms,5,5,true,CS202;CS204
+CS303,Database Management Systems,3,5,true,CS202
+CS304,Computer Networks,3,5,false,CS104
+CS305,Advanced Programming Concepts,2,5,false,CS201;CS203
+CS401,Operating Systems,5,5,true,CS301;CS301;CS302
+CS402,Compiler Design,5,5,true,CS302
+CS403,Information Security,3,5,false,CS304
+CS404,Distributed Systems,3,5,false,CS301;CS304
+CS405,Systems Integration Project,2,5,false,CS303;CS305

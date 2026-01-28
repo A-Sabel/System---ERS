@@ -4,6 +4,9 @@
  */
 package ers.group;
 
+import.java.io.*;
+import java.util.*;
+
 /**
  *
  * @author Andrea Ysabela
@@ -18,6 +21,8 @@ public class CourseSubject {
     private int studentCount;
     private boolean isLabRoom;
     private boolean isScheduled = false;
+
+    private ArrayList<CourseSubject> prerequisites;
 
     //Constructor
     public CourseSubject(String courseSubjectID, String courseSubjectName, 
@@ -48,6 +53,12 @@ public class CourseSubject {
     }
     public boolean isIsScheduled() {
         return isScheduled;
+    }
+    public void addPrerequisite(CourseSubject prerequisite) {
+        if (prerequisites == null) {
+            prerequisites = new ArrayList<>();
+        }
+        this.prerequisites.add(prerequisite);
     }
 
 }

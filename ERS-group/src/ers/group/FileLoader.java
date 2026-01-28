@@ -1,9 +1,14 @@
 package ers.group;
 
+/**
+ *
+ * @author Andrea Ysabela
+ */
+
 import java.io.*;
 import java.util.*;
 
-public class SubjectLoader {
+public class FileLoader {
     private Map<String, CourseSubject> subjectMap = new LinkedHashMap<>();
     
     public void loadFromTextFile(String filePath) {

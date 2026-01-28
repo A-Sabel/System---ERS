@@ -20,12 +20,14 @@ public class CourseSubject {
     private int studentCount;
     private boolean isLabRoom;
     private boolean isScheduled = false;
+    private int yearLevel;
+    private int semester;
 
     private ArrayList<CourseSubject> prerequisites;
 
     //Constructor
     public CourseSubject(String courseSubjectID, String courseSubjectName, 
-                        int units, int studentCount, boolean isLabRoom) {
+                        int units, int studentCount, boolean isLabRoom, int yearLevel, int semester) {
         this.courseSubjectID = courseSubjectID;
         this.courseSubjectName = courseSubjectName;
         this.units = units;
@@ -49,21 +51,15 @@ public class CourseSubject {
     }
 
     //Getters and Setters
-    public String getCourseSubjectID() { return courseSubjectID; }
-    public String getCourseSubjectName() { return courseSubjectName;}
-    public int getUnits() { return units;}
-    public int getStudentCount() { return studentCount;}
-    public boolean isLabRoom() { return isLabRoom;}
-    public boolean isScheduled() { return isScheduled;}
-    public ArrayList<CourseSubject> getPrerequisites() { return prerequisites; }
-    
-    public void setCourseSubjectID(String courseSubjectID) { this.courseSubjectID = courseSubjectID; }
-    public void setCourseSubjectName(String courseSubjectName) { this.courseSubjectName = courseSubjectName; }
-    public void setUnits(int units) { this.units = units; }
-    public void setStudentCount(int studentCount) { this.studentCount = studentCount; }
-    public void setLabRoom(boolean labRoom) { this.isLabRoom = labRoom; }
-    public void setScheduled(boolean scheduled) { this.isScheduled = scheduled; }
-    public void setPrerequisites(ArrayList<CourseSubject> prerequisites) { this.prerequisites = prerequisites; }
+    public String getCourseSubjectID() { return this.courseSubjectID; }
+    public String getCourseSubjectName() { return this.courseSubjectName;}
+    public int getUnits() { return this.units;}
+    public int getStudentCount() { return this.studentCount;}
+    public boolean isLabRoom() { return this.isLabRoom;}
+    public boolean isScheduled() { return this.isScheduled;}
+    public int getYearLevel() { return this.yearLevel; }
+    public int getSemester() { return this.semester; }
+    public ArrayList<CourseSubject> getPrerequisites() { return this.prerequisites; }
 
     @Override
     public String toString() {

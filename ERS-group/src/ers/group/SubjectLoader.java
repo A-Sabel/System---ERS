@@ -17,7 +17,9 @@ public class SubjectLoader {
                 int units = Integer.parseInt(parts[2]);
                 int count = Integer.parseInt(parts[3]);
                 boolean isLab = Boolean.parseBoolean(parts[4]);
-                CourseSubject subject = new CourseSubject(id, name, units, count, isLab);
+                int yearLevel = Integer.parseInt(parts[6]);
+                int semester = Integer.parseInt(parts[7]);
+                CourseSubject subject = new CourseSubject(id, name, units, count, isLab, yearLevel, semester);
                 subjectMap.put(id, subject);
             }
         } catch (FileNotFoundException e) {

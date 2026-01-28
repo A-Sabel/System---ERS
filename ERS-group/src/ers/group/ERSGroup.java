@@ -18,7 +18,7 @@ public class ERSGroup {
     SubjectLoader loader = new SubjectLoader();
     loader.loadFromTextFile("ERS-group/src/ers/group/master files/courseSubject.txt");
     for (CourseSubject s : loader.getAllSubjects()) {
-        System.out.println("Subject: " + s.getCourseSubjectName() + "| Units: " + s.getUnits() );
+        System.out.println("Subject: " + s.getCourseSubjectID() + " " + s.getCourseSubjectName() + "| Units: " + s.getUnits() );
         }
     }
 

@@ -15,13 +15,18 @@ public class ERSGroup {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-        FileLoader loader = new CourseSubjectFileLoader();
-        loader.load("ERS-group/src/ers/group/master files/courseSubject.txt");
-        
-        CourseSubjectFileLoader courseLoader = (CourseSubjectFileLoader) loader;
+        CourseSubjectFileLoader courseLoader = new CourseSubjectFileLoader();
+        courseLoader.load("ERS-group/src/ers/group/master files/courseSubject.txt");
         for (CourseSubject s : courseLoader.getAllSubjects()) {
             System.out.println("Subject: " + s.getCourseSubjectID() + " " + s.getCourseSubjectName() + "| Units: " + s.getUnits() + 
                 "\nPrerequisites: " + s.getPrerequisitesString() + "| SY: " + s.getYearLevel() + " - " + s.getSemester() + "\n");
+        }
+
+        TeacherFileLoader teacherLoader = new TeacherFileLoader();
+        teacherLoader.load("ERS-group/src/ers/group/master files/teachers.txt");
+        for (Teachers t : teacherLoader.getAllTeachers()) {
+            System.out.println("Teacher: " + t.getTeacherID() + " " + t.getTeacherName() + 
+                "\nSubjects: " + t.getQualifiedSubjectNames(courseLoader.getSubjectMap()) + "\n");
         }
     }
 

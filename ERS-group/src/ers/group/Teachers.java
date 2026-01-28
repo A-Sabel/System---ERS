@@ -1,10 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package ers.group;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  *
@@ -14,62 +11,59 @@ public class Teachers {
     private final String teacherID;
     private final String teacherName;
 
-    private final ArrayList<CourseSubject> qualifiedSubjects;
-    // The "Window" of time the teacher is actually at the school
-    private final ArrayList<Schedule> availableSchedules;
-    // The classes ALREADY given to this teacher by the auto-scheduler
-    private final ArrayList<Schedule> assignedSchedules; 
+    private final ArrayList<String> qualifiedSubjectIDs;
+    private final ArrayList<String> assignedSchedules; 
 
     // Constructor
     public Teachers(String teacherID, String teacherName) {
         this.teacherID = teacherID;
         this.teacherName = teacherName;
-        this.qualifiedSubjects = new ArrayList<>();
-        this.availableSchedules = new ArrayList<>();
+        this.qualifiedSubjectIDs = new ArrayList<>();
         this.assignedSchedules = new ArrayList<>();
     }
     
     // Methods
-    public boolean isFitFor(CourseSubject subject, Schedule proposedSched) {
-        if (!canTeachSubject(subject)) return false; // can teach?
-        if (!isAvailableForSchedule(proposedSched)) return false; // is available?
-        // no schedule conflicts?
-        for (Schedule assigned : assignedSchedules) {
-            if (assigned.conflictsWith(proposedSched)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean canTeachSubject(CourseSubject subject) {
-        return this.qualifiedSubjects.contains(subject);
-    }
-
-    public boolean isAvailableForSchedule(Schedule sched) {
-        return this.availableSchedules.contains(sched);
+    public boolean canTeachSubject(String subjectID) {
+        return this.qualifiedSubjectIDs.contains(subjectID);
     }
 
     // Actions
-    public void assignSchedule(Schedule sched) {
-        if (sched != null && !this.assignedSchedules.contains(sched)) {
-            this.assignedSchedules.add(sched);
+    public void assignSchedule(String schedule) {
+        if (schedule != null && !this.assignedSchedules.contains(schedule)) {
+            this.assignedSchedules.add(schedule);
         }
     }
-    public void addQualifiedSubject(CourseSubject subject) {
-        if (subject != null && !this.qualifiedSubjects.contains(subject)) {
-            this.qualifiedSubjects.add(subject);
+    
+    public void addQualifiedSubject(String subjectID) {
+        if (subjectID != null && !this.qualifiedSubjectIDs.contains(subjectID)) {
+            this.qualifiedSubjectIDs.add(subjectID);
         }
     }
-    public void addAvailableSchedule(Schedule sched) {
-        if (sched != null && !this.availableSchedules.contains(sched)) {
-            this.availableSchedules.add(sched);
+    
+    // Get subject names
+    public String getQualifiedSubjectNames(Map<String, CourseSubject> subjectMap) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < qualifiedSubjectIDs.size(); i++) {
+            String id = qualifiedSubjectIDs.get(i);
+            CourseSubject course = subjectMap.get(id);
+            if (course != null) {
+                sb.append(course.getCourseSubjectID()).append(" ").append(course.getCourseSubjectName());
+                if (i < qualifiedSubjectIDs.size() - 1) {
+                    sb.append(", ");
+                }
+            }
         }
+        return sb.toString();
     }
+    
     // Getters
     public String getTeacherID() { return teacherID; }
     public String getTeacherName() { return teacherName; }
-    public ArrayList<Schedule> getAssignedSchedules() { return assignedSchedules; }
+    public ArrayList<String> getQualifiedSubjectIDs() { return qualifiedSubjectIDs; }
+    public ArrayList<String> getAssignedSchedules() { return assignedSchedules; }
     
-
+    @Override
+    public String toString() {
+        return String.format("%s - %s", teacherID, teacherName);
+    }
 }

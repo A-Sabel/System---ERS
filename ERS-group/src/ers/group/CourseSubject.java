@@ -12,18 +12,18 @@ import java.util.*;
  */
 public class CourseSubject {
     //Identity
-    private String courseSubjectID;
-    private String courseSubjectName;
+    private final String courseSubjectID;
+    private final String courseSubjectName;
 
     //Academic Constraints
-    private int units;
+    private final int units;
     private int studentCount;
-    private boolean isLabRoom;
+    private final boolean isLabRoom;
     private boolean isScheduled = false;
-    private int yearLevel;
+    private final int yearLevel;
     private int semester;
 
-    private ArrayList<CourseSubject> prerequisites;
+    private final ArrayList<CourseSubject> prerequisites;
 
     //Constructor
     public CourseSubject(String courseSubjectID, String courseSubjectName, 

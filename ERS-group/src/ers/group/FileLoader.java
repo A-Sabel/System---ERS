@@ -33,7 +33,7 @@ abstract class BaseFileLoader implements FileLoader {
 }
 
 class CourseSubjectFileLoader extends BaseFileLoader {
-    private Map<String, CourseSubject> subjectMap = new LinkedHashMap<>();
+    private final Map<String, CourseSubject> subjectMap = new LinkedHashMap<>();
     
     @Override
     public void load(String filePath) {

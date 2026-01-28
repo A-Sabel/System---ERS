@@ -24,7 +24,7 @@ public class Enrollment {
     // Constructor
     public Enrollment(String courseID, String courseName, int units, int maxStudents,
                         boolean isLab, int year, int sem) {
-=======
+
 package ers.group;  
 
 public class Enrollment {

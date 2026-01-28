@@ -1,0 +1,9 @@
+R101,Lecture Room 1,false,5
+R102,Lecture Room 2,false,5
+R103,Lecture Room 3,false,8
+R104,Lecture Room 4,false,8
+LAB201,Computer Laboratory 1,true,5
+LAB202,Computer Laboratory 2,true,5
+LAB203,Computer Laboratory 3,true,5
+NET301,Networking Laboratory,true,5
+SYS401,Systems Laboratory,true,5

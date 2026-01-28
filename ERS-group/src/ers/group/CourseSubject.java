@@ -20,7 +20,7 @@ public class CourseSubject {
     private int studentCount;
     private final boolean isLabRoom;
     private boolean isScheduled = false;
-    private final int yearLevel;
+    private int yearLevel;
     private int semester;
 
     private final ArrayList<CourseSubject> prerequisites;

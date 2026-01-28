@@ -109,3 +109,33 @@ class TeacherFileLoader extends BaseFileLoader {
         return teacherMap;
     }
 }
+
+class RoomsFileLoader extends BaseFileLoader {
+    private final List<Rooms> allRooms = new ArrayList<>();
+    
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split(",");
+            // Format: RoomID, RoomName, isLabRoom, Capacity
+            String roomID = parts[0];
+            String roomName = parts[1];
+            boolean isLabRoom = Boolean.parseBoolean(parts[2]);
+            int capacity = Integer.parseInt(parts[3]);
+            Rooms room = new Rooms(roomID, roomName, isLabRoom, capacity);
+            allRooms.add(room);
+        });
+    }
+
+    public Collection<Rooms> getAllRooms() {
+        return allRooms;
+    }
+
+    public Map<String, Rooms> getRoomMap() {
+        Map<String, Rooms> roomMap = new LinkedHashMap<>();
+        for (Rooms room : allRooms) {
+            roomMap.put(room.getRoomID(), room);
+        }
+        return roomMap;
+    }
+}

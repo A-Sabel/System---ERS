@@ -1,12 +1,14 @@
+package ers.group;
+
 import java.util.ArrayList;
 
 public class Enrollment {
     // Identity
-    private String courseID;
-    private String courseName;
+    private final String courseID;
+    private final String courseName;
 
     // Academic constraints
-    private int units;
+    private final int units;
     private int maxStudents;
     private boolean isLabCourse;
     private boolean isScheduled = false;
@@ -20,7 +22,7 @@ public class Enrollment {
 
     // Constructor
     public Enrollment(String courseID, String courseName, int units, int maxStudents,
-                         boolean isLab, int year, int sem) {
+                        boolean isLab, int year, int sem) {
         this.courseID = courseID;
         this.courseName = courseName;
         this.units = units;

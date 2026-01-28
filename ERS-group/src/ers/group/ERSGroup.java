@@ -28,6 +28,13 @@ public class ERSGroup {
             System.out.println("Teacher: " + t.getTeacherID() + " " + t.getTeacherName() + 
                 "\nSubjects: " + t.getQualifiedSubjectNames(courseLoader.getSubjectMap()) + "\n");
         }
+
+        RoomsFileLoader roomLoader = new RoomsFileLoader();
+        roomLoader.load("ERS-group/src/ers/group/master files/rooms.txt");
+        for (Rooms r : roomLoader.getAllRooms()) {
+            System.out.println("Room: " + r.getRoomID() + " " + r.getRoomName() + 
+                "| Capacity: " + r.getCapacity() + "\n");
+        }
     }
 
 }

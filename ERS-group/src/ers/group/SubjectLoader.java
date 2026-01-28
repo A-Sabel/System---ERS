@@ -5,6 +5,7 @@ import java.util.*;
 
 public class SubjectLoader {
     private Map<String, CourseSubject> subjectMap = new LinkedHashMap<>();
+    
     public void loadFromTextFile(String filePath) {
         try (Scanner scanner = new Scanner(new File(filePath))) {
             while (scanner.hasNextLine()) {

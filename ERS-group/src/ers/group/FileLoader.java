@@ -139,3 +139,52 @@ class RoomFileLoader extends BaseFileLoader {
         return roomMap;
     }
 }
+
+class SectionFileLoader extends BaseFileLoader {
+    private final List<Section> allSections = new ArrayList<>();
+    private final Map<String, CourseSubject> courseMap;
+    
+    public SectionFileLoader(Map<String, CourseSubject> courseMap) {
+        this.courseMap = courseMap;
+    }
+    
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split("\\|");
+            // Format: SectionID|CourseID|TeacherID|ScheduleID|RoomID|StudentCount|StudentList
+            if (parts.length < 7) return;
+            String sectionID = parts[0].trim();
+            String courseID = parts[1].trim();
+            String teacherID = parts[2].trim();
+            String scheduleID = parts[3].trim();
+            String roomID = parts[4].trim();
+            String studentList = parts[6].trim();
+            CourseSubject course = courseMap.get(courseID);
+            if (course == null) {
+                System.out.println("Warning: Course " + courseID + " not found");
+                return;
+            }
+            Section section = new Section(sectionID, course, course.getStudentCount());
+            if (!studentList.isEmpty() && !studentList.equals("NULL")) {
+                String[] studentIDs = studentList.split(";");
+                for (String studentID : studentIDs) {
+                    section.addStudent(studentID.trim());
+                }
+            }
+            allSections.add(section);
+        });
+    }
+    
+    public Collection<Section> getAllSections() {
+        return allSections;
+    }
+    
+    public Map<String, Section> getSectionMap() {
+        Map<String, Section> sectionMap = new LinkedHashMap<>();
+        for (Section section : allSections) {
+            sectionMap.put(section.getSectionID(), section);
+        }
+        return sectionMap;
+    }
+}

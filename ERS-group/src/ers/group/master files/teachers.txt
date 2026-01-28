@@ -1,0 +1,2 @@
+T-001,Alice Santos,CS101;CS201;CS305
+T-002,Ben Cruz,CS102

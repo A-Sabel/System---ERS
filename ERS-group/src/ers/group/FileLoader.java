@@ -79,3 +79,33 @@ class CourseSubjectFileLoader extends BaseFileLoader {
         return subjectMap;
     }
 }
+
+class TeacherFileLoader extends BaseFileLoader {
+    private final Map<String, Teachers> teacherMap = new LinkedHashMap<>();
+    
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split(",");
+            // Format: ID, Name, Subjects
+            String id = parts[0];
+            String name = parts[1];
+            Teachers teacher = new Teachers(id, name);
+            if (parts.length > 2) {
+                String[] qualifiedSubjects = parts[2].split(";");
+                for (String subjectID : qualifiedSubjects) {
+                    teacher.addQualifiedSubject(subjectID);
+                }
+            }
+            teacherMap.put(id, teacher);
+        });
+    }
+    
+    public Collection<Teachers> getAllTeachers() {
+        return teacherMap.values();
+    }
+    
+    public Map<String, Teachers> getTeacherMap() {
+        return teacherMap;
+    }
+}

@@ -1,6 +1,7 @@
 package ers.group;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  *
@@ -39,6 +40,22 @@ public class Teachers {
         }
     }
     
+    // Get subject names
+    public String getQualifiedSubjectNames(Map<String, CourseSubject> subjectMap) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < qualifiedSubjectIDs.size(); i++) {
+            String id = qualifiedSubjectIDs.get(i);
+            CourseSubject course = subjectMap.get(id);
+            if (course != null) {
+                sb.append(course.getCourseSubjectID()).append(" ").append(course.getCourseSubjectName());
+                if (i < qualifiedSubjectIDs.size() - 1) {
+                    sb.append(", ");
+                }
+            }
+        }
+        return sb.toString();
+    }
+    
     // Getters
     public String getTeacherID() { return teacherID; }
     public String getTeacherName() { return teacherName; }
@@ -47,6 +64,6 @@ public class Teachers {
     
     @Override
     public String toString() {
-        return String.format("%s - %s (Prefers: %s)", teacherID, teacherName);
+        return String.format("%s - %s", teacherID, teacherName);
     }
 }

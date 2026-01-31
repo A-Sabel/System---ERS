@@ -1,0 +1,7 @@
+studentID,studentName,schoolYear,semester,course1,grade1,passed1,course2,grade2,passed2,course3,grade3,passed3,course4,grade4,passed4,course5,grade5,passed5,gpa
+S-001,Juan Dela Cruz,2024-2025,1,CS101,1.75,true,MATH101,2.25,true,ENG101,3.00,true,HIST101,2.00,true,PHYS101,4.00,false,2.60
+S-001,Juan Dela Cruz,2024-2025,2,CS102,1.50,true,MATH102,2.50,true,ENG102,2.25,true,HIST102,3.00,true,PHYS102,2.75,true,2.40
+S-001,Juan Dela Cruz,2025-2026,1,CS201,1.25,true,MATH201,1.75,true,ENG201,2.00,true,HIST201,1.50,true,PHYS201,3.00,true,1.90
+S-002,Maria Santos,2024-2025,1,CS101,2.00,true,MATH101,3.00,true,ENG101,2.50,true,HIST101,2.25,true,PHYS101,4.50,false,2.65
+S-002,Maria Santos,2024-2025,2,CS102,2.25,true,MATH102,2.75,true,ENG102,3.00,true,HIST102,2.50,true,PHYS102,3.50,true,2.80
+S-003,renegago,2025-2026,1,CS201,1.50,true,MATH201,1.75,true,ENG201,1.25,true,HIST201,2.00,true,PHYS201,2.50,true,1.80

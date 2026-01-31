@@ -20,12 +20,12 @@ public class Enrollment {
     // Check schedule conflicts
     public static boolean conflictsWith(Schedule s1, Schedule s2) {
         if (!s1.getDay().equals(s2.getDay())) return false;
-        return !(s1.getEndHour() <= s2.getStartHour() || s1.getStartHour() >= s2.getEndHour());
+        return !(s1.getEndTime().compareTo(s2.getStartTime()) <= 0 || s1.getStartTime().compareTo(s2.getEndTime()) >= 0);
     }
 
     // Check if section is full
     public static boolean isFull(Section section) {
-        return section.getStudentIDs().size() >= section.getMaxStudents();
+        return section.getEnrolledStudentIDs().size() >= section.getCapacityLimit();
     }
 
     public String getStudentID() { return studentID; }

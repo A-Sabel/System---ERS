@@ -2,19 +2,19 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
-
+package ers.group;
 /**
  *
  * @author Eli
  */
-public class Student extends javax.swing.JFrame {
+public class studenttab extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Student.class.getName());
 
     /**
      * Creates new form Student
      */
-    public Student() {
+    public studenttab() {
         initComponents();
     }
 
@@ -1027,7 +1027,7 @@ public class Student extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new Student().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new studenttab().setVisible(true));
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables

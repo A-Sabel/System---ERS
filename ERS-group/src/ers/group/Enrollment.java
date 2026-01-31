@@ -7,6 +7,15 @@ public class Enrollment {
     private String courseID;
 
     public Enrollment(String studentID, String sectionID, String courseID) {
+        if (studentID == null || studentID.isEmpty()) {
+            throw new IllegalArgumentException("Student ID cannot be empty");
+        }
+        if (sectionID == null || sectionID.isEmpty()) {
+            throw new IllegalArgumentException("Section ID cannot be empty");
+        }
+        if (courseID == null || courseID.isEmpty()) {
+            throw new IllegalArgumentException("Course ID cannot be empty");
+        }
         this.studentID = studentID;
         this.sectionID = sectionID;
         this.courseID = courseID;
@@ -31,6 +40,27 @@ public class Enrollment {
     public String getStudentID() { return studentID; }
     public String getSectionID() { return sectionID; }
     public String getCourseID() { return courseID; }
+    
+    public void setStudentID(String studentID) {
+        if (studentID == null || studentID.isEmpty()) {
+            throw new IllegalArgumentException("Student ID cannot be empty");
+        }
+        this.studentID = studentID;
+    }
+    
+    public void setSectionID(String sectionID) {
+        if (sectionID == null || sectionID.isEmpty()) {
+            throw new IllegalArgumentException("Section ID cannot be empty");
+        }
+        this.sectionID = sectionID;
+    }
+    
+    public void setCourseID(String courseID) {
+        if (courseID == null || courseID.isEmpty()) {
+            throw new IllegalArgumentException("Course ID cannot be empty");
+        }
+        this.courseID = courseID;
+    }
 
     @Override
     public String toString() {

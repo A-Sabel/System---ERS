@@ -1,17 +1,48 @@
-package ers.group;
+import java.util.*;
 
 public class Schedule {
-    private final String day; // e.g., "Mon"
-    private final int startHour; // 24-hour integer, e.g., 8
-    private final int endHour;   // exclusive end hour
+    // Fields
+    private String scheduleID;
+    private String courseID;
+    private String room;
+    private String day;
+    private String startTime;
+    private String endTime;
+    private String teacherName;
 
-    public Schedule(String day, int startHour, int endHour) {
+    // Constructor
+    public Schedule(String scheduleID, String courseID, String room, String day, String startTime, String endTime, String teacherName) {
+        this.scheduleID = scheduleID;
+        this.courseID = courseID;
+        this.room = room;
         this.day = day;
-        this.startHour = startHour;
-        this.endHour = endHour;
+        this.startTime = startTime;
+        this.endTime = endTime;
+        this.teacherName = teacherName;
     }
 
+    // Getters
+    public String getScheduleID() { return scheduleID; }
+    public String getCourseID() { return courseID; }
+    public String getRoom() { return room; }
     public String getDay() { return day; }
-    public int getStartHour() { return startHour; }
-    public int getEndHour() { return endHour; }
+    public String getStartTime() { return startTime; }
+    public String getEndTime() { return endTime; }
+    public String getTeacherName() { return teacherName; }
+
+    // Setters / Methods to update schedule
+    public void reschedule(String newDay, String newStartTime, String newEndTime) {
+        this.day = newDay;
+        this.startTime = newStartTime;
+        this.endTime = newEndTime;
+    }
+
+    public void assignRoom(String newRoom) {
+        this.room = newRoom;
+    }
+
+    @Override
+    public String toString() {
+        return "Schedule: " + courseID + " in " + room + " on " + day + " from " + startTime + " to " + endTime + ", Teacher: " + teacherName;
+    }
 }

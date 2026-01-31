@@ -81,7 +81,7 @@ public class Section {
                 String studentList = String.join(";", students);
                 String teacherID = (sec.getInstructor() != null) ? sec.getInstructor().getTeacherID() : "NULL";
                 String scheduleID = (sec.getSchedule() != null) ? sec.getSchedule().getScheduleID() : "NULL";
-                String roomID = (sec.getSchedule() != null) ? sec.getSchedule().getRoomID() : "NULL";
+                String roomID = (sec.getSchedule() != null) ? sec.getSchedule().getRoom() : "NULL";
                 
                 // Format: SectionID|CourseID|TeacherID|ScheduleID|RoomID|StudentCount|StudentList
                 writer.printf("%s|%s|%s|%s|%s|%d|%s\n", 

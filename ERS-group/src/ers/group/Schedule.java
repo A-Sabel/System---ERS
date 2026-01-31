@@ -1,4 +1,4 @@
-import java.util.*;
+package ers.group;
 
 public class Schedule {
     // Fields

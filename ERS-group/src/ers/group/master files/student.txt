@@ -1,0 +1,6 @@
+studentID,studentName,age,dob,yearLevel,studentType,subjectsEnrolled,gwa
+STU-001,Juan Dela Cruz,19,2005-03-15,1st Year,Regular,CS101|CS102|CS103|CS104|CS105,1.75
+STU-002,Maria Santos,20,2004-07-22,2nd Year,Regular,CS201|CS202|CS203|CS204|CS205,1.68
+STU-003,Paolo Reyes,18,2006-01-10,1st Year,Irregular,CS101|CS103|CS105,2.10
+STU-004,Ana Diaz,21,2003-11-05,3rd Year,Regular,CS301|CS302|CS303|CS304|CS305,1.82
+STU-005,Liam Cruz,22,2002-05-30,4th Year,Irregular,CS401|CS402|CS403|CS404|CS405,1.90

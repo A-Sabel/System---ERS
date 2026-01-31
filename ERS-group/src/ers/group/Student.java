@@ -16,8 +16,8 @@ public class Student {
 
     // constructors
     public Student(String studentID, String studentName, int age,
-                   String dob, String yearLevel, String studentType,
-                   ArrayList<String> subjectsEnrolled, double gwa) {
+                    String dob, String yearLevel, String studentType,
+                    ArrayList<String> subjectsEnrolled, double gwa) {
         this.studentID = studentID;
         this.studentName = studentName;
         this.age = age;
@@ -97,4 +97,15 @@ public class Student {
         System.out.println("Subjects Enrolled: " + subjectsEnrolled);
         System.out.println("GWA: " + gwa);
     }
-}
+    public boolean hasPassed(ArrayList<CourseSubject> prerequisites) {
+        if (prerequisites == null || prerequisites.isEmpty()) {
+            return true;
+        }
+        // Check if all prerequisites are in the subjectsEnrolled list
+        for (CourseSubject prerequisite : prerequisites) {
+            if (!subjectsEnrolled.contains(prerequisite.getCourseSubjectID())) {
+                return false;
+            }
+        }
+        return true;
+    }}

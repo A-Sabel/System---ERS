@@ -50,9 +50,11 @@ public class ERSGroup {
     public static void loadAndDisplayCourses() {
         CourseSubjectFileLoader courseLoader = new CourseSubjectFileLoader();
         courseLoader.load("ERS-group/src/ers/group/master files/courseSubject.txt");
+        System.out.println("\n--- Course Subjects ---");
         for (CourseSubject s : courseLoader.getAllSubjects()) {
-            System.out.println("Subject: " + s.getCourseSubjectID() + " " + s.getCourseSubjectName() + "| Units: " + s.getUnits() + 
-                "\nPrerequisites: " + s.getPrerequisitesString() + "| SY: " + s.getYearLevel() + " - " + s.getSemester() + "\n");
+            System.out.println("Subject: " + s.getCourseSubjectID() + " " + s.getCourseSubjectName() + 
+                "| Units: " + s.getUnits() + "\nPrerequisites: " + s.getPrerequisitesString() + 
+                "| SY: " + s.getYearLevel() + " - Sem: " + s.getSemester() + "\n");
         }
     }
     
@@ -62,6 +64,7 @@ public class ERSGroup {
         
         TeacherFileLoader teacherLoader = new TeacherFileLoader();
         teacherLoader.load("ERS-group/src/ers/group/master files/teachers.txt");
+        System.out.println("\n--- Teachers ---");
         for (Teachers t : teacherLoader.getAllTeachers()) {
             System.out.println("Teacher: " + t.getTeacherID() + " " + t.getTeacherName() + 
                 "\nSubjects: " + t.getQualifiedSubjectNames(courseLoader.getSubjectMap()) + "\n");
@@ -71,9 +74,10 @@ public class ERSGroup {
     public static void loadAndDisplayRooms() {
         RoomFileLoader roomLoader = new RoomFileLoader();
         roomLoader.load("ERS-group/src/ers/group/master files/rooms.txt");
+        System.out.println("\n--- Rooms ---");
         for (Rooms r : roomLoader.getAllRooms()) {
             System.out.println("Room: " + r.getRoomID() + " " + r.getRoomName() + 
-                "| Capacity: " + r.getCapacity() + "\n");
+                "| Capacity: " + r.getCapacity() + "| Lab: " + r.isLabRoom() + "\n");
         }
     }
     

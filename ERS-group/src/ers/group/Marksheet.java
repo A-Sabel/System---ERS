@@ -1,3 +1,4 @@
+package ers.group;
 public class Marksheet {
 
     private String studentID;
@@ -9,8 +10,8 @@ public class Marksheet {
 
     // CONSTRUCTOR
     public Marksheet(String studentID, String studentName,
-                     String schoolYear, String semester,
-                     String[] subjects, double[] marks) {
+                    String schoolYear, String semester,
+                    String[] subjects, double[] marks) {
 
         this.studentID = studentID;
         this.studentName = studentName;

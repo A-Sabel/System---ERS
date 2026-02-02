@@ -20,7 +20,8 @@ public class ERSGroup {
             System.out.println("2. Load Teachers");
             System.out.println("3. Load Rooms");
             System.out.println("4. Load All Data");
-            System.out.println("5. Exit");
+            System.out.println("5. Load Students");
+            System.out.println("6. Exit");
             System.out.print("Enter your choice: ");
             int choice = scanner.nextInt();
             switch (choice) {
@@ -37,6 +38,9 @@ public class ERSGroup {
                     loadAndDisplayAll();
                     break;
                 case 5:
+                    loadAndDisplayStudents();
+                    break;
+                case 6:
                     System.out.println("Exiting ERS System...");
                     running = false;
                     break;
@@ -85,6 +89,16 @@ public class ERSGroup {
         loadAndDisplayCourses();
         loadAndDisplayTeachers();
         loadAndDisplayRooms();
+    }
+
+    public static void loadAndDisplayStudents() {
+        StudentFileLoader studentLoader = new StudentFileLoader();
+        studentLoader.load("ERS-group/src/ers/group/master files/student.txt");
+        System.out.println("\n--- Students ---");
+        for (Student s : studentLoader.getAllStudents()) {
+            s.displayStudentInfo();
+            System.out.println();
+        }
     }
 
     public static void main(String[] args) {

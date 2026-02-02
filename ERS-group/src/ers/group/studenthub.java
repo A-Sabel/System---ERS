@@ -1,4 +1,13 @@
 package ers.group;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
+ */
+
+/**
+ *
+ * @author fedoc
+ */
 public class studenthub extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(studenthub.class.getName());
@@ -35,19 +44,19 @@ public class studenthub extends javax.swing.JFrame {
         Marksheet = new javax.swing.JPanel();
         jPanel15 = new javax.swing.JPanel();
         jPanel16 = new javax.swing.JPanel();
-        jLabel2 = new javax.swing.JLabel();
-        jTextField1 = new javax.swing.JTextField();
-        jButton1 = new javax.swing.JButton();
+        StudentID = new javax.swing.JLabel();
+        Searchbar = new javax.swing.JTextField();
+        Searchbutton = new javax.swing.JButton();
         jPanel5 = new javax.swing.JPanel();
-        jLabel3 = new javax.swing.JLabel();
+        GWA = new javax.swing.JLabel();
         jPanel17 = new javax.swing.JPanel();
         jPanel8 = new javax.swing.JPanel();
-        jButton2 = new javax.swing.JButton();
-        jButton3 = new javax.swing.JButton();
-        jButton4 = new javax.swing.JButton();
+        printbutton = new javax.swing.JButton();
+        clearbutton = new javax.swing.JButton();
+        logoutbutton = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
-        jTable1 = new javax.swing.JTable();
+        scoretable = new javax.swing.JTable();
         Schedule = new javax.swing.JPanel();
         jPanel23 = new javax.swing.JPanel();
         jPanel26 = new javax.swing.JPanel();
@@ -248,15 +257,15 @@ public class studenthub extends javax.swing.JFrame {
         jPanel16.setBackground(new java.awt.Color(0, 30, 58));
         jPanel16.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("Student ID");
+        StudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        StudentID.setForeground(new java.awt.Color(255, 255, 255));
+        StudentID.setText("Student ID");
 
-        jTextField1.setBackground(new java.awt.Color(146, 190, 219));
+        Searchbar.setBackground(new java.awt.Color(146, 190, 219));
 
-        jButton1.setBackground(new java.awt.Color(189, 216, 233));
-        jButton1.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jButton1.setText("Search");
+        Searchbutton.setBackground(new java.awt.Color(189, 216, 233));
+        Searchbutton.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        Searchbutton.setText("Search");
 
         javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
         jPanel16.setLayout(jPanel16Layout);
@@ -265,32 +274,32 @@ public class studenthub extends javax.swing.JFrame {
             .addGroup(jPanel16Layout.createSequentialGroup()
                 .addGap(23, 23, 23)
                 .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel16Layout.createSequentialGroup()
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(Searchbar, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(31, 31, 31)
-                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(Searchbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(20, Short.MAX_VALUE))
         );
         jPanel16Layout.setVerticalGroup(
             jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel16Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(jLabel2)
+                .addComponent(StudentID)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton1))
+                    .addComponent(Searchbar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(Searchbutton))
                 .addContainerGap(29, Short.MAX_VALUE))
         );
 
         jPanel5.setBackground(new java.awt.Color(0, 30, 58));
         jPanel5.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
 
-        jLabel3.setFont(new java.awt.Font("Segoe UI", 1, 40)); // NOI18N
-        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel3.setText("GWA. 3.53");
+        GWA.setFont(new java.awt.Font("Segoe UI", 1, 40)); // NOI18N
+        GWA.setForeground(new java.awt.Color(255, 255, 255));
+        GWA.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        GWA.setText("GWA. 3.53");
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -298,14 +307,14 @@ public class studenthub extends javax.swing.JFrame {
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(GWA, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel5Layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
+                .addComponent(GWA, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -336,20 +345,20 @@ public class studenthub extends javax.swing.JFrame {
         jPanel8.setBackground(new java.awt.Color(0, 30, 58));
         jPanel8.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
 
-        jButton2.setBackground(new java.awt.Color(73, 118, 159));
-        jButton2.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jButton2.setText("Print");
-        jButton2.addActionListener(this::jButton2ActionPerformed);
+        printbutton.setBackground(new java.awt.Color(73, 118, 159));
+        printbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        printbutton.setText("Print");
+        printbutton.addActionListener(this::printbuttonActionPerformed);
 
-        jButton3.setBackground(new java.awt.Color(73, 118, 159));
-        jButton3.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jButton3.setText("Clear");
-        jButton3.addActionListener(this::jButton3ActionPerformed);
+        clearbutton.setBackground(new java.awt.Color(73, 118, 159));
+        clearbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        clearbutton.setText("Clear");
+        clearbutton.addActionListener(this::clearbuttonActionPerformed);
 
-        jButton4.setBackground(new java.awt.Color(73, 118, 159));
-        jButton4.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        jButton4.setText("Logout");
-        jButton4.addActionListener(this::jButton4ActionPerformed);
+        logoutbutton.setBackground(new java.awt.Color(73, 118, 159));
+        logoutbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        logoutbutton.setText("Logout");
+        logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
 
         javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
         jPanel8.setLayout(jPanel8Layout);
@@ -357,11 +366,11 @@ public class studenthub extends javax.swing.JFrame {
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
                 .addGap(26, 26, 26)
-                .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(clearbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(jButton4)
+                .addComponent(logoutbutton)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel8Layout.setVerticalGroup(
@@ -369,15 +378,15 @@ public class studenthub extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
                 .addContainerGap(33, Short.MAX_VALUE)
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton2, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton3, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(clearbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(logoutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18))
         );
 
         jPanel2.setBackground(new java.awt.Color(0, 30, 58));
 
-        jTable1.setModel(new javax.swing.table.DefaultTableModel(
+        scoretable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
                 {null, null, null, null, null, null, null, null, null, null, null, null, null, null},
                 {null, null, null, null, null, null, null, null, null, null, null, null, null, null},
@@ -388,8 +397,8 @@ public class studenthub extends javax.swing.JFrame {
                 "ID", "Student ID", "Semester", "Course 1", "Score 1", "Course 2", "Score 2", "Course 3", "Score 3", "Course 4", "Score 4", "Course 5", "Score 5", "Average"
             }
         ));
-        jTable1.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
-        jScrollPane1.setViewportView(jTable1);
+        scoretable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        jScrollPane1.setViewportView(scoretable);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
@@ -540,17 +549,17 @@ public class studenthub extends javax.swing.JFrame {
         pack();
     }// </editor-fold>                        
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
         // TODO add your handling code here:
-    }                                        
+    }                                           
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
         // TODO add your handling code here:
-    }                                        
+    }                                           
 
-    private void jButton4ActionPerformed(java.awt.event.ActionEvent evt) {                                         
+    private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                             
         // TODO add your handling code here:
-    }                                        
+    }                                            
 
     /**
      * @param args the command line arguments
@@ -579,17 +588,16 @@ public class studenthub extends javax.swing.JFrame {
 
     // Variables declaration - do not modify                     
     private javax.swing.JPanel Background;
+    private javax.swing.JLabel GWA;
     private javax.swing.JPanel Marksheet;
     private javax.swing.JPanel Schedule;
+    private javax.swing.JTextField Searchbar;
+    private javax.swing.JButton Searchbutton;
+    private javax.swing.JLabel StudentID;
     private javax.swing.JTabbedPane alltabs;
+    private javax.swing.JButton clearbutton;
     private javax.swing.JPanel course;
-    private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton2;
-    private javax.swing.JButton jButton3;
-    private javax.swing.JButton jButton4;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel11;
     private javax.swing.JPanel jPanel13;
@@ -606,12 +614,10 @@ public class studenthub extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTable jTable1;
-    private javax.swing.JTextField jTextField1;
+    private javax.swing.JButton logoutbutton;
+    private javax.swing.JButton printbutton;
     private javax.swing.JPanel score;
+    private javax.swing.JTable scoretable;
     private javax.swing.JPanel student;
     // End of variables declaration                   
 }
-
-    
-

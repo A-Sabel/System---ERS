@@ -3,6 +3,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 package ers.group;
+
+import javax.swing.JFrame;
+
 /**
  *
  * @author Eli
@@ -124,10 +127,9 @@ public class studenttab extends javax.swing.JFrame {
         ScheduleTab = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setPreferredSize(new java.awt.Dimension(1874, 750));
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         jPanel1.setBackground(new java.awt.Color(31, 58, 95));
-        jPanel1.setPreferredSize(new java.awt.Dimension(1874, 750));
 
         jPanel2.setBackground(new java.awt.Color(0, 30, 58));
 

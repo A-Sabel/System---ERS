@@ -906,8 +906,8 @@ public class studenttab extends javax.swing.JFrame {
             .addGap(0, 622, Short.MAX_VALUE)
         );
 
-        jTabbedPane1.addTab("Score", ScoreTab);
-
+        jTabbedPane1.addTab("Score", new ScoreTab());
+        
         MarkSheetTab.setBackground(new java.awt.Color(31, 58, 95));
 
         javax.swing.GroupLayout MarkSheetTabLayout = new javax.swing.GroupLayout(MarkSheetTab);

@@ -15,8 +15,8 @@ public class studenthub2 extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(studenthub2.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
-    private ArrayList<Schedule> schedules;
-    private Map<String, ArrayList<String>> studentCourses;  // Maps studentID to list of courseIDs
+    private final ArrayList<Schedule> schedules;
+    private final Map<String, ArrayList<String>> studentCourses;  // Maps studentID to list of courseIDs
 
     /**
      * Creates new form studenthub2
@@ -95,9 +95,8 @@ public class studenthub2 extends javax.swing.JFrame {
             students = new ArrayList<>(allStudents);
             logger.info("Loaded " + students.size() + " students from file");
         } catch (Exception e) {
-            logger.warning("Error loading student data: " + e.getMessage());
+            logger.severe("Error loading student data: " + e.getMessage());
             students = new ArrayList<>();
-            e.printStackTrace();
         }
     }
     
@@ -164,28 +163,28 @@ public class studenthub2 extends javax.swing.JFrame {
                 return;
             }
             
-            java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath));
-            scanner.nextLine(); // skip header
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.trim().isEmpty()) continue;
-                
-                String[] parts = line.split(",");
-                if (parts.length < 7) continue;
-                
-                Schedule schedule = new Schedule(
-                    parts[0].trim(),    // scheduleID
-                    parts[1].trim(),    // courseID
-                    parts[2].trim(),    // room
-                    parts[3].trim(),    // day
-                    parts[4].trim(),    // startTime
-                    parts[5].trim(),    // endTime
-                    parts[6].trim()     // teacherName
-                );
-                schedules.add(schedule);
+            try (java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath))) {
+                scanner.nextLine(); // skip header
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.trim().isEmpty()) continue;
+                    
+                    String[] parts = line.split(",");
+                    if (parts.length < 7) continue;
+                    
+                    Schedule schedule = new Schedule(
+                        parts[0].trim(),    // scheduleID
+                        parts[1].trim(),    // courseID
+                        parts[2].trim(),    // room
+                        parts[3].trim(),    // day
+                        parts[4].trim(),    // startTime
+                        parts[5].trim(),    // endTime
+                        parts[6].trim()     // teacherName
+                    );
+                    schedules.add(schedule);
+                }
+                logger.info("Loaded " + schedules.size() + " schedules");
             }
-            scanner.close();
-            logger.info("Loaded " + schedules.size() + " schedules");
         } catch (Exception e) {
             logger.warning("Error loading schedule data: " + e.getMessage());
         }
@@ -214,22 +213,22 @@ public class studenthub2 extends javax.swing.JFrame {
                 return;
             }
             
-            java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath));
-            scanner.nextLine(); // skip header
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.trim().isEmpty()) continue;
-                
-                String[] parts = line.split(",");
-                if (parts.length < 2) continue;
-                
-                String studentID = parts[0].trim();
-                String courseID = parts[1].trim();
-                
-                studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(courseID);
+            try (java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath))) {
+                scanner.nextLine(); // skip header
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.trim().isEmpty()) continue;
+                    
+                    String[] parts = line.split(",");
+                    if (parts.length < 2) continue;
+                    
+                    String studentID = parts[0].trim();
+                    String courseID = parts[1].trim();
+                    
+                    studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(courseID);
+                }
+                logger.info("Loaded student-course mappings");
             }
-            scanner.close();
-            logger.info("Loaded student-course mappings");
         } catch (Exception e) {
             logger.warning("Error loading student-course mappings: " + e.getMessage());
         }
@@ -264,13 +263,13 @@ public class studenthub2 extends javax.swing.JFrame {
             scheduleGrid.put(timeSlot, dayMap);
         }
         
-        // Colors for courses - consistent color mapping based on course ID
+        // Colors for courses - modern professional palette
         java.awt.Color[] colors = {
-            new java.awt.Color(100, 150, 255),  // Blue
-            new java.awt.Color(100, 255, 150),  // Green
-            new java.awt.Color(255, 200, 100),  // Orange
-            new java.awt.Color(255, 150, 150),  // Red
-            new java.awt.Color(200, 150, 255)   // Purple
+            new java.awt.Color(112, 161, 255),  // Soft Steel Blue
+            new java.awt.Color(46, 213, 115),   // Emerald Mint
+            new java.awt.Color(255, 165, 94),   // Soft Orange
+            new java.awt.Color(255, 107, 129),  // Watermelon Red
+            new java.awt.Color(179, 136, 255)   // Lavender Purple
         };
         
         // Assign colors to courses based on their ID (consistent mapping)
@@ -339,9 +338,48 @@ public class studenthub2 extends javax.swing.JFrame {
         
         Scheduletable.setModel(model);
         
-        // Set custom cell renderer for colors
+        // Modernize the table
+        Scheduletable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        Scheduletable.setRowHeight(30);
+        Scheduletable.setShowGrid(false);
+        Scheduletable.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        Scheduletable.setCellSelectionEnabled(false);
+        Scheduletable.setFocusable(false);
+        
+        // Header styling - match dark theme
+        Scheduletable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        Scheduletable.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
+        Scheduletable.getTableHeader().setForeground(java.awt.Color.WHITE);
+        Scheduletable.getTableHeader().setPreferredSize(new java.awt.Dimension(100, 40));
+        ((javax.swing.table.DefaultTableCellRenderer)Scheduletable.getTableHeader().getDefaultRenderer())
+            .setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        // Time column styling with zebra striping
+        javax.swing.table.DefaultTableCellRenderer timeRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(
+                javax.swing.JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                // Zebra striping - alternating subtle background colors
+                if (row % 2 == 0) {
+                    setBackground(new java.awt.Color(255, 255, 255));
+                } else {
+                    setBackground(new java.awt.Color(248, 249, 252));
+                }
+                setHorizontalAlignment(javax.swing.JLabel.CENTER);
+                setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                setForeground(new java.awt.Color(0, 30, 58));
+                return this;
+            }
+        };
+        Scheduletable.getColumnModel().getColumn(0).setCellRenderer(timeRenderer);
+        Scheduletable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        
+        // Set custom cell renderer for colored schedule cells
         for (int i = 1; i < Scheduletable.getColumnCount(); i++) {
             Scheduletable.getColumnModel().getColumn(i).setCellRenderer(new ScheduleCellRenderer());
+            Scheduletable.getColumnModel().getColumn(i).setPreferredWidth(150);
         }
         
         Scheduletable.repaint();
@@ -367,7 +405,7 @@ public class studenthub2 extends javax.swing.JFrame {
         }
     }
     
-    // Custom cell renderer for colored schedule cells
+    // Custom cell renderer for colored schedule cells with continuous block effect
     class ScheduleCellRenderer extends javax.swing.table.DefaultTableCellRenderer {
         @Override
         public java.awt.Component getTableCellRendererComponent(
@@ -380,24 +418,79 @@ public class studenthub2 extends javax.swing.JFrame {
                 CourseSlot slot = (CourseSlot) value;
                 if (!slot.courseID.isEmpty()) {
                     setBackground(slot.color);
-                    setForeground(java.awt.Color.WHITE);
-                    setText(slot.toString());
-                    setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 11));
+                    setForeground(new java.awt.Color(30, 30, 30));
+                    setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
                     setHorizontalAlignment(javax.swing.JLabel.CENTER);
                     setVerticalAlignment(javax.swing.JLabel.CENTER);
+                    
+                    // Check if same course above/below for continuous block effect
+                    boolean sameAbove = false;
+                    boolean sameBelow = false;
+                    
+                    if (row > 0) {
+                        Object aboveValue = table.getValueAt(row - 1, column);
+                        if (aboveValue instanceof CourseSlot) {
+                            sameAbove = ((CourseSlot) aboveValue).courseID.equals(slot.courseID);
+                        }
+                    }
+                    
+                    if (row < table.getRowCount() - 1) {
+                        Object belowValue = table.getValueAt(row + 1, column);
+                        if (belowValue instanceof CourseSlot) {
+                            sameBelow = ((CourseSlot) belowValue).courseID.equals(slot.courseID);
+                        }
+                    }
+                    
+                    // Hide duplicate text - only show in top cell of block
+                    if (sameAbove) {
+                        setText("");
+                    } else {
+                        setText(slot.toString());
+                    }
+                    
+                    // Light guide borders - faint lines for internal blocks, visible for edges
+                    java.awt.Color lightLine = new java.awt.Color(255, 255, 255, 50);  // Very faint guide
+                    java.awt.Color darkLine = new java.awt.Color(255, 255, 255, 120);  // Visible edge
+                    
+                    int topWidth = sameAbove ? 1 : 2;  // Thinner for internal, thicker for block start
+                    int bottomWidth = sameBelow ? 1 : 2;  // Thinner for internal, thicker for block end               
+                    java.awt.Color topColor = sameAbove ? lightLine : darkLine;
+                    
+                    // Create compound border: MatteBorder for guides + EmptyBorder for text padding
+                    javax.swing.border.Border matteBorder = javax.swing.BorderFactory.createMatteBorder(
+                        topWidth, 1, bottomWidth, 1, topColor
+                    );
+                    javax.swing.border.Border paddingBorder = javax.swing.BorderFactory.createEmptyBorder(
+                        4, 6, 4, 6  // top, left, bottom, right padding for text
+                    );
+                    setBorder(javax.swing.BorderFactory.createCompoundBorder(matteBorder, paddingBorder));
                 } else {
-                    setBackground(new java.awt.Color(230, 230, 240));
+                    // Empty cells with zebra striping effect
+                    if (row % 2 == 0) {
+                        setBackground(new java.awt.Color(255, 255, 255));
+                    } else {
+                        setBackground(new java.awt.Color(248, 249, 252));
+                    }
                     setForeground(new java.awt.Color(100, 100, 100));
                     setText("");
+                    setBorder(javax.swing.BorderFactory.createMatteBorder(
+                        0, 0, 1, 1, new java.awt.Color(230, 230, 230)
+                    ));
                 }
             } else {
-                // Handle null or non-CourseSlot values
-                setBackground(new java.awt.Color(230, 230, 240));
+                // Null cells with zebra striping
+                if (row % 2 == 0) {
+                    setBackground(new java.awt.Color(255, 255, 255));
+                } else {
+                    setBackground(new java.awt.Color(248, 249, 252));
+                }
                 setForeground(new java.awt.Color(100, 100, 100));
                 setText("");
+                setBorder(javax.swing.BorderFactory.createMatteBorder(
+                    0, 0, 1, 1, new java.awt.Color(230, 230, 230)
+                ));
             }
             
-            setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(100, 100, 100)));
             return this;
         }
     }

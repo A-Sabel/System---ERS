@@ -22,6 +22,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         students = new ArrayList<>();
         loadStudentData();
+        loadStudentTableData();
     }
     
     private void loadStudentData() {
@@ -69,8 +70,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         javax.swing.JTable table = null;
         
         // Try to get existing model from table if it exists
-        if (ST_RightPanel.getComponentCount() > 0 && ST_RightPanel.getComponent(0) instanceof javax.swing.JScrollPane) {
-            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_RightPanel.getComponent(0);
+        if (ST_TableScrollPane.getComponentCount() > 0 && ST_TableScrollPane.getComponent(0) instanceof javax.swing.JScrollPane) {
+            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_TableScrollPane.getComponent(0);
             if (pane.getViewport().getView() instanceof javax.swing.JTable) {
                 table = (javax.swing.JTable) pane.getViewport().getView();
                 if (table.getModel() instanceof DefaultTableModel) {
@@ -89,9 +90,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
             
             // Clear panel and add the new table
-            ST_RightPanel.removeAll();
+            ST_TableScrollPane.removeAll();
             javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
-            ST_RightPanel.add(scrollPane, java.awt.BorderLayout.CENTER);
+            ST_TableScrollPane.add(scrollPane, java.awt.BorderLayout.CENTER);
         } else {
             model.setRowCount(0);
         }
@@ -112,9 +113,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
         
         // Refresh display
-        if (ST_RightPanel.getParent() != null) {
-            ST_RightPanel.revalidate();
-            ST_RightPanel.repaint();
+        if (ST_TableScrollPane.getParent() != null) {
+            ST_TableScrollPane.revalidate();
+            ST_TableScrollPane.repaint();
         }
     }
 
@@ -1006,7 +1007,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGap(0, 571, Short.MAX_VALUE)
         );
 
-        MainTabPanel.addTab("Score", ScoreTab);
+        MainTabPanel.addTab("Score",new ScoreTab());
 
         MarkSheetTab.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -1130,13 +1131,13 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 });
                 
                 // Create and set table to display in schedule tab
-                if (ST_RightPanel.getComponentCount() > 0) {
-                    ST_RightPanel.remove(0);
+                if (ST_TableScrollPane.getComponentCount() > 0) {
+                    ST_TableScrollPane.remove(0);
                 }
                 javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(new javax.swing.JTable(model));
-                ST_RightPanel.add(scrollPane);
-                ST_RightPanel.revalidate();
-                ST_RightPanel.repaint();
+                ST_TableScrollPane.add(scrollPane);
+                ST_TableScrollPane.revalidate();
+                ST_TableScrollPane.repaint();
                 return;
             }
         }  

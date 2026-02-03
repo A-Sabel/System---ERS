@@ -549,17 +549,57 @@ public class studenthub extends javax.swing.JFrame {
         pack();
     }// </editor-fold>                        
 
-    private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        // TODO add your handling code here:
-    }                                           
+    private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+    try {
+        boolean printed = scoretable.print(
+                javax.swing.JTable.PrintMode.FIT_WIDTH,
+                new java.text.MessageFormat("Student Marksheet"),
+                new java.text.MessageFormat("Page {0}")
+        );
 
-    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        // TODO add your handling code here:
-    }                                           
+        if (printed) {
+            javax.swing.JOptionPane.showMessageDialog(
+                    this, "Printing successful");
+        }
+    } catch (java.awt.print.PrinterException e) {
+        javax.swing.JOptionPane.showMessageDialog(
+                this, "Printing failed: " + e.getMessage());
+    }
+}
+                                        
 
-    private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        // TODO add your handling code here:
-    }                                            
+   private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+    // Clear search bar
+    Searchbar.setText("");
+
+    // Reset GWA label
+    GWA.setText("GWA. --");
+
+    // Clear table data
+    javax.swing.table.DefaultTableModel model =
+            (javax.swing.table.DefaultTableModel) scoretable.getModel();
+
+    for (int row = 0; row < model.getRowCount(); row++) {
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            model.setValueAt(null, row, col);
+        }
+    }
+}
+                                       
+
+    private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+    int choice = javax.swing.JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to logout?",
+            "Logout",
+            javax.swing.JOptionPane.YES_NO_OPTION
+    );
+
+    if (choice == javax.swing.JOptionPane.YES_OPTION) {
+        this.dispose(); // close current window
+    }
+}
+                                          
 
     /**
      * @param args the command line arguments

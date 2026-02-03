@@ -1022,7 +1022,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGap(0, 571, Short.MAX_VALUE)
         );
 
-        MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
+        MainTabPanel.addTab("Mark Sheet",new Marksheettab());
 
         ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
 

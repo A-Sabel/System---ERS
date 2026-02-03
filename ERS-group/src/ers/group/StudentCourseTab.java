@@ -90,9 +90,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
             
             // Clear panel and add the new table
-            ST_TableScrollPane.removeAll();
-            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
-            ST_TableScrollPane.add(scrollPane, java.awt.BorderLayout.CENTER);
+            ST_TableScrollPane.setViewportView(table);
         } else {
             model.setRowCount(0);
         }
@@ -341,6 +339,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_SearchStudentID.setBackground(new java.awt.Color(146, 190, 219));
         ST_SearchStudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         ST_SearchStudentID.setText("Search");
+        ST_SearchStudentID.addActionListener(this::ST_SearchStudentIdActionPerformed);
 
         javax.swing.GroupLayout ST_SearchStudentIDPanelLayout = new javax.swing.GroupLayout(ST_SearchStudentIDPanel);
         ST_SearchStudentIDPanel.setLayout(ST_SearchStudentIDPanelLayout);
@@ -1104,7 +1103,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }                                            
 
     private void ST_SearchStudentIdActionPerformed(java.awt.event.ActionEvent evt) {                                                   
-        String searchID = ST_SearchStudent.getText().trim();
+        String searchID = ST_SearchStudentId.getText().trim();
         if (searchID.isEmpty()) {
             loadStudentTableData();
             return;
@@ -1131,16 +1130,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 });
                 
                 // Create and set table to display in schedule tab
-                if (ST_TableScrollPane.getComponentCount() > 0) {
-                    ST_TableScrollPane.remove(0);
-                }
-                javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(new javax.swing.JTable(model));
-                ST_TableScrollPane.add(scrollPane);
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                ST_TableScrollPane.setViewportView(table);
                 ST_TableScrollPane.revalidate();
                 ST_TableScrollPane.repaint();
                 return;
             }
-        }  
+        }
+        
+        javax.swing.JOptionPane.showMessageDialog(this, "Student ID not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }                                                  
 
     private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
@@ -1148,14 +1146,53 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }                                                
 
     private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
+        ST_SearchStudentActionPerformed(evt);
     }                                         
 
     private void ST_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        // TODO add your handling code here:
+        ST_SearchStudentId.setText("");
+        loadStudentTableData();
     }                                          
 
     private void ST_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        // TODO add your handling code here:
+        String searchName = ST_SearchStudent.getText().trim();
+        if (searchName.isEmpty()) {
+            loadStudentTableData();
+            return;
+        }
+        
+        // Find student by name
+        for (Student student : students) {
+            if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
+                // Update table to show only this student
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    0
+                );
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                logger.info("Found student: " + student.getStudentName());
+                
+                // Create and set table
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                ST_TableScrollPane.setViewportView(table);
+                ST_TableScrollPane.revalidate();
+                ST_TableScrollPane.repaint();
+                return;
+            }
+        }
+        
+        javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }                                       
     
     private void ST_DeleteActionPerformed(java.awt.event.ActionEvent evt) {                                         
@@ -1192,18 +1229,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
 
     private void CT_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
-        int confirm = javax.swing.JOptionPane.showConfirmDialog(
-            this, 
-            "Are you sure you want to logout?", 
-            "Logout Confirmation", 
-            javax.swing.JOptionPane.YES_NO_OPTION
-        );
-        
-        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Logged out successfully!", "Logout", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            // Optionally, close the window
-            this.dispose();
-        }
+        ST_LogoutActionPerformed(evt);
     }
 
     /**

@@ -1021,7 +1021,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGap(0, 571, Short.MAX_VALUE)
         );
 
-        MainTabPanel.addTab("Mark Sheet",new Marksheettab());
+        MainTabPanel.addTab("Mark Sheet", new MarksheetTab());
 
         ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -1036,7 +1036,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGap(0, 571, Short.MAX_VALUE)
         );
 
-        MainTabPanel.addTab("Schedule", ScheduleTab);
+        MainTabPanel.addTab("Schedule", new ScheduleTab());
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);

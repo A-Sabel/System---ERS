@@ -1074,6 +1074,36 @@ public class StudentCourseTab extends javax.swing.JFrame {
             loadStudentTableData();
             return;
         }
+        //Find student by ID
+        for (Student student : students) {
+            if (student.getStudentID().equalsIgnoreCase(searchName)) {
+                // Update table to show only this student
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    0
+                );
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                logger.info("Found student: " + student.getStudentID());
+                
+                // Create and set table
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                ST_TableScrollPane.setViewportView(table);
+                ST_TableScrollPane.revalidate();
+                ST_TableScrollPane.repaint();
+                return;
+            }
+        }
         
         // Find student by name
         for (Student student : students) {

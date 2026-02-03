@@ -1128,6 +1128,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getEmail(),
                     student.getPhoneNumber()
                 });
+
+                logger.info("Found student: " + student.getStudentName());
                 
                 // Create and set table to display in schedule tab
                 javax.swing.JTable table = new javax.swing.JTable(model);

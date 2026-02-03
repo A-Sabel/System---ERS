@@ -1,8 +1,7 @@
 package ers.group;
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
+
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 
 /**
  *
@@ -16,8 +15,12 @@ public class studenthub extends javax.swing.JFrame {
      * Creates new form studenthub
      */
     public studenthub() {
-        initComponents();
-    }
+    initComponents();
+
+    setExtendedState(JFrame.MAXIMIZED_BOTH);
+    setLocationRelativeTo(null);
+}
+
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -459,7 +462,14 @@ public class studenthub extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        alltabs.addTab("Marksheet", Marksheet);
+        JScrollPane marksheetScroll = new JScrollPane(
+        Marksheet,
+        JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+        JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED
+);
+
+    alltabs.addTab("Marksheet", marksheetScroll);
+
 
         Schedule.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -567,7 +577,6 @@ public class studenthub extends javax.swing.JFrame {
     }
 }
                                         
-
    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
     // Clear search bar
     Searchbar.setText("");

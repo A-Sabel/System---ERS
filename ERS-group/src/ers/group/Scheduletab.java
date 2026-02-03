@@ -10,9 +10,9 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author fedoc
  */
-public class studenthub2 extends javax.swing.JFrame {
+public class Scheduletab extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(studenthub2.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Scheduletab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private final ArrayList<Schedule> schedules;
@@ -21,7 +21,7 @@ public class studenthub2 extends javax.swing.JFrame {
     /**
      * Creates new form studenthub2
      */
-    public studenthub2() {
+    public Scheduletab() {
         initComponents();
         
         // Initialize data
@@ -1179,7 +1179,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        java.awt.EventQueue.invokeLater(() -> new studenthub2().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new Scheduletab().setVisible(true));
     }
 
     // Variables declaration - do not modify                     

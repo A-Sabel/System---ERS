@@ -10,14 +10,14 @@ import javax.swing.JFrame;
  *
  * @author fedoc
  */
-public class studenthub extends javax.swing.JFrame {
+public class Marksheettab extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(studenthub.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Marksheettab.class.getName());
 
     /**
      * Creates new form studenthub
      */
-    public studenthub() {
+    public Marksheettab() {
     initComponents();
 }
 
@@ -630,7 +630,7 @@ public class studenthub extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new studenthub().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new Marksheettab().setVisible(true));
     }
 
     // Variables declaration - do not modify                     

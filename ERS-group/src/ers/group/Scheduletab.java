@@ -1108,10 +1108,19 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     }
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        updateMonthYearLabel();
+        studentSearchField.setText("");
+        gwaLabel.setText("GWA. --");
+        // Clear the schedule table
+        DefaultTableModel emptyModel = new DefaultTableModel(
+            new String[]{"Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
+            0
+        );
+        Scheduletable.setModel(emptyModel);
+        loadStudentTableData();
     }
     
     private void searchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        
         String searchID = studentSearchField.getText().trim();
         if (searchID.isEmpty()) {
             loadStudentTableData();

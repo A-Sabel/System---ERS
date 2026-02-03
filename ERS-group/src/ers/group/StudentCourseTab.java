@@ -1153,6 +1153,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void ST_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
         ST_SearchStudentId.setText("");
+        ST_SearchStudent.setText("");
         loadStudentTableData();
     }                                          
 

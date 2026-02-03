@@ -1108,7 +1108,16 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     }
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        updateMonthYearLabel();
+        studentSearchField.setText("");
+        semesterSearchField.setText("");
+        loadStudentTableData();
+        gwaLabel.setText("GWA. --");
+        DefaultTableModel scheduleModel = (DefaultTableModel) Scheduletable.getModel();
+        for (int row = 0; row < scheduleModel.getRowCount(); row++) {
+            for (int col = 1; col < scheduleModel.getColumnCount(); col++) {
+                scheduleModel.setValueAt("", row, col);
+            }
+        }
     }
     
     private void searchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {

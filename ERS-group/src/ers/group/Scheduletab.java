@@ -10,9 +10,9 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author fedoc
  */
-public class ScheduleTab extends javax.swing.JFrame {
+public class Scheduletab extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(ScheduleTab.class.getName());
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Scheduletab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private final ArrayList<Schedule> schedules;
@@ -21,7 +21,7 @@ public class ScheduleTab extends javax.swing.JFrame {
     /**
      * Creates new form studenthub2
      */
-    public ScheduleTab() {
+    public Scheduletab() {
         initComponents();
         
         // Initialize data

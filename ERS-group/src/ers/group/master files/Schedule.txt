@@ -1,6 +1,18 @@
 scheduleID,courseID,room,day,startTime,endTime,teacherName
 SCH-001,CS101,Room 201,Monday,8:00 AM,9:30 AM,Alice Santos
-SCH-002,MATH101,Room 202,Monday,10:00 AM,11:30 AM,Bob Reyes
-SCH-003,ENG101,Room 203,Tuesday,8:00 AM,9:30 AM,Clara Diaz
-SCH-004,HIST101,Room 204,Wednesday,1:00 PM,2:30 PM,Daniel Cruz
-SCH-005,PHYS101,Room 205,Thursday,10:00 AM,11:30 AM,RENEGAGO
+SCH-002,CS102,Room 202,Tuesday,10:00 AM,11:30 AM,Bob Reyes
+SCH-003,CS103,Room 203,Wednesday,8:00 AM,9:30 AM,Clara Diaz
+SCH-004,CS104,Room 204,Thursday,1:00 PM,2:30 PM,Daniel Cruz
+SCH-005,CS105,Room 205,Friday,10:00 AM,11:30 AM,Eva Renegago
+SCH-006,CS201,Room 301,Monday,10:00 AM,11:30 AM,Frank Torres
+SCH-007,CS202,Room 302,Monday,1:00 PM,2:30 PM,Grace Martinez
+SCH-008,CS203,Room 303,Tuesday,2:00 PM,3:30 PM,Henry Lopez
+SCH-009,CS204,Room 304,Wednesday,9:00 AM,10:30 AM,Iris Garcia
+SCH-010,CS205,Room 305,Friday,1:00 PM,2:30 PM,Jack Villaruel
+SCH-011,CS301,Room 401,Monday,9:00 AM,10:30 AM,Karen Santos
+SCH-012,CS302,Room 402,Tuesday,1:00 PM,2:30 PM,Leo Reyes
+SCH-013,CS303,Room 403,Wednesday,2:00 PM,3:30 PM,Maria Diaz
+SCH-014,CS304,Room 404,Thursday,9:00 AM,10:30 AM,Oscar Cruz
+SCH-015,CS305,Room 405,Friday,2:00 PM,3:30 PM,Patricia Gomez
+SCH-016,CS401,Room 501,Monday,2:00 PM,3:30 PM,Quentin Silva
+SCH-017,CS402,Room 502,Wednesday,10:00 AM,11:30 AM,Rachel Wong

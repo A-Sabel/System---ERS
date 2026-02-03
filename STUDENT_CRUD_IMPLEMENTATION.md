@@ -1,13 +1,15 @@
 # Student CRUD Implementation
 
 ## Overview
+
 Full CRUD (Create, Read, Update, Delete) operations with file persistence have been implemented in StudentCourseTab.java for the Student Management tab.
 
 ## Implemented Features
 
 ### 1. **Add New Student** (ST_AddNew button)
+
 - **Functionality**: Creates a new student record from form input
-- **Validation**: 
+- **Validation**:
   - Requires Student ID and Name
   - Checks for duplicate Student IDs
 - **Data Collection**:
@@ -38,6 +40,7 @@ Full CRUD (Create, Read, Update, Delete) operations with file persistence have b
   8. Shows success message
 
 ### 2. **Update Student** (ST_Update button)
+
 - **Functionality**: Updates an existing student record
 - **Validation**:
   - Requires a row to be selected in the table
@@ -59,6 +62,7 @@ Full CRUD (Create, Read, Update, Delete) operations with file persistence have b
   10. Shows success message
 
 ### 3. **Delete Student** (ST_Delete button) - Previously Implemented
+
 - **Functionality**: Removes a student record
 - **Actions**:
   1. Gets selected student from table
@@ -68,6 +72,7 @@ Full CRUD (Create, Read, Update, Delete) operations with file persistence have b
   5. Shows success message
 
 ### 4. **Clear Form** (ST_Clear button)
+
 - **Functionality**: Resets all form fields to empty/default values
 - **Clears**:
   - All text fields
@@ -76,6 +81,7 @@ Full CRUD (Create, Read, Update, Delete) operations with file persistence have b
   - Table selection
 
 ### 5. **Auto-Populate Form** (Table Row Selection)
+
 - **Functionality**: When a table row is clicked, automatically fills form fields
 - **Purpose**: Makes updating students easier - click row, edit fields, click Update
 - **Populated Fields**:
@@ -93,6 +99,7 @@ Full CRUD (Create, Read, Update, Delete) operations with file persistence have b
 ## File Persistence
 
 All operations (Add, Update, Delete) automatically save changes to:
+
 ```
 src/ers/group/master files/student.txt
 ```
@@ -102,6 +109,7 @@ The StudentFileSaver writes the complete student list in comma-separated format,
 ## Form Fields
 
 ### Available in GUI:
+
 1. ST_StudentID - JTextField
 2. ST_StudentName - JTextField
 3. ST_DateOfBirth - JSpinner (with date picker)
@@ -114,6 +122,7 @@ The StudentFileSaver writes the complete student list in comma-separated format,
 10. ST_Address - JTextField
 
 ### Not in Form (using defaults):
+
 - Age - Auto-calculated from Date of Birth
 - Year Level - Empty string (to be set elsewhere)
 - Student Type - Empty string (to be set elsewhere)
@@ -123,6 +132,7 @@ The StudentFileSaver writes the complete student list in comma-separated format,
 ## Usage Instructions
 
 ### Adding a New Student:
+
 1. Fill in Student ID (required)
 2. Fill in Student Name (required)
 3. Set Date of Birth using the spinner
@@ -132,22 +142,26 @@ The StudentFileSaver writes the complete student list in comma-separated format,
 7. Student is added to table and saved to file
 
 ### Updating a Student:
+
 1. Click on a student row in the table (form auto-populates)
 2. Modify any fields as needed
 3. Click "Update" button
 4. Changes are saved to table and file
 
 ### Deleting a Student:
+
 1. Click on a student row in the table
 2. Click "Delete" button
 3. Student is removed from table and file
 
 ### Clearing the Form:
+
 - Click "Clear" button to reset all fields
 
 ## Error Handling
 
 All operations include try-catch blocks with user-friendly error messages:
+
 - Validation errors (missing required fields)
 - Duplicate Student ID errors
 - File I/O errors
@@ -156,6 +170,7 @@ All operations include try-catch blocks with user-friendly error messages:
 ## Technical Implementation
 
 ### Age Calculation:
+
 ```java
 java.util.Calendar dobCal = java.util.Calendar.getInstance();
 dobCal.setTime(dobDate);
@@ -167,12 +182,14 @@ if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DA
 ```
 
 ### Date Format:
+
 - Display format: yyyy-MM-dd
 - Stored format: yyyy-MM-dd (matching file format)
 
 ## Next Steps
 
 The following features could be added in future updates:
+
 1. Add form fields for Year Level, Student Type, and GWA
 2. Implement Subjects Enrolled management (list/table of enrolled courses)
 3. Add more robust validation (email format, phone number format)

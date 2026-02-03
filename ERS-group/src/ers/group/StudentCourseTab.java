@@ -94,6 +94,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
             table = new javax.swing.JTable(model);
             table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
             
+            // Configure table selection behavior
+            table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+            table.setRowSelectionAllowed(true);
+            table.setColumnSelectionAllowed(false);
+            
             // Add selection listener to populate form when row is clicked
             final javax.swing.JTable finalTable = table;
             table.getSelectionModel().addListSelectionListener(e -> {

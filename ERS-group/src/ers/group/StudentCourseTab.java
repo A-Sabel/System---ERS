@@ -2,12 +2,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
+
 package ers.group;
 
-import javax.swing.JSpinner;
-import javax.swing.SpinnerDateModel;
-import java.util.Date;
-import java.util.Calendar;
 /**
  *
  * @author Eli
@@ -21,10 +18,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
      */
     public StudentCourseTab() {
         initComponents();
-        pack();
-        setLocationRelativeTo(null);
 }
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -60,22 +54,24 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_MOTHERS_NAME = new javax.swing.JLabel();
         ST_GUARDIANS_PHONE_NUM = new javax.swing.JLabel();
         ST_ADDRESS = new javax.swing.JLabel();
-        jPanel8 = new javax.swing.JPanel();
+        ST_SearchStudentIDPanel = new javax.swing.JPanel();
         ST_SEARCH_STUDENT_ID = new javax.swing.JLabel();
         ST_SearchStudentId = new javax.swing.JTextField();
         ST_SearchStudentID = new javax.swing.JButton();
-        dateSpinner = new JSpinner(
-                new SpinnerDateModel(
-                        new Date(),
-                        null,
-                        null,
-                        Calendar.DAY_OF_MONTH
-                )
+
+        ST_DateOfBirth = new javax.swing.JSpinner(
+            new javax.swing.SpinnerDateModel(
+                new java.util.Date(),
+                null,
+                null,
+                java.util.Calendar.DAY_OF_MONTH
+            )
         );
 
-        JSpinner.DateEditor editor =
-                new JSpinner.DateEditor(dateSpinner, "MM-dd-yyyy");
-        dateSpinner.setEditor(editor);
+        javax.swing.JSpinner.DateEditor dobEditor =
+            new javax.swing.JSpinner.DateEditor(ST_DateOfBirth, "yyyy-MM-dd");
+        ST_DateOfBirth.setEditor(dobEditor);
+        
         ST_RightPanel = new javax.swing.JPanel();
         ST_SearchStudentPanel = new javax.swing.JPanel();
         ST_SEARCH_STUDENT = new javax.swing.JLabel();
@@ -102,10 +98,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_COURSE3 = new javax.swing.JLabel();
         CT_COURSE4 = new javax.swing.JLabel();
         CT_COURSE5 = new javax.swing.JLabel();
-        jPanel10 = new javax.swing.JPanel();
-        jLabel24 = new javax.swing.JLabel();
-        jTextField19 = new javax.swing.JTextField();
-        jButton9 = new javax.swing.JButton();
+        CT_SearchStudentIDPanel = new javax.swing.JPanel();
+        CT_SEARCH_STUDENT_ID = new javax.swing.JLabel();
+        CT_SearchStudentId = new javax.swing.JTextField();
+        CT_SearchStudentID = new javax.swing.JButton();
         CT_Course1 = new javax.swing.JComboBox<>();
         CT_Course2 = new javax.swing.JComboBox<>();
         CT_Course3 = new javax.swing.JComboBox<>();
@@ -237,8 +233,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_ADDRESS.setForeground(new java.awt.Color(255, 255, 255));
         ST_ADDRESS.setText("Address");
 
-        jPanel8.setBackground(new java.awt.Color(0, 30, 58));
-        jPanel8.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
+        ST_SearchStudentIDPanel.setBackground(new java.awt.Color(0, 30, 58));
+        ST_SearchStudentIDPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
 
         ST_SEARCH_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         ST_SEARCH_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
@@ -251,34 +247,31 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_SearchStudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         ST_SearchStudentID.setText("Search");
 
-        javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
-        jPanel8.setLayout(jPanel8Layout);
-        jPanel8Layout.setHorizontalGroup(
-            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel8Layout.createSequentialGroup()
+        javax.swing.GroupLayout ST_SearchStudentIDPanelLayout = new javax.swing.GroupLayout(ST_SearchStudentIDPanel);
+        ST_SearchStudentIDPanel.setLayout(ST_SearchStudentIDPanelLayout);
+        ST_SearchStudentIDPanelLayout.setHorizontalGroup(
+            ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ST_SearchStudentIDPanelLayout.createSequentialGroup()
                 .addGap(15, 15, 15)
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(ST_SEARCH_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel8Layout.createSequentialGroup()
+                    .addGroup(ST_SearchStudentIDPanelLayout.createSequentialGroup()
                         .addComponent(ST_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(ST_SearchStudentID)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-        jPanel8Layout.setVerticalGroup(
-            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel8Layout.createSequentialGroup()
+        ST_SearchStudentIDPanelLayout.setVerticalGroup(
+            ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ST_SearchStudentIDPanelLayout.createSequentialGroup()
                 .addGap(12, 12, 12)
                 .addComponent(ST_SEARCH_STUDENT_ID)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(ST_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(ST_SearchStudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(32, Short.MAX_VALUE))
         );
-
-        dateSpinner.getEditor().getComponent(0)
-        .setBackground(new java.awt.Color(146, 190, 219));
 
         javax.swing.GroupLayout ST_LeftPanelLayout = new javax.swing.GroupLayout(ST_LeftPanel);
         ST_LeftPanel.setLayout(ST_LeftPanelLayout);
@@ -287,7 +280,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, ST_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(ST_SearchStudentIDPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(ST_LeftPanelLayout.createSequentialGroup()
                         .addComponent(ST_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -311,7 +304,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(ST_StudentName)
-                            .addComponent(dateSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(ST_DateOfBirth, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)))
                     .addGroup(ST_LeftPanelLayout.createSequentialGroup()
                         .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                             .addComponent(ST_EMAIL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -336,7 +329,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ST_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(ST_SearchStudentIDPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(32, 32, 32)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(ST_LeftPanelLayout.createSequentialGroup()
@@ -348,7 +341,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                             .addComponent(ST_StudentName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(ST_STUDENT_NAME))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(dateSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(ST_DateOfBirth, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(ST_BIRTHDAY))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -478,6 +471,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_Delete.setBackground(new java.awt.Color(73, 118, 159));
         ST_Delete.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         ST_Delete.setText("Delete");
+        ST_Delete.addActionListener(this::ST_DeleteActionPerformed);
 
         ST_Clear.setBackground(new java.awt.Color(73, 118, 159));
         ST_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -486,6 +480,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_Logout.setBackground(new java.awt.Color(73, 118, 159));
         ST_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         ST_Logout.setText("Logout");
+        ST_Logout.addActionListener(this::ST_LogoutActionPerformed); 
 
         javax.swing.GroupLayout ST_BottomPanelLayout = new javax.swing.GroupLayout(ST_BottomPanel);
         ST_BottomPanel.setLayout(ST_BottomPanelLayout);
@@ -591,43 +586,43 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_COURSE5.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE5.setText("Course 5");
 
-        jPanel10.setBackground(new java.awt.Color(0, 30, 58));
-        jPanel10.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
+        CT_SearchStudentIDPanel.setBackground(new java.awt.Color(0, 30, 58));
+        CT_SearchStudentIDPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
 
-        jLabel24.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jLabel24.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel24.setText("Student ID");
+        CT_SEARCH_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_SEARCH_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
+        CT_SEARCH_STUDENT_ID.setText("Student ID");
 
-        jTextField19.setBackground(new java.awt.Color(146, 190, 219));
-        jTextField19.addActionListener(this::jTextField19ActionPerformed);
+        CT_SearchStudentId.setBackground(new java.awt.Color(146, 190, 219));
+        CT_SearchStudentId.addActionListener(this::CT_SearchStudentIdActionPerformed);
 
-        jButton9.setBackground(new java.awt.Color(146, 190, 219));
-        jButton9.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        jButton9.setText("Search");
+        CT_SearchStudentID.setBackground(new java.awt.Color(146, 190, 219));
+        CT_SearchStudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_SearchStudentID.setText("Search");
 
-        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
-        jPanel10.setLayout(jPanel10Layout);
-        jPanel10Layout.setHorizontalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel10Layout.createSequentialGroup()
+        javax.swing.GroupLayout CT_SearchStudentIDPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentIDPanel);
+        CT_SearchStudentIDPanel.setLayout(CT_SearchStudentIDPanelLayout);
+        CT_SearchStudentIDPanelLayout.setHorizontalGroup(
+            CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
                 .addGap(15, 15, 15)
-                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel10Layout.createSequentialGroup()
-                        .addComponent(jTextField19, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(CT_SEARCH_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
+                        .addComponent(CT_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton9)))
+                        .addComponent(CT_SearchStudentID)))
                 .addContainerGap(7, Short.MAX_VALUE))
         );
-        jPanel10Layout.setVerticalGroup(
-            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel10Layout.createSequentialGroup()
+        CT_SearchStudentIDPanelLayout.setVerticalGroup(
+            CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
                 .addGap(12, 12, 12)
-                .addComponent(jLabel24)
+                .addComponent(CT_SEARCH_STUDENT_ID)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jTextField19, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton9, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(CT_SearchStudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(32, Short.MAX_VALUE))
         );
 
@@ -667,7 +662,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jPanel10, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(CT_SearchStudentIDPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                         .addComponent(CT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -702,7 +697,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(CT_SearchStudentIDPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(32, 32, 32)
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
@@ -827,6 +822,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_Save.setBackground(new java.awt.Color(73, 118, 159));
         CT_Save.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         CT_Save.setText("Save");
+        CT_Save.addActionListener(this::CT_SaveActionPerformed);
 
         CT_Update.setBackground(new java.awt.Color(73, 118, 159));
         CT_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -843,6 +839,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_Logout.setBackground(new java.awt.Color(73, 118, 159));
         CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         CT_Logout.setText("Logout");
+        CT_Logout.addActionListener(this::CT_LogoutActionPerformed); 
 
         javax.swing.GroupLayout CT_BottomPanelLayout = new javax.swing.GroupLayout(CT_BottomPanel);
         CT_BottomPanel.setLayout(CT_BottomPanelLayout);
@@ -999,9 +996,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
         // TODO add your handling code here:
     }                                         
 
-    private void jTextField19ActionPerformed(java.awt.event.ActionEvent evt) {                                             
+    private void CT_SearchStudentIdActionPerformed(java.awt.event.ActionEvent evt) {                                                   
         // TODO add your handling code here:
-    }                                            
+    }                                                  
 
     private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
         // TODO add your handling code here:
@@ -1029,7 +1026,55 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void ST_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
         // TODO add your handling code here:
-    }                                                
+    }                                       
+    
+    private void ST_DeleteActionPerformed(java.awt.event.ActionEvent evt) {                                         
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
+        int selectedRow = ST_Table.getSelectedRow();
+
+        if (selectedRow >= 0) {
+            model.removeRow(selectedRow);
+            javax.swing.JOptionPane.showMessageDialog(this, "Deleted selected student record.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "No student selected to delete.", "Error", javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
+        // You can add your saving logic here
+        // For now, just a popup message
+        javax.swing.JOptionPane.showMessageDialog(this, "Course details have been saved!", "Save", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void ST_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(
+            this, 
+            "Are you sure you want to logout?", 
+            "Logout Confirmation", 
+            javax.swing.JOptionPane.YES_NO_OPTION
+        );
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Logged out successfully!", "Logout", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            // Optionally, close the window
+            this.dispose();
+        }
+    }
+
+    private void CT_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(
+            this, 
+            "Are you sure you want to logout?", 
+            "Logout Confirmation", 
+            javax.swing.JOptionPane.YES_NO_OPTION
+        );
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Logged out successfully!", "Logout", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            // Optionally, close the window
+            this.dispose();
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -1053,7 +1098,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new Student().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new StudentCourseTab().setVisible(true));
     }
 
     // Variables declaration - do not modify                     
@@ -1076,11 +1121,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JButton CT_Refresh;
     private javax.swing.JPanel CT_RightPanel;
     private javax.swing.JLabel CT_SEARCH_STUDENT;
+    private javax.swing.JLabel CT_SEARCH_STUDENT_ID;
     private javax.swing.JLabel CT_SEMESTER;
     private javax.swing.JLabel CT_STUDENT_ID;
     private javax.swing.JButton CT_Save;
     private javax.swing.JButton CT_Search;
     private javax.swing.JTextField CT_SearchStudent;
+    private javax.swing.JButton CT_SearchStudentID;
+    private javax.swing.JPanel CT_SearchStudentIDPanel;
+    private javax.swing.JTextField CT_SearchStudentId;
     private javax.swing.JPanel CT_SearchStudentPanel;
     private javax.swing.JComboBox<String> CT_Semester;
     private javax.swing.JTextField CT_StudentID;
@@ -1125,6 +1174,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JButton ST_Search;
     private javax.swing.JTextField ST_SearchStudent;
     private javax.swing.JButton ST_SearchStudentID;
+    private javax.swing.JPanel ST_SearchStudentIDPanel;
     private javax.swing.JTextField ST_SearchStudentId;
     private javax.swing.JPanel ST_SearchStudentPanel;
     private javax.swing.JTextField ST_StudentID;
@@ -1135,11 +1185,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JPanel ScheduleTab;
     private javax.swing.JPanel ScoreTab;
     private javax.swing.JPanel StudentTab;
-    private javax.swing.JButton jButton9;
-    private JSpinner dateSpinner;
-    private javax.swing.JLabel jLabel24;
-    private javax.swing.JPanel jPanel10;
-    private javax.swing.JPanel jPanel8;
-    private javax.swing.JTextField jTextField19;
+    private javax.swing.JSpinner ST_DateOfBirth;
     // End of variables declaration                   
 }

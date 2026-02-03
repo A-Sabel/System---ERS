@@ -237,3 +237,70 @@ class StudentFileLoader extends BaseFileLoader {
         return studentMap;
     }
 }
+
+class ScheduleFileLoader extends BaseFileLoader {
+    private final List<Schedule> allSchedules = new ArrayList<>();
+    
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split(",");
+            // Format: scheduleID,courseID,room,day,startTime,endTime,teacherName
+            if (parts.length < 7) return;
+            String scheduleID = parts[0].trim();
+            String courseID = parts[1].trim();
+            String room = parts[2].trim();
+            String day = parts[3].trim();
+            String startTime = parts[4].trim();
+            String endTime = parts[5].trim();
+            String teacherName = parts[6].trim();
+            
+            Schedule schedule = new Schedule(scheduleID, courseID, room, day, startTime, endTime, teacherName);
+            allSchedules.add(schedule);
+        });
+    }
+    
+    public Collection<Schedule> getAllSchedules() {
+        return allSchedules;
+    }
+    
+    public Map<String, Schedule> getScheduleMap() {
+        Map<String, Schedule> scheduleMap = new LinkedHashMap<>();
+        for (Schedule schedule : allSchedules) {
+            scheduleMap.put(schedule.getScheduleID(), schedule);
+        }
+        return scheduleMap;
+    }
+}
+
+class EnrollmentFileLoader extends BaseFileLoader {
+    private final List<Enrollment> allEnrollments = new ArrayList<>();
+    
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split(",");
+            // Format: studentID,sectionID,courseID
+            if (parts.length < 3) return;
+            String studentID = parts[0].trim();
+            String sectionID = parts[1].trim();
+            String courseID = parts[2].trim();
+            
+            Enrollment enrollment = new Enrollment(studentID, sectionID, courseID);
+            allEnrollments.add(enrollment);
+        });
+    }
+    
+    public Collection<Enrollment> getAllEnrollments() {
+        return allEnrollments;
+    }
+    
+    public Map<String, Enrollment> getEnrollmentMap() {
+        Map<String, Enrollment> enrollmentMap = new LinkedHashMap<>();
+        for (Enrollment enrollment : allEnrollments) {
+            String key = enrollment.getStudentID() + "_" + enrollment.getCourseID();
+            enrollmentMap.put(key, enrollment);
+        }
+        return enrollmentMap;
+    }
+}

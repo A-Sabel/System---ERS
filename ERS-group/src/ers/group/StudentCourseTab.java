@@ -147,10 +147,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_MOTHERS_NAME = new javax.swing.JLabel();
         ST_GUARDIANS_PHONE_NUM = new javax.swing.JLabel();
         ST_ADDRESS = new javax.swing.JLabel();
-        ST_SearchStudentIDPanel = new javax.swing.JPanel();
-        ST_SEARCH_STUDENT_ID = new javax.swing.JLabel();
-        ST_SearchStudentId = new javax.swing.JTextField();
-        ST_SearchStudentID = new javax.swing.JButton();
 
         ST_DateOfBirth = new javax.swing.JSpinner(
             new javax.swing.SpinnerDateModel(
@@ -326,47 +322,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_ADDRESS.setForeground(new java.awt.Color(255, 255, 255));
         ST_ADDRESS.setText("Address");
 
-        ST_SearchStudentIDPanel.setBackground(new java.awt.Color(0, 30, 58));
-        ST_SearchStudentIDPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
-
-        ST_SEARCH_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        ST_SEARCH_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
-        ST_SEARCH_STUDENT_ID.setText("Student ID");
-
-        ST_SearchStudentId.setBackground(new java.awt.Color(146, 190, 219));
-        ST_SearchStudentId.addActionListener(this::ST_SearchStudentIdActionPerformed);
-
-        ST_SearchStudentID.setBackground(new java.awt.Color(146, 190, 219));
-        ST_SearchStudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        ST_SearchStudentID.setText("Search");
-        ST_SearchStudentID.addActionListener(this::ST_SearchStudentIdActionPerformed);
-
-        javax.swing.GroupLayout ST_SearchStudentIDPanelLayout = new javax.swing.GroupLayout(ST_SearchStudentIDPanel);
-        ST_SearchStudentIDPanel.setLayout(ST_SearchStudentIDPanelLayout);
-        ST_SearchStudentIDPanelLayout.setHorizontalGroup(
-            ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(ST_SearchStudentIDPanelLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ST_SEARCH_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(ST_SearchStudentIDPanelLayout.createSequentialGroup()
-                        .addComponent(ST_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ST_SearchStudentID)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        ST_SearchStudentIDPanelLayout.setVerticalGroup(
-            ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(ST_SearchStudentIDPanelLayout.createSequentialGroup()
-                .addGap(12, 12, 12)
-                .addComponent(ST_SEARCH_STUDENT_ID)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(ST_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_SearchStudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(32, Short.MAX_VALUE))
-        );
-
         javax.swing.GroupLayout ST_LeftPanelLayout = new javax.swing.GroupLayout(ST_LeftPanel);
         ST_LeftPanel.setLayout(ST_LeftPanelLayout);
         ST_LeftPanelLayout.setHorizontalGroup(
@@ -374,7 +329,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.LEADING, ST_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ST_SearchStudentIDPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(ST_LeftPanelLayout.createSequentialGroup()
                         .addComponent(ST_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -423,7 +377,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ST_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(ST_SearchStudentIDPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(32, 32, 32)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(ST_LeftPanelLayout.createSequentialGroup()
@@ -1100,18 +1053,30 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
         // TODO add your handling code here:
-    }                                            
+    }                                                                                         
 
-    private void ST_SearchStudentIdActionPerformed(java.awt.event.ActionEvent evt) {                                                   
-        String searchID = ST_SearchStudentId.getText().trim();
-        if (searchID.isEmpty()) {
+    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        // TODO add your handling code here:
+    }                                                
+
+    private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
+        ST_SearchStudentActionPerformed(evt);
+    }                                         
+
+    private void ST_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        ST_SearchStudent.setText("");
+        loadStudentTableData();
+    }                                          
+
+    private void ST_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        String searchName = ST_SearchStudent.getText().trim();
+        if (searchName.isEmpty()) {
             loadStudentTableData();
             return;
         }
-        
-        // Find student by ID
+        //Find student by ID
         for (Student student : students) {
-            if (student.getStudentID().equals(searchID)) {
+            if (student.getStudentID().equalsIgnoreCase(searchName)) {
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
                     new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
@@ -1129,39 +1094,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getPhoneNumber()
                 });
 
-                logger.info("Found student: " + student.getStudentName());
+                logger.info("Found student: " + student.getStudentID());
                 
-                // Create and set table to display in schedule tab
+                // Create and set table
                 javax.swing.JTable table = new javax.swing.JTable(model);
                 ST_TableScrollPane.setViewportView(table);
                 ST_TableScrollPane.revalidate();
                 ST_TableScrollPane.repaint();
                 return;
             }
-        }
-        
-        javax.swing.JOptionPane.showMessageDialog(this, "Student ID not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-    }                                                  
-
-    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        // TODO add your handling code here:
-    }                                                
-
-    private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
-        ST_SearchStudentActionPerformed(evt);
-    }                                         
-
-    private void ST_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        ST_SearchStudentId.setText("");
-        ST_SearchStudent.setText("");
-        loadStudentTableData();
-    }                                          
-
-    private void ST_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        String searchName = ST_SearchStudent.getText().trim();
-        if (searchName.isEmpty()) {
-            loadStudentTableData();
-            return;
         }
         
         // Find student by name
@@ -1327,14 +1268,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JButton ST_Refresh;
     private javax.swing.JPanel ST_RightPanel;
     private javax.swing.JLabel ST_SEARCH_STUDENT;
-    private javax.swing.JLabel ST_SEARCH_STUDENT_ID;
     private javax.swing.JLabel ST_STUDENT_ID;
     private javax.swing.JLabel ST_STUDENT_NAME;
     private javax.swing.JButton ST_Search;
     private javax.swing.JTextField ST_SearchStudent;
-    private javax.swing.JButton ST_SearchStudentID;
-    private javax.swing.JPanel ST_SearchStudentIDPanel;
-    private javax.swing.JTextField ST_SearchStudentId;
     private javax.swing.JPanel ST_SearchStudentPanel;
     private javax.swing.JTextField ST_StudentID;
     private javax.swing.JTextField ST_StudentName;

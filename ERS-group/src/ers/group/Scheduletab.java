@@ -1179,7 +1179,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        java.awt.EventQueue.invokeLater(() -> new ScheduleTab().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new Scheduletab().setVisible(true));
     }
 
     // Variables declaration - do not modify                     

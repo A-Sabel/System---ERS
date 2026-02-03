@@ -69,9 +69,11 @@ public class studenthub2 extends javax.swing.JFrame {
             String[] possiblePaths = {
                 "ERS-group/src/ers/group/master files/student.txt",
                 "src/ers/group/master files/student.txt",
+                "master files/student.txt",
                 "student.txt",
                 "ERS-group/student.txt",
-                "../student.txt"
+                "../student.txt",
+                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/student.txt"
             };
             
             String filePath = null;
@@ -79,6 +81,7 @@ public class studenthub2 extends javax.swing.JFrame {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
                     filePath = path;
+                    logger.info("Found student data at: " + f.getAbsolutePath());
                     break;
                 }
             }
@@ -102,12 +105,13 @@ public class studenthub2 extends javax.swing.JFrame {
     
     private void loadStudentTableData() {
         DefaultTableModel model = null;
+        javax.swing.JTable table = null;
         
         // Try to get existing model from table if it exists
         if (studentTablePanel.getComponentCount() > 0 && studentTablePanel.getComponent(0) instanceof javax.swing.JScrollPane) {
             javax.swing.JScrollPane pane = (javax.swing.JScrollPane) studentTablePanel.getComponent(0);
             if (pane.getViewport().getView() instanceof javax.swing.JTable) {
-                javax.swing.JTable table = (javax.swing.JTable) pane.getViewport().getView();
+                table = (javax.swing.JTable) pane.getViewport().getView();
                 if (table.getModel() instanceof DefaultTableModel) {
                     model = (DefaultTableModel) table.getModel();
                 }
@@ -120,33 +124,49 @@ public class studenthub2 extends javax.swing.JFrame {
                 new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
                 0
             );
+            table = new javax.swing.JTable(model);
+            table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+            
+            // Clear panel and add the new table
+            studentTablePanel.removeAll();
+            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
+            studentTablePanel.add(scrollPane, java.awt.BorderLayout.CENTER);
         } else {
             model.setRowCount(0);
         }
         
         // Add student data to table
-        for (Student student : students) {
+        for (Student stud : students) {
             model.addRow(new Object[]{
-                student.getStudentID(),
-                student.getStudentName(),
-                student.getAge(),
-                student.getDateOfBirth(),
-                student.getYearLevel(),
-                student.getStudentType(),
-                student.getGwa(),
-                student.getEmail(),
-                student.getPhoneNumber()
+                stud.getStudentID(),
+                stud.getStudentName(),
+                stud.getAge(),
+                stud.getDateOfBirth(),
+                stud.getYearLevel(),
+                stud.getStudentType(),
+                stud.getGwa(),
+                stud.getEmail(),
+                stud.getPhoneNumber()
             });
+        }
+        
+        // Refresh display
+        if (studentTablePanel.getParent() != null) {
+            studentTablePanel.revalidate();
+            studentTablePanel.repaint();
         }
     }
     
     private void loadScheduleData() {
         try {
             String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/Schedule.txt",
+                "src/ers/group/master files/Schedule.txt",
                 "ERS-group/src/ers/group/master files/schedule.txt",
                 "src/ers/group/master files/schedule.txt",
+                "Schedule.txt",
                 "schedule.txt",
-                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/schedule.txt"
+                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/Schedule.txt"
             };
             
             String filePath = null;
@@ -1081,34 +1101,10 @@ public class studenthub2 extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-    }// </editor-fold>                        
-
-    private void addButtonActionPerformed(java.awt.event.ActionEvent evt) {                                         
-        // TODO add your handling code here:
-    }                                        
-
-    private void editButtonActionPerformed(java.awt.event.ActionEvent evt) {                                         
-        // TODO add your handling code here:
-    }                                        
-
-    private void deleteButtonActionPerformed(java.awt.event.ActionEvent evt) {                                         
-        // TODO add your handling code here:
-    }                                        
+    }                                                       
 
 private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         updateMonthYearLabel();
-    }
-
-    private void printButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-    }
-
-    private void clearButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
-    }
-
-    private void logoutButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO add your handling code here:
     }
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1173,11 +1169,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
      * @param args the command line arguments
      */
     public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -1188,9 +1179,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new studenthub2().setVisible(true));
     }
 

@@ -13,6 +13,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
+    private StudentFileSaver studentFileSaver;
+    
+    // File paths
+    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
 
     /**
      * Creates new form Student
@@ -21,6 +25,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         initComponents();
 
         students = new ArrayList<>();
+        studentFileSaver = new StudentFileSaver();
         loadStudentData();
         loadStudentTableData();
     }
@@ -1144,10 +1149,33 @@ public class StudentCourseTab extends javax.swing.JFrame {
         int selectedRow = ST_Table.getSelectedRow();
 
         if (selectedRow >= 0) {
+            // Get student ID from the selected row
+            String studentID = model.getValueAt(selectedRow, 0).toString();
+            
+            // Remove from table
             model.removeRow(selectedRow);
-            javax.swing.JOptionPane.showMessageDialog(this, "Deleted selected student record.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            
+            // Remove from ArrayList
+            students.removeIf(s -> s.getStudentID().equals(studentID));
+            
+            // Save to file
+            try {
+                studentFileSaver.save(STUDENT_FILE, students);
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Student deleted and saved successfully!", 
+                    "Success", 
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } catch (java.io.IOException e) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Error saving to file: " + e.getMessage(), 
+                    "Error", 
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "No student selected to delete.", "Error", javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "No student selected to delete.", 
+                "Error", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
         }
     }
 

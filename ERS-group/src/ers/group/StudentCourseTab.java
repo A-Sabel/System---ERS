@@ -13,6 +13,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
+    private StudentFileSaver studentFileSaver;
+    
+    // File paths
+    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
 
     /**
      * Creates new form Student
@@ -21,6 +25,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         initComponents();
 
         students = new ArrayList<>();
+        studentFileSaver = new StudentFileSaver();
         loadStudentData();
         loadStudentTableData();
     }
@@ -88,6 +93,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
             );
             table = new javax.swing.JTable(model);
             table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+            
+            // Add selection listener to populate form when row is clicked
+            final javax.swing.JTable finalTable = table;
+            table.getSelectionModel().addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting() && finalTable.getSelectedRow() >= 0) {
+                    populateStudentFormFromTable(finalTable.getSelectedRow());
+                }
+            });
             
             // Clear panel and add the new table
             ST_TableScrollPane.setViewportView(table);
@@ -510,10 +523,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_AddNew.setBackground(new java.awt.Color(73, 118, 159));
         ST_AddNew.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         ST_AddNew.setText("Add New");
+        ST_AddNew.addActionListener(this::ST_AddNewActionPerformed);
 
         ST_Update.setBackground(new java.awt.Color(73, 118, 159));
         ST_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         ST_Update.setText("Update");
+        ST_Update.addActionListener(this::ST_UpdateActionPerformed);
 
         ST_Delete.setBackground(new java.awt.Color(73, 118, 159));
         ST_Delete.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -523,6 +538,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_Clear.setBackground(new java.awt.Color(73, 118, 159));
         ST_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         ST_Clear.setText("Clear");
+        ST_Clear.addActionListener(this::ST_ClearActionPerformed);
 
         ST_Logout.setBackground(new java.awt.Color(73, 118, 159));
         ST_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -1144,10 +1160,303 @@ public class StudentCourseTab extends javax.swing.JFrame {
         int selectedRow = ST_Table.getSelectedRow();
 
         if (selectedRow >= 0) {
+            // Get student ID from the selected row
+            String studentID = model.getValueAt(selectedRow, 0).toString();
+            
+            // Remove from table
             model.removeRow(selectedRow);
-            javax.swing.JOptionPane.showMessageDialog(this, "Deleted selected student record.", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            
+            // Remove from ArrayList
+            students.removeIf(s -> s.getStudentID().equals(studentID));
+            
+            // Save to file
+            try {
+                studentFileSaver.save(STUDENT_FILE, students);
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Student deleted and saved successfully!", 
+                    "Success", 
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } catch (java.io.IOException e) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Error saving to file: " + e.getMessage(), 
+                    "Error", 
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
         } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "No student selected to delete.", "Error", javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "No student selected to delete.", 
+                "Error", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void ST_AddNewActionPerformed(java.awt.event.ActionEvent evt) {
+        // Validate required fields
+        if (ST_StudentID.getText().trim().isEmpty() || 
+            ST_StudentName.getText().trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Student ID and Name are required!", 
+                "Validation Error", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String studentID = ST_StudentID.getText().trim();
+        
+        // Check for duplicate student ID
+        for (Student s : students) {
+            if (s.getStudentID().equals(studentID)) {
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Student ID already exists!", 
+                    "Duplicate Error", 
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
+        try {
+            // Collect data from form fields
+            String name = ST_StudentName.getText().trim();
+            String gender = (String) ST_Gender.getSelectedItem();
+            String email = ST_Email.getText().trim();
+            String phoneNumber = ST_PhoneNumber.getText().trim();
+            String address = ST_Address.getText().trim();
+            String fathersName = ST_FathersName.getText().trim();
+            String mothersName = ST_MothersName.getText().trim();
+            String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
+            
+            // Get date of birth from spinner
+            java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            String dob = sdf.format(dobDate);
+            
+            // Calculate age from DOB
+            java.util.Calendar dobCal = java.util.Calendar.getInstance();
+            dobCal.setTime(dobDate);
+            java.util.Calendar today = java.util.Calendar.getInstance();
+            int age = today.get(java.util.Calendar.YEAR) - dobCal.get(java.util.Calendar.YEAR);
+            if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DAY_OF_YEAR)) {
+                age--;
+            }
+            
+            // Use defaults for fields not in the form
+            String yearLevel = "";
+            String studentType = "";
+            java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
+            double gwa = 0.0;
+            
+            // Create new Student object
+            Student newStudent = new Student(
+                studentID, name, age, dob, yearLevel, studentType,
+                subjectsEnrolled, gwa, email, phoneNumber, gender,
+                address, fathersName, mothersName, guardiansPhone
+            );
+            
+            // Add to ArrayList
+            students.add(newStudent);
+            
+            // Save to file
+            studentFileSaver.save(STUDENT_FILE, students);
+            
+            // Refresh table
+            loadStudentTableData();
+            
+            // Clear form
+            clearStudentForm();
+            
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Student added successfully!", 
+                "Success", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Error adding student: " + e.getMessage(), 
+                "Error", 
+                javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void ST_UpdateActionPerformed(java.awt.event.ActionEvent evt) {
+        int selectedRow = ST_Table.getSelectedRow();
+        
+        if (selectedRow < 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Please select a student to update.", 
+                "Selection Error", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Validate required fields
+        if (ST_StudentID.getText().trim().isEmpty() || 
+            ST_StudentName.getText().trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Student ID and Name are required!", 
+                "Validation Error", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        try {
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
+            String originalID = model.getValueAt(selectedRow, 0).toString();
+            String newID = ST_StudentID.getText().trim();
+            
+            // Check if ID changed and if new ID already exists
+            if (!originalID.equals(newID)) {
+                for (Student s : students) {
+                    if (s.getStudentID().equals(newID)) {
+                        javax.swing.JOptionPane.showMessageDialog(this, 
+                            "Student ID already exists!", 
+                            "Duplicate Error", 
+                            javax.swing.JOptionPane.WARNING_MESSAGE);
+                        return;
+                    }
+                }
+            }
+            
+            // Collect data from form fields
+            String name = ST_StudentName.getText().trim();
+            String gender = (String) ST_Gender.getSelectedItem();
+            String email = ST_Email.getText().trim();
+            String phoneNumber = ST_PhoneNumber.getText().trim();
+            String address = ST_Address.getText().trim();
+            String fathersName = ST_FathersName.getText().trim();
+            String mothersName = ST_MothersName.getText().trim();
+            String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
+            
+            // Get date of birth from spinner
+            java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            String dob = sdf.format(dobDate);
+            
+            // Calculate age from DOB
+            java.util.Calendar dobCal = java.util.Calendar.getInstance();
+            dobCal.setTime(dobDate);
+            java.util.Calendar today = java.util.Calendar.getInstance();
+            int age = today.get(java.util.Calendar.YEAR) - dobCal.get(java.util.Calendar.YEAR);
+            if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DAY_OF_YEAR)) {
+                age--;
+            }
+            
+            // Find the student in the list and preserve their existing data for fields not in form
+            String yearLevel = "";
+            String studentType = "";
+            java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
+            double gwa = 0.0;
+            
+            for (Student s : students) {
+                if (s.getStudentID().equals(originalID)) {
+                    yearLevel = s.getYearLevel();
+                    studentType = s.getStudentType();
+                    subjectsEnrolled = s.getSubjectsEnrolled();
+                    gwa = s.getGwa();
+                    break;
+                }
+            }
+            
+            // Create updated Student object
+            Student updatedStudent = new Student(
+                newID, name, age, dob, yearLevel, studentType,
+                subjectsEnrolled, gwa, email, phoneNumber, gender,
+                address, fathersName, mothersName, guardiansPhone
+            );
+            
+            // Update in ArrayList
+            for (int i = 0; i < students.size(); i++) {
+                if (students.get(i).getStudentID().equals(originalID)) {
+                    students.set(i, updatedStudent);
+                    break;
+                }
+            }
+            
+            // Save to file
+            studentFileSaver.save(STUDENT_FILE, students);
+            
+            // Refresh table
+            loadStudentTableData();
+            
+            // Clear form
+            clearStudentForm();
+            
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Student updated successfully!", 
+                "Success", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Error updating student: " + e.getMessage(), 
+                "Error", 
+                javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void ST_ClearActionPerformed(java.awt.event.ActionEvent evt) {
+        clearStudentForm();
+    }
+
+    private void clearStudentForm() {
+        ST_StudentID.setText("");
+        ST_StudentName.setText("");
+        ST_Email.setText("");
+        ST_PhoneNumber.setText("");
+        ST_Address.setText("");
+        ST_FathersName.setText("");
+        ST_MothersName.setText("");
+        ST_GuardiansPhoneNumber.setText("");
+        ST_Gender.setSelectedIndex(0);
+        ST_DateOfBirth.setValue(new java.util.Date());
+        ST_Table.clearSelection();
+    }
+
+    private void populateStudentFormFromTable(int rowIndex) {
+        try {
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
+            
+            // Get student ID from table and find full student object
+            String studentID = model.getValueAt(rowIndex, 0).toString();
+            Student student = null;
+            
+            for (Student s : students) {
+                if (s.getStudentID().equals(studentID)) {
+                    student = s;
+                    break;
+                }
+            }
+            
+            if (student != null) {
+                // Populate form fields
+                ST_StudentID.setText(student.getStudentID());
+                ST_StudentName.setText(student.getStudentName());
+                ST_Email.setText(student.getEmail() != null ? student.getEmail() : "");
+                ST_PhoneNumber.setText(student.getPhoneNumber() != null ? student.getPhoneNumber() : "");
+                ST_Address.setText(student.getAddress() != null ? student.getAddress() : "");
+                ST_FathersName.setText(student.getFathersName() != null ? student.getFathersName() : "");
+                ST_MothersName.setText(student.getMothersName() != null ? student.getMothersName() : "");
+                ST_GuardiansPhoneNumber.setText(student.getGuardiansPhoneNumber() != null ? student.getGuardiansPhoneNumber() : "");
+                
+                // Set gender
+                String gender = student.getGender();
+                if ("Male".equalsIgnoreCase(gender)) {
+                    ST_Gender.setSelectedIndex(0);
+                } else if ("Female".equalsIgnoreCase(gender)) {
+                    ST_Gender.setSelectedIndex(1);
+                }
+                
+                // Set date of birth
+                try {
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                    java.util.Date dob = sdf.parse(student.getDateOfBirth());
+                    ST_DateOfBirth.setValue(dob);
+                } catch (java.text.ParseException e) {
+                    logger.warning("Error parsing date: " + e.getMessage());
+                    ST_DateOfBirth.setValue(new java.util.Date());
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("Error populating form from table: " + e.getMessage());
         }
     }
 

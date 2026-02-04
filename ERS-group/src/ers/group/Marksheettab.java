@@ -4,7 +4,10 @@ package ers.group;
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 
-import javax.swing.JFrame;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -12,7 +15,13 @@ import javax.swing.JFrame;
  */
 public class Marksheettab extends javax.swing.JPanel {
     
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Marksheettab.class.getName());
     private List<Marksheet> marksheets;
+    private MarksheetFileLoader marksheetFileLoader;
+    private MarksheetFileSaver marksheetFileSaver;
+    private String marksheetFilePath;
+    private CourseSubjectFileLoader courseFileLoader;
+    private java.util.Map<String, String> courseNameMap;
 
     /**
      * Creates new form Marksheettab
@@ -20,27 +29,161 @@ public class Marksheettab extends javax.swing.JPanel {
     public Marksheettab() {
         initComponents();
         marksheets = new ArrayList<>();
+        marksheetFileLoader = new MarksheetFileLoader();
+        marksheetFileSaver = new MarksheetFileSaver();
+        courseFileLoader = new CourseSubjectFileLoader();
+        courseNameMap = new java.util.HashMap<>();
+        loadCourseData();
         loadMarksheetData();
-        Searchbutton.addActionListener(this::SearchbuttonActionPerformed);
     }
     
-    public static void main(String[] args) {
-        System.out.println("Starting Marksheet Application...");
-        SwingUtilities.invokeLater(() -> {
-            try {
-                JFrame frame = new JFrame("Student Marksheet System");
-                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-                frame.setSize(1600, 900);
-                frame.setLocationRelativeTo(null);
-                frame.setResizable(true);
-                frame.add(new Marksheettab());
-                frame.setVisible(true);
-                System.out.println("Application initialized successfully!");
-            } catch (Exception e) {
-                System.err.println("Error creating application: " + e.getMessage());
-                e.printStackTrace();
+    private void loadCourseData() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/coursesubject.txt",
+                "src/ers/group/master files/coursesubject.txt",
+                "master files/coursesubject.txt",
+                "coursesubject.txt"
+            };
+            
+            for (String path : possiblePaths) {
+                File f = new File(path);
+                if (f.exists()) {
+                    courseFileLoader.load(path);
+                    java.util.Collection<CourseSubject> courses = courseFileLoader.getAllSubjects();
+                    for (CourseSubject course : courses) {
+                        courseNameMap.put(course.getCourseSubjectID(), course.getCourseSubjectName());
+                    }
+                    logger.info("Loaded " + courses.size() + " courses");
+                    return;
+                }
             }
-        });
+            logger.warning("Course file not found in any expected location");
+        } catch (Exception e) {
+            logger.severe("Error loading course data: " + e.getMessage());
+        }
+    }
+    
+    private String getCourseName(String courseID) {
+        if (courseID == null || courseID.isEmpty()) {
+            return "";
+        }
+        return courseNameMap.getOrDefault(courseID, courseID);
+    }
+    
+    private void loadMarksheetData() {
+        try {
+            // Try multiple possible paths
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/marksheet.txt",
+                "src/ers/group/master files/marksheet.txt",
+                "master files/marksheet.txt",
+                "marksheet.txt"
+            };
+            
+            for (String path : possiblePaths) {
+                File f = new File(path);
+                if (f.exists()) {
+                    marksheetFilePath = path;
+                    logger.info("Found marksheet data at: " + f.getAbsolutePath());
+                    marksheetFileLoader.load(path);
+                    marksheets = new ArrayList<>(marksheetFileLoader.getAllMarksheets());
+                    logger.info("Loaded " + marksheets.size() + " marksheets from file");
+                    loadMarksheetTableData();
+                    return;
+                }
+            }
+            logger.warning("Marksheet file not found in any expected location");
+        } catch (Exception e) {
+            logger.severe("Error loading marksheet data: " + e.getMessage());
+        }
+    }
+    
+    private void loadMarksheetTableData() {
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+        model.setRowCount(0); // Clear existing rows
+        
+        for (Marksheet m : marksheets) {
+            String[] subjects = m.getSubjects();
+            double[] marks = m.getMarks();
+            
+            // Calculate average
+            double average = 0.0;
+            int count = 0;
+            for (double mark : marks) {
+                if (mark > 0) {
+                    average += mark;
+                    count++;
+                }
+            }
+            average = count > 0 ? average / count : 0.0;
+            
+            Object[] row = new Object[14];
+            row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
+            row[1] = m.getStudentID();
+            row[2] = m.getSemester();
+            
+            // Add course-score pairs with course names
+            for (int i = 0; i < 5; i++) {
+                String courseID = subjects[i] != null ? subjects[i] : "";
+                row[3 + (i * 2)] = getCourseName(courseID);
+                row[4 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+            }
+            row[13] = String.format("%.2f", average);
+            
+            model.addRow(row);
+        }
+    }
+    
+    private void SearchbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+        String searchID = SearchbarID.getText().trim();
+        
+        if (searchID.isEmpty()) {
+            loadMarksheetTableData();
+            GWA.setText("GWA: --");
+            return;
+        }
+        
+        // Find marksheet by student ID
+        for (Marksheet m : marksheets) {
+            if (m.getStudentID().equalsIgnoreCase(searchID)) {
+                // Update table to show only this marksheet
+                javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+                model.setRowCount(0);
+                
+                String[] subjects = m.getSubjects();
+                double[] marks = m.getMarks();
+                
+                // Calculate average
+                double average = 0.0;
+                int count = 0;
+                for (double mark : marks) {
+                    if (mark > 0) {
+                        average += mark;
+                        count++;
+                    }
+                }
+                average = count > 0 ? average / count : 0.0;
+                
+                Object[] row = new Object[14];
+                row[0] = "MRK-001";
+                row[1] = m.getStudentID();
+                row[2] = m.getSemester();
+                
+                for (int i = 0; i < 5; i++) {
+                    String courseID = subjects[i] != null ? subjects[i] : "";
+                    row[3 + (i * 2)] = getCourseName(courseID);
+                    row[4 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                }
+                row[13] = String.format("%.2f", average);
+                
+                model.addRow(row);
+                GWA.setText(String.format("GWA: %.2f", average));
+                return;
+            }
+        }
+        
+        JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
     }
 
     /**
@@ -282,10 +425,10 @@ public class Marksheettab extends javax.swing.JPanel {
 
    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
     // Clear search bar
-    Searchbar.setText("");
+    SearchbarID.setText("");
 
     // Reset GWA label
-    GWA.setText("GWA. --");
+    GWA.setText("GWA: --");
 
     // Clear table data
     javax.swing.table.DefaultTableModel model =
@@ -308,7 +451,10 @@ public class Marksheettab extends javax.swing.JPanel {
     );
 
     if (choice == javax.swing.JOptionPane.YES_OPTION) {
-        this.dispose(); // close current window
+        java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+        if (window != null) {
+            window.dispose(); // close parent window
+        }
     }
 }
                                           

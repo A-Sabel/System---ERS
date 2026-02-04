@@ -1,12 +1,87 @@
 package ers.group;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.table.DefaultTableModel;
 
 public class CourseTab extends JPanel {
 
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CourseTab.class.getName());
+    private ArrayList<Student> students;
+    private StudentFileLoader studentFileLoader;
+    private String studentFilePath; 
+
     public CourseTab() {
         initComponents();
+        students = new ArrayList<>();
+        loadStudentData();
+        loadStudentTableData();
+    }
+
+    private void loadStudentData() {
+        try {
+            // Try multiple possible paths
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/student.txt",
+                "src/ers/group/master files/student.txt",
+                "master files/student.txt",
+                "student.txt",
+                "ERS-group/student.txt",
+                "../student.txt",
+                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/student.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    filePath = path;
+                    studentFilePath = path; // Store for later use in saving
+                    logger.info("Found student data at: " + f.getAbsolutePath());
+                    break;
+                }
+            }
+            
+            if (filePath == null) {
+                logger.warning("Could not find student.txt in any expected location");
+                students = new ArrayList<>();
+                return;
+            }
+            
+            studentFileLoader = new StudentFileLoader();
+            studentFileLoader.load(filePath);
+            Collection<Student> allStudents = studentFileLoader.getAllStudents();
+            students = new ArrayList<>(allStudents);
+            logger.info("Loaded " + students.size() + " students from file");
+        } catch (Exception e) {
+            logger.severe("Error loading student data: " + e.getMessage());
+            students = new ArrayList<>();
+        }
+    }
+
+    private void loadStudentTableData() {
+        // Get the model from CT_Table directly
+        DefaultTableModel model = (DefaultTableModel) CT_Table.getModel();
+        
+        // Clear existing rows
+        model.setRowCount(0);
+        
+        // Add student data to table
+        for (Student stud : students) {
+            model.addRow(new Object[]{
+                stud.getStudentID(),
+                stud.getStudentName(),
+                stud.getAge(),
+                stud.getDateOfBirth(),
+                stud.getYearLevel(),
+                stud.getStudentType(),
+                stud.getGwa(),
+                stud.getEmail(),
+                stud.getPhoneNumber()
+            });
+        }
     }
 
     private void initComponents() {
@@ -206,6 +281,7 @@ public class CourseTab extends JPanel {
         CT_SEARCH_STUDENT.setText("Search Student");
 
         CT_SearchStudent.setBackground(new java.awt.Color(146, 190, 219));
+        CT_SearchStudent.addActionListener(this::CT_SearchStudentActionPerformed);
 
         CT_Search.setBackground(new java.awt.Color(146, 190, 219));
         CT_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -215,6 +291,7 @@ public class CourseTab extends JPanel {
         CT_Refresh.setBackground(new java.awt.Color(146, 190, 219));
         CT_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         CT_Refresh.setText("Refresh");
+        CT_Refresh.addActionListener(this::CT_RefreshActionPerformed);
 
         javax.swing.GroupLayout CT_SearchStudentPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentPanel);
         CT_SearchStudentPanel.setLayout(CT_SearchStudentPanelLayout);
@@ -294,6 +371,7 @@ public class CourseTab extends JPanel {
         CT_Clear.setBackground(new java.awt.Color(73, 118, 159));
         CT_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         CT_Clear.setText("Clear");
+        CT_Clear.addActionListener(this::CT_ClearActionPerformed);
 
         CT_Logout.setBackground(new java.awt.Color(73, 118, 159));
         CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -355,11 +433,7 @@ public class CourseTab extends JPanel {
                         .addComponent(CT_BottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
-    }
-
-    private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        // TODO add your handling code here:
-    }                                         
+    }                                        
 
     private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
         // TODO add your handling code here:
@@ -370,9 +444,55 @@ public class CourseTab extends JPanel {
     }
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
-        // You can add your saving logic here
-        // For now, just a popup message
         javax.swing.JOptionPane.showMessageDialog(this, "Course details have been saved!", "Save", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
+        CT_SearchStudentActionPerformed(evt);
+    }
+
+    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        String searchName = CT_SearchStudent.getText().trim();
+        DefaultTableModel model = (DefaultTableModel) CT_Table.getModel();
+        model.setRowCount(0); // Clear the table first
+
+        if (searchName.isEmpty()) {
+            // If search field is empty, reload all students
+            loadStudentTableData();
+            return;
+        }
+
+        boolean found = false;
+
+        // Search by ID or Name
+        for (Student student : students) {
+            if (student.getStudentID().equalsIgnoreCase(searchName) ||
+                student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
+
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                found = true;
+            }
+        }
+
+        if (!found) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    private void CT_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        CT_SearchStudent.setText("");
+        loadStudentTableData(); // reload all students
     }
 
     private void CT_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
@@ -391,6 +511,22 @@ public class CourseTab extends JPanel {
                 frame.dispose();
             }
         }
+    }
+
+    private void CT_ClearActionPerformed(java.awt.event.ActionEvent evt) {
+        clearCourseForm();
+    }
+
+    private void clearCourseForm() {
+        CT_id.setText("");
+        CT_StudentID.setText("");
+        CT_Semester.setSelectedIndex(0);
+        CT_Course1.setSelectedIndex(0);
+        CT_Course2.setSelectedIndex(0);
+        CT_Course3.setSelectedIndex(0);
+        CT_Course4.setSelectedIndex(0);
+        CT_Course5.setSelectedIndex(0);
+        CT_Table.clearSelection();
     }
 
     private javax.swing.JPanel CT_BottomPanel;

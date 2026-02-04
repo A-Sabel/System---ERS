@@ -140,15 +140,10 @@ class RoomsFileSaver extends BaseFileSaver<Rooms> {
 class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     @Override
     protected String formatLine(Enrollment enrollment) {
-        // Format: enrollmentID,studentID,courseID,yearLevel,semester,status,sectionID
         return String.join(",",
-            enrollment.getEnrollmentID(),
             enrollment.getStudentID(),
-            enrollment.getCourseID(),
-            enrollment.getYearLevel(),
-            enrollment.getSemester(),
-            enrollment.getStatus(),
-            enrollment.getSectionID() != null ? enrollment.getSectionID() : ""
+            enrollment.getSectionID(),
+            enrollment.getCourseID()
         );
     }
 }

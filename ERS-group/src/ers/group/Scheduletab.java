@@ -52,12 +52,6 @@ public class Scheduletab extends javax.swing.JPanel {
         // Update label when year changes
         yearSpinner.addChangeListener(e -> updateMonthYearLabel());
         
-        // Hide the duplicate header panel since StudentCourseTab already has a header
-        headerPanel.setVisible(false);
-        
-        // Hide the inner tabs since StudentCourseTab already has tab navigation
-        alltabs.setVisible(false);
-        
         // Preserve preferred size similar to the previous JFrame size
         setPreferredSize(new java.awt.Dimension(1400, 800));
         
@@ -925,12 +919,11 @@ public class Scheduletab extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(Schedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+                .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(Schedule, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
     }                                                       
 

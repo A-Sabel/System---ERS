@@ -1,8 +1,11 @@
 package ers.group;
 
+
 import java.util.ArrayList;
 
+
 public class Student {
+
 
     // identity
     private final String studentID;
@@ -14,20 +17,23 @@ public class Student {
     private String studentType;
     private ArrayList<String> subjectsEnrolled;
     private double gwa;
-    
+   
     // contact information
     private String email;
     private String phoneNumber;
     private final String gender;
     private String address;
-    
+   
     // family information
     private String fathersName;
     private String mothersName;
     private String guardiansPhoneNumber;
 
+
     // generate student number
     private static int nextIdNum = 1;
+
+
 
 
     // constructors
@@ -50,7 +56,7 @@ public class Student {
         this.mothersName = mothersName;
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
-    
+   
     // Constructor for creating new students (generates new ID)
     public Student(String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = generateNewID();
@@ -71,46 +77,57 @@ public class Student {
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
 
+
     // methods
     public String getStudentID() {
         return studentID;
     }
 
+
     public String getStudentName() {
         return studentName;
     }
+
 
     public int getAge() {
         return age;
     }
 
+
     public String getDateOfBirth() {
         return dob;
     }
+
 
     public String getYearLevel() {
         return yearLevel;
     }
 
+
     public String getSection() {
         return section;
     }
+
 
     public String getStudentType() {
         return studentType;
     }
 
+
     public ArrayList<String> getSubjectsEnrolled() {
         return subjectsEnrolled;
     }
+
 
     public double getGwa() {
         return gwa;
     }
 
+
     public static String generateNewID() {
         return String.format("STU-%03d", nextIdNum++);
     }
+
 
     public static void setNextIdNum(int lastID) {
         nextIdNum = lastID + 1;
@@ -120,85 +137,105 @@ public class Student {
         this.studentName = studentName;
     }
 
+
     public void setAge(int age) {
         this.age = age;
     }
+
 
     public void setYearLevel(String yearLevel) {
         this.yearLevel = yearLevel;
     }
 
+
     public void setSection(String section) {
         this.section = section;
     }
+
 
     public void setStudentType(String studentType) {
         this.studentType = studentType;
     }
 
+
     public void setSubjectsEnrolled(ArrayList<String> subjectsEnrolled) {
         this.subjectsEnrolled = subjectsEnrolled;
     }
 
+
     public void setGwa(double gwa) {
         this.gwa = gwa;
     }
+
 
     // Contact information setters
     public void setEmail(String email) {
         this.email = email;
     }
 
+
     public void setPhoneNumber(String phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
 
+
     public void setAddress(String address) {
         this.address = address;
     }
+
 
     // Family information setters
     public void setFathersName(String fathersName) {
         this.fathersName = fathersName;
     }
 
+
     public void setMothersName(String mothersName) {
         this.mothersName = mothersName;
     }
 
+
     public void setGuardiansPhoneNumber(String guardiansPhoneNumber) {
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
+
 
     // Contact information getters
     public String getEmail() {
         return email;
     }
 
+
     public String getPhoneNumber() {
         return phoneNumber;
     }
+
 
     public String getGender() {
         return gender;
     }
 
+
     public String getAddress() {
         return address;
     }
+
 
     // Family information getters
     public String getFathersName() {
         return fathersName;
     }
 
+
     public String getMothersName() {
         return mothersName;
     }
 
+
     public String getGuardiansPhoneNumber() {
         return guardiansPhoneNumber;
     }
+
 
     // Display method
     public void displayStudentInfo() {
@@ -231,3 +268,6 @@ public class Student {
         }
         return true;
     }}
+
+
+

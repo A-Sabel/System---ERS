@@ -1,41 +1,29 @@
-// student course tab TAMA SHA
-
 package ers.group;
-
 
 import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.table.DefaultTableModel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.awt.Color;
+import java.awt.Component;
 
+/**
+ *
+ * @author Eli
+ */
 public class StudentCourseTab extends javax.swing.JFrame {
     
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
-    private ArrayList<Student> students;
-    private StudentFileLoader studentFileLoader;
-    private StudentFileSaver studentFileSaver;
-    private String studentFilePath; // Store the actual file path found during loading
-
-    // reference to embedded marksheet panel
-    private Marksheettab marksheetTab;
-
-    private CourseSubjectFileLoader courseLoader; // For loading suggested courses
-    private CourseTab courseTab; // Reference to CourseTab for refreshing
-    private boolean isInitialized = false; // Flag to prevent premature tab change events
-
-    
-    // Schedule Data - commented out as not used in this version
-    // private ArrayList<Schedule> schedules;
-    // private Map<String, ArrayList<String>> studentCourses;
-    
-    // Static inner class to hold session data for cross-tab communication
-    static class SessionManager {
-        private static String currentStudentID = "";
-        private static String currentStudentName = "";
+    // Session Manager - holds current student for auto-population in Course Tab
+    public static class SessionManager {
+        private static String currentStudentID = null;
+        private static String currentStudentName = null;
         
-        public static void setCurrentStudent(String id, String name) {
-            currentStudentID = id;
-            currentStudentName = name;
+        public static void setCurrentStudent(String studentID, String studentName) {
+            currentStudentID = studentID;
+            currentStudentName = studentName;
         }
         
         public static String getCurrentStudentID() {
@@ -46,9 +34,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             return currentStudentName;
         }
         
-        public static void clear() {
-            currentStudentID = "";
-            currentStudentName = "";
+        public static void clearSession() {
+            currentStudentID = null;
+            currentStudentName = null;
         }
     }
     
@@ -84,10 +72,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JLabel SCH_MonthYearDisplayLabel;
     private javax.swing.JButton SCH_RefreshButton;
     private javax.swing.JScrollPane SCH_TableScrollPane;
-    private javax.swing.JTable SCH_Table;
+    private javax.swing.JTable SCH_Table;*/
     
     // File paths
     private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
+
 
     /**
      * Creates new form Student
@@ -97,57 +86,40 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         students = new ArrayList<>();
         studentFileSaver = new StudentFileSaver();
+        courseLoader = new CourseSubjectFileLoader();
+        loadCourseData();
         loadStudentData();
         loadStudentTableData();
-        // embed the separate Marksheettab panel into this tab
-        addMarksheetPanel();
     }
-
-    // Add the existing Marksheettab panel into the MarkSheetTab container
-    private void addMarksheetPanel() {
-        try {
-            MarkSheetTab.removeAll();
-            MarkSheetTab.setLayout(new BorderLayout());
-
-            // create and keep a reference to the marksheet panel
-            marksheetTab = new Marksheettab();
-
-            // Wrap the marksheet panel in a scroll pane so its main content can scroll
-            javax.swing.JScrollPane marksheetScroll = new javax.swing.JScrollPane(marksheetTab);
-            marksheetScroll.setBorder(null);
-            marksheetScroll.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-            MarkSheetTab.add(marksheetScroll, BorderLayout.CENTER);
-
-            // Reparent the marksheet's control panel (Print/Clear/Logout) to the bottom
-            javax.swing.JPanel control = marksheetTab.getControlPanel();
-            if (control != null) {
-                java.awt.Container oldParent = control.getParent();
-                if (oldParent != null) oldParent.remove(control);
-                control.setVisible(true);
-                MarkSheetTab.add(control, BorderLayout.SOUTH);
-                // hide internal copy inside the marksheet
-                marksheetTab.setControlPanelVisible(false);
-            }
-
-            MarkSheetTab.revalidate();
-            MarkSheetTab.repaint();
-
-            // After layout, size the embedded marksheet to the available tab area
-            java.awt.EventQueue.invokeLater(() -> {
-                try {
-                    java.awt.Dimension size = MarkSheetTab.getSize();
-                    if (size != null && size.width > 0 && size.height > 0) {
-                        java.awt.Component south = ((java.awt.BorderLayout) MarkSheetTab.getLayout()).getLayoutComponent(java.awt.BorderLayout.SOUTH);
-                        int southHeight = (south != null) ? south.getPreferredSize().height : 0;
-                        marksheetTab.setPreferredSize(new java.awt.Dimension(size.width, Math.max(200, size.height - southHeight)));
-                        marksheetTab.revalidate();
-                        marksheetTab.repaint();
-                    }
-                } catch (Exception ignored) {}
-            });
-        } catch (Exception e) {
-            logger.severe("Failed to add Marksheettab panel: " + e.getMessage());
+    
+    /**
+     * Helper method to find the student file path.
+     * Returns the resolved path if found, or the first possible path if not found.
+     */
+    private String getStudentFilePath() {
+        if (studentFilePath != null) {
+            return studentFilePath;
         }
+        
+        // Try to find the file using the same logic as loadStudentData
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/student.txt",
+            "src/ers/group/master files/student.txt",
+            "master files/student.txt",
+            "student.txt",
+            "ERS-group/student.txt",
+            "../student.txt"
+        };
+        
+        for (String path : possiblePaths) {
+            java.io.File f = new java.io.File(path);
+            if (f.exists()) {
+                return path;
+            }
+        }
+        
+        // If not found, return the most likely path (first option)
+        return possiblePaths[0];
     }
     
     private void loadStudentData() {
@@ -168,7 +140,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
                     filePath = path;
-                    studentFilePath = path; // Store for later use in saving
                     logger.info("Found student data at: " + f.getAbsolutePath());
                     break;
                 }
@@ -192,20 +163,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
     
     private void loadStudentTableData() {
-        DefaultTableModel model = null;
+        // Get the model from ST_Table directly
+        DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
         
-        // Try to get existing table from ST_Table (which is already defined in initComponents)
-        if (ST_Table != null && ST_Table.getModel() instanceof DefaultTableModel) {
-            model = (DefaultTableModel) ST_Table.getModel();
-            model.setRowCount(0); // Clear existing rows
-        } else {
-            // This shouldn't happen since ST_Table is created in initComponents
-            model = new DefaultTableModel(
-                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Section", "Type", "GWA", "Email", "Phone"},
-                0
-            );
-            ST_Table.setModel(model);
-        }
+        // Clear existing rows
+        model.setRowCount(0);
         
         // Add student data to table
         for (Student stud : students) {
@@ -222,31 +184,16 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getPhoneNumber()
             });
         }
+        
+        // Refresh display
+        if (ST_TableScrollPane.getParent() != null) {
+            ST_TableScrollPane.revalidate();
+            ST_TableScrollPane.repaint();
+        }
     }
 
-    private String getStudentFilePath() {
-        if (studentFilePath != null) {
-            return studentFilePath;
-        }
-        
-        String[] possiblePaths = {
-            "ERS-group/src/ers/group/master files/student.txt",
-            "src/ers/group/master files/student.txt",
-            "master files/student.txt",
-            "student.txt",
-            "ERS-group/student.txt",
-            "../student.txt"
-        };
-        
-        for (String path : possiblePaths) {
-            if (new java.io.File(path).exists()) {
-                return path;
-            }
-        }
-        
-        return possiblePaths[0]; // Fallback to first path
-    }
-
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         MainScrollPane = new javax.swing.JScrollPane();
@@ -265,6 +212,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_GuardiansPhoneNumber = new javax.swing.JTextField();
         ST_Address = new javax.swing.JTextField();
         ST_Gender = new javax.swing.JComboBox<>();
+        ST_YearLevel = new javax.swing.JComboBox<>();
+        ST_CurrentSemester = new javax.swing.JComboBox<>();
+        ST_StudentType = new javax.swing.JComboBox<>();
+        ST_Section = new javax.swing.JTextField();
+        ST_GWA = new javax.swing.JTextField();
+        ST_SuggestedCoursesPanel = new javax.swing.JPanel();
+        ST_SuggestedCoursesScrollPane = new javax.swing.JScrollPane();
+        ST_SuggestedCoursesList = new javax.swing.JList<>();
+        ST_SaveAndEnroll = new javax.swing.JButton();
         ST_STUDENT_ID = new javax.swing.JLabel();
         ST_STUDENT_NAME = new javax.swing.JLabel();
         ST_BIRTHDAY = new javax.swing.JLabel();
@@ -275,6 +231,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_MOTHERS_NAME = new javax.swing.JLabel();
         ST_GUARDIANS_PHONE_NUM = new javax.swing.JLabel();
         ST_ADDRESS = new javax.swing.JLabel();
+        ST_YEAR_LEVEL = new javax.swing.JLabel();
+        ST_CURRENT_SEMESTER = new javax.swing.JLabel();
+        ST_STUDENT_TYPE = new javax.swing.JLabel();
+        ST_SECTION = new javax.swing.JLabel();
+        ST_GWA_LABEL = new javax.swing.JLabel();
+        ST_ACADEMIC_INFO = new javax.swing.JLabel();
 
         ST_DateOfBirth = new javax.swing.JSpinner(
             new javax.swing.SpinnerDateModel(
@@ -303,14 +265,46 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_Delete = new javax.swing.JButton();
         ST_Clear = new javax.swing.JButton();
         ST_Logout = new javax.swing.JButton();
+        CourseTab = new javax.swing.JPanel();
+        CT_LeftPanel = new javax.swing.JPanel();
+        CT_id = new javax.swing.JTextField();
+        CT_StudentID = new javax.swing.JTextField();
+        CT_ID = new javax.swing.JLabel();
+        CT_STUDENT_ID = new javax.swing.JLabel();
+        CT_SEMESTER = new javax.swing.JLabel();
+        CT_COURSE1 = new javax.swing.JLabel();
+        CT_COURSE2 = new javax.swing.JLabel();
+        CT_COURSE3 = new javax.swing.JLabel();
+        CT_COURSE4 = new javax.swing.JLabel();
+        CT_COURSE5 = new javax.swing.JLabel();
+        CT_Course1 = new javax.swing.JComboBox<>();
+        CT_Course2 = new javax.swing.JComboBox<>();
+        CT_Course3 = new javax.swing.JComboBox<>();
+        CT_Course4 = new javax.swing.JComboBox<>();
+        CT_Course5 = new javax.swing.JComboBox<>();
+        CT_Semester = new javax.swing.JComboBox<>();
+        CT_RightPanel = new javax.swing.JPanel();
+        CT_SearchStudentPanel = new javax.swing.JPanel();
+        CT_SEARCH_STUDENT = new javax.swing.JLabel();
+        CT_SearchStudent = new javax.swing.JTextField();
+        CT_Search = new javax.swing.JButton();
+        CT_Refresh = new javax.swing.JButton();
+        CT_TableScrollPane = new javax.swing.JScrollPane();
+        CT_Table = new javax.swing.JTable();
+        CT_BottomPanel = new javax.swing.JPanel();
+        CT_Save = new javax.swing.JButton();
+        CT_Update = new javax.swing.JButton();
+        CT_Print = new javax.swing.JButton();
+        CT_Clear = new javax.swing.JButton();
+        CT_Logout = new javax.swing.JButton();
         ScoreTab = new javax.swing.JPanel();
         MarkSheetTab = new javax.swing.JPanel();
-        ScheduleTab = new Scheduletab();
+        ScheduleTab = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         MainPanel.setBackground(new java.awt.Color(31, 58, 95));
-        MainPanel.setPreferredSize(new java.awt.Dimension(1200, 699));
+        MainPanel.setPreferredSize(new java.awt.Dimension(1350, 650));
 
         SMSPanel.setBackground(new java.awt.Color(0, 30, 58));
 
@@ -342,77 +336,186 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         ST_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
         ST_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-        ST_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
+        ST_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 480));
 
-        ST_StudentID.setBackground(new java.awt.Color(146, 190, 219));
-        ST_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
+        ST_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_StudentID.setEditable(false);
         ST_StudentID.addActionListener(this::ST_StudentIDActionPerformed);
 
         ST_StudentName.setBackground(new java.awt.Color(146, 190, 219));
-        ST_StudentName.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_StudentName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         ST_StudentName.addActionListener(this::ST_StudentNameActionPerformed);
 
         ST_Email.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Email.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_Email.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         ST_PhoneNumber.setBackground(new java.awt.Color(146, 190, 219));
-        ST_PhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_PhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         ST_FathersName.setBackground(new java.awt.Color(146, 190, 219));
-        ST_FathersName.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_FathersName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         ST_MothersName.setBackground(new java.awt.Color(146, 190, 219));
-        ST_MothersName.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_MothersName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         ST_GuardiansPhoneNumber.setBackground(new java.awt.Color(146, 190, 219));
-        ST_GuardiansPhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_GuardiansPhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         ST_Address.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Address.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_Address.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         ST_Gender.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Gender.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        ST_Gender.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         ST_Gender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
 
-        ST_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        // Academic Information Fields
+        ST_YearLevel.setBackground(new java.awt.Color(146, 190, 219));
+        ST_YearLevel.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_YearLevel.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1st Year", "2nd Year" }));
+
+        ST_CurrentSemester.setBackground(new java.awt.Color(146, 190, 219));
+        ST_CurrentSemester.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_CurrentSemester.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2" }));
+
+        ST_StudentType.setBackground(new java.awt.Color(146, 190, 219));
+        ST_StudentType.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_StudentType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Regular", "Irregular" }));
+
+        ST_Section.setBackground(new java.awt.Color(240, 240, 240));
+        ST_Section.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_Section.setEditable(false);
+        ST_Section.setText("(Auto-assigned)");
+
+        ST_GWA.setBackground(new java.awt.Color(240, 240, 240));
+        ST_GWA.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_GWA.setEditable(false);
+        ST_GWA.setText("0.00");
+
+        // Suggested Courses Preview Panel
+        ST_SuggestedCoursesPanel.setBackground(new java.awt.Color(0, 30, 58));
+        ST_SuggestedCoursesPanel.setBorder(javax.swing.BorderFactory.createTitledBorder(
+            javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 2),
+            "Suggested Courses",
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            new java.awt.Font("Segoe UI", 1, 14),
+            new java.awt.Color(189, 216, 233)
+        ));
+
+        ST_SuggestedCoursesList.setBackground(new java.awt.Color(146, 190, 219));
+        ST_SuggestedCoursesList.setFont(new java.awt.Font("Segoe UI", 0, 12));
+        ST_SuggestedCoursesList.setModel(new javax.swing.AbstractListModel<String>() {
+            String[] strings = { "Select Year Level and Semester to view suggested courses" };
+            public int getSize() { return strings.length; }
+            public String getElementAt(int i) { return strings[i]; }
+        });
+        ST_SuggestedCoursesScrollPane.setViewportView(ST_SuggestedCoursesList);
+
+        ST_SaveAndEnroll.setBackground(new java.awt.Color(73, 118, 159));
+        ST_SaveAndEnroll.setFont(new java.awt.Font("Segoe UI", 1, 16));
+        ST_SaveAndEnroll.setForeground(new java.awt.Color(255, 255, 255));
+        ST_SaveAndEnroll.setText("Save & Enroll →");
+        ST_SaveAndEnroll.addActionListener(this::ST_SaveAndEnrollActionPerformed);
+
+        javax.swing.GroupLayout ST_SuggestedCoursesPanelLayout = new javax.swing.GroupLayout(ST_SuggestedCoursesPanel);
+        ST_SuggestedCoursesPanel.setLayout(ST_SuggestedCoursesPanelLayout);
+        ST_SuggestedCoursesPanelLayout.setHorizontalGroup(
+            ST_SuggestedCoursesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ST_SuggestedCoursesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(ST_SuggestedCoursesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(ST_SuggestedCoursesScrollPane)
+                    .addComponent(ST_SaveAndEnroll, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        ST_SuggestedCoursesPanelLayout.setVerticalGroup(
+            ST_SuggestedCoursesPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ST_SuggestedCoursesPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(ST_SuggestedCoursesScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 110, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(ST_SaveAndEnroll)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        // Add listeners to Year Level and Semester dropdowns
+        ST_YearLevel.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                loadSuggestedCourses();
+            }
+        });
+        
+        ST_CurrentSemester.addItemListener(e -> {
+            if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) {
+                loadSuggestedCourses();
+            }
+        });
+
+        ST_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
         ST_STUDENT_ID.setText("Student ID");
 
-        ST_STUDENT_NAME.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_STUDENT_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_STUDENT_NAME.setForeground(new java.awt.Color(255, 255, 255));
         ST_STUDENT_NAME.setText("Student Name");
 
-        ST_BIRTHDAY.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_BIRTHDAY.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_BIRTHDAY.setForeground(new java.awt.Color(255, 255, 255));
         ST_BIRTHDAY.setText("Date of Birth");
 
-        ST_GENDER.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_GENDER.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_GENDER.setForeground(new java.awt.Color(255, 255, 255));
         ST_GENDER.setText("Gender");
 
-        ST_EMAIL.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_EMAIL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_EMAIL.setForeground(new java.awt.Color(255, 255, 255));
         ST_EMAIL.setText("Email");
 
-        ST_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_PHONE_NUM.setForeground(new java.awt.Color(255, 255, 255));
         ST_PHONE_NUM.setText("Phone Number");
 
-        ST_FATHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_FATHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_FATHERS_NAME.setForeground(new java.awt.Color(255, 255, 255));
         ST_FATHERS_NAME.setText("Father's Name");
 
-        ST_MOTHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_MOTHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_MOTHERS_NAME.setForeground(new java.awt.Color(255, 255, 255));
         ST_MOTHERS_NAME.setText("Mother's Name");
 
-        ST_GUARDIANS_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_GUARDIANS_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_GUARDIANS_PHONE_NUM.setForeground(new java.awt.Color(255, 255, 255));
         ST_GUARDIANS_PHONE_NUM.setText("Guardian's Phone No.");
 
-        ST_ADDRESS.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_ADDRESS.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         ST_ADDRESS.setForeground(new java.awt.Color(255, 255, 255));
         ST_ADDRESS.setText("Address");
+
+        // Academic Information Labels
+        ST_ACADEMIC_INFO.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_ACADEMIC_INFO.setForeground(new java.awt.Color(189, 216, 233));
+        ST_ACADEMIC_INFO.setText("Academic Information");
+
+        ST_YEAR_LEVEL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_YEAR_LEVEL.setForeground(new java.awt.Color(255, 255, 255));
+        ST_YEAR_LEVEL.setText("Year Level");
+
+        ST_CURRENT_SEMESTER.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_CURRENT_SEMESTER.setForeground(new java.awt.Color(255, 255, 255));
+        ST_CURRENT_SEMESTER.setText("Current Semester");
+
+        ST_STUDENT_TYPE.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_STUDENT_TYPE.setForeground(new java.awt.Color(255, 255, 255));
+        ST_STUDENT_TYPE.setText("Student Type");
+
+        ST_SECTION.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_SECTION.setForeground(new java.awt.Color(255, 255, 255));
+        ST_SECTION.setText("Section");
+
+        ST_GWA_LABEL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_GWA_LABEL.setForeground(new java.awt.Color(255, 255, 255));
+        ST_GWA_LABEL.setText("GWA");
 
         javax.swing.GroupLayout ST_LeftPanelLayout = new javax.swing.GroupLayout(ST_LeftPanel);
         ST_LeftPanel.setLayout(ST_LeftPanelLayout);
@@ -462,64 +565,115 @@ public class StudentCourseTab extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(ST_GuardiansPhoneNumber, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
-                            .addComponent(ST_Address))))
+                            .addComponent(ST_Address)))
+                    .addComponent(ST_ACADEMIC_INFO, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_YEAR_LEVEL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_YearLevel, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_CURRENT_SEMESTER, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_CurrentSemester, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_STUDENT_TYPE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_StudentType, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_SECTION, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_Section, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_GWA_LABEL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_GWA, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(ST_SuggestedCoursesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         ST_LeftPanelLayout.setVerticalGroup(
             ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(ST_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGap(32, 32, 32)
-                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(ST_LeftPanelLayout.createSequentialGroup()
-                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(ST_StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ST_STUDENT_ID))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(ST_StudentName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ST_STUDENT_NAME))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(ST_DateOfBirth, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(ST_BIRTHDAY))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                // Personal Info Section
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_Gender, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_GENDER))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(ST_STUDENT_ID)
+                    .addComponent(ST_StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2) // Tightest possible gap
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_Email, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_EMAIL))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(ST_STUDENT_NAME)
+                    .addComponent(ST_StudentName, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_PhoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_PHONE_NUM))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(ST_BIRTHDAY)
+                    .addComponent(ST_DateOfBirth, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_FathersName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_FATHERS_NAME))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(ST_GENDER)
+                    .addComponent(ST_Gender, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_MothersName, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_MOTHERS_NAME))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(ST_EMAIL)
+                    .addComponent(ST_Email, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_GuardiansPhoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_GUARDIANS_PHONE_NUM))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                    .addComponent(ST_PHONE_NUM)
+                    .addComponent(ST_PhoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(ST_Address, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ST_ADDRESS))
+                    .addComponent(ST_FATHERS_NAME)
+                    .addComponent(ST_FathersName, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_MOTHERS_NAME)
+                    .addComponent(ST_MothersName, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_GUARDIANS_PHONE_NUM)
+                    .addComponent(ST_GuardiansPhoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_ADDRESS)
+                    .addComponent(ST_Address, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    
+                // Header
+                .addGap(8, 8, 8)
+                .addComponent(ST_ACADEMIC_INFO)
+                .addGap(4, 4, 4)
+                
+                // Academic Info Section
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_YEAR_LEVEL)
+                    .addComponent(ST_YearLevel, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_CURRENT_SEMESTER)
+                    .addComponent(ST_CurrentSemester, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_STUDENT_TYPE)
+                    .addComponent(ST_StudentType, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_SECTION)
+                    .addComponent(ST_Section, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(2, 2, 2)
+                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(ST_GWA_LABEL)
+                    .addComponent(ST_GWA, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    
+                // Bottom Panel
+                .addGap(8, 8, 8)
+                .addComponent(ST_SuggestedCoursesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         ST_RightPanel.setBackground(new java.awt.Color(0, 30, 58));
         ST_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-        ST_RightPanel.setPreferredSize(new java.awt.Dimension(460, 703));
+        ST_RightPanel.setPreferredSize(new java.awt.Dimension(620, 480));
 
         ST_SearchStudentPanel.setBackground(new java.awt.Color(0, 30, 58));
         ST_SearchStudentPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
-        ST_SearchStudentPanel.setPreferredSize(new java.awt.Dimension(400, 119));
+        ST_SearchStudentPanel.setPreferredSize(new java.awt.Dimension(620, 119));
 
         ST_SEARCH_STUDENT.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         ST_SEARCH_STUDENT.setForeground(new java.awt.Color(255, 255, 255));
@@ -573,19 +727,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 "Student ID", "Student Name", "Age", "Date of Birth", "Year Level", "Section", "Student Status", "GWA", "Email", "Phone No.",
             }
         ));
-        
-        // Configure table selection behavior
-        ST_Table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        ST_Table.setRowSelectionAllowed(true);
-        ST_Table.setColumnSelectionAllowed(false);
-        
-        // Add selection listener to populate form when row is clicked
-        ST_Table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && ST_Table.getSelectedRow() >= 0) {
-                populateStudentFormFromTable(ST_Table.getSelectedRow());
-            }
-        });
-        
         ST_TableScrollPane.setViewportView(ST_Table);
 
         javax.swing.GroupLayout ST_RightPanelLayout = new javax.swing.GroupLayout(ST_RightPanel);
@@ -605,7 +746,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(ST_SearchStudentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(ST_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
+                .addComponent(ST_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 250, Short.MAX_VALUE)
                 .addContainerGap())
         );
 
@@ -695,8 +836,355 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Student", StudentTab);
 
-        MainTabPanel.addTab("Course", new CourseTab());
+        courseTab = new CourseTab();
+        MainTabPanel.addTab("Course", courseTab);
+        
+        // Add tab change listener to refresh Course tab when selected
+        MainTabPanel.addChangeListener(e -> {
+            // Only process tab changes after initial setup is complete
+            if (!isInitialized) return;
+            
+            int selectedTab = MainTabPanel.getSelectedIndex();
+            
+            if (selectedTab == 0) { // Student tab
+                // Refresh student table and suggested courses when returning
+                loadStudentData();
+                loadStudentTableData();
+                
+                // Refresh suggested courses for currently selected student
+                String currentStudentID = ST_StudentID.getText().trim();
+                if (!currentStudentID.isEmpty()) {
+                    loadSuggestedCourses();
+                }
+            } 
+            else if (selectedTab == 1) { // Course tab
+                courseTab.refreshStudentList();
+                
+                // Auto-populate student ID if coming from Save & Enroll
+                String sessionStudentID = SessionManager.getCurrentStudentID();
+                if (sessionStudentID != null && !sessionStudentID.isEmpty()) {
+                    courseTab.autoPopulateStudent(sessionStudentID);
+                    SessionManager.clearSession(); // Clear after use
+                }
+            }
+        });
 
+        CourseTab.setBackground(new java.awt.Color(31, 58, 95));
+
+        CT_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
+        CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
+
+        CT_id.setBackground(new java.awt.Color(146, 190, 219));
+        CT_id.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_id.addActionListener(this::CT_idActionPerformed);
+
+        CT_StudentID.setBackground(new java.awt.Color(146, 190, 219));
+        CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_StudentID.addActionListener(this::CT_StudentIDActionPerformed);
+
+        CT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_ID.setForeground(new java.awt.Color(255, 255, 255));
+        CT_ID.setText("ID");
+
+        CT_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
+        CT_STUDENT_ID.setText("Student ID");
+
+        CT_SEMESTER.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_SEMESTER.setForeground(new java.awt.Color(255, 255, 255));
+        CT_SEMESTER.setText("Semester");
+
+        CT_COURSE1.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE1.setForeground(new java.awt.Color(255, 255, 255));
+        CT_COURSE1.setText("Course 1");
+
+        CT_COURSE2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE2.setForeground(new java.awt.Color(255, 255, 255));
+        CT_COURSE2.setText("Course 2");
+
+        CT_COURSE3.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE3.setForeground(new java.awt.Color(255, 255, 255));
+        CT_COURSE3.setText("Course 3");
+
+        CT_COURSE4.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE4.setForeground(new java.awt.Color(255, 255, 255));
+        CT_COURSE4.setText("Course 4");
+
+        CT_COURSE5.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE5.setForeground(new java.awt.Color(255, 255, 255));
+        CT_COURSE5.setText("Course 5");
+
+        CT_Course1.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Course1.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
+        CT_Course1.setMinimumSize(new java.awt.Dimension(90, 28));
+
+        CT_Course2.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Course2.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
+        CT_Course2.setMinimumSize(new java.awt.Dimension(90, 28));
+
+        CT_Course3.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Course3.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
+        CT_Course3.setMinimumSize(new java.awt.Dimension(90, 28));
+
+        CT_Course4.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Course4.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
+        CT_Course4.setMinimumSize(new java.awt.Dimension(90, 28));
+
+        CT_Course5.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Course5.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course5.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
+        CT_Course5.setMinimumSize(new java.awt.Dimension(90, 28));
+
+        CT_Semester.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Semester.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Semester.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1st Semester", "2nd Semester" }));
+
+        javax.swing.GroupLayout CT_LeftPanelLayout = new javax.swing.GroupLayout(CT_LeftPanel);
+        CT_LeftPanel.setLayout(CT_LeftPanelLayout);
+        CT_LeftPanelLayout.setHorizontalGroup(
+            CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_LeftPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(CT_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(CT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(CT_id, javax.swing.GroupLayout.PREFERRED_SIZE, 363, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, CT_LeftPanelLayout.createSequentialGroup()
+                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(CT_COURSE5)
+                            .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(CT_COURSE2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(CT_COURSE1, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                .addComponent(CT_SEMESTER, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(CT_STUDENT_ID, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 119, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(CT_Course1, 0, 363, Short.MAX_VALUE)
+                            .addComponent(CT_Semester, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(CT_StudentID, javax.swing.GroupLayout.Alignment.TRAILING)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, CT_LeftPanelLayout.createSequentialGroup()
+                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(CT_COURSE3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(CT_COURSE4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(CT_Course4, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(CT_Course3, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(CT_Course2, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(CT_Course5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 363, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap())
+        );
+        CT_LeftPanelLayout.setVerticalGroup(
+            CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_LeftPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGap(32, 32, 32)
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addGroup(CT_LeftPanelLayout.createSequentialGroup()
+                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(CT_id, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(CT_ID))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(CT_StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(CT_STUDENT_ID))
+                        .addGap(18, 18, 18)
+                        .addComponent(CT_Semester, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(CT_SEMESTER))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(CT_COURSE1)
+                    .addComponent(CT_Course1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_COURSE2)
+                    .addComponent(CT_Course2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_COURSE3)
+                    .addComponent(CT_Course3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_COURSE4)
+                    .addComponent(CT_Course4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_COURSE5)
+                    .addComponent(CT_Course5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(80, Short.MAX_VALUE))
+        );
+
+        CT_RightPanel.setBackground(new java.awt.Color(0, 30, 58));
+        CT_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        CT_RightPanel.setPreferredSize(new java.awt.Dimension(460, 703));
+
+        CT_SearchStudentPanel.setBackground(new java.awt.Color(0, 30, 58));
+        CT_SearchStudentPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
+
+        CT_SEARCH_STUDENT.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_SEARCH_STUDENT.setForeground(new java.awt.Color(255, 255, 255));
+        CT_SEARCH_STUDENT.setText("Search Student");
+
+        CT_SearchStudent.setBackground(new java.awt.Color(146, 190, 219));
+        CT_SearchStudent.addActionListener(this::CT_SearchStudentActionPerformed);
+
+        CT_Search.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Search.setText("Search");
+        CT_Search.addActionListener(this::CT_SearchActionPerformed);
+
+        CT_Refresh.setBackground(new java.awt.Color(146, 190, 219));
+        CT_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Refresh.setText("Refresh");
+
+        javax.swing.GroupLayout CT_SearchStudentPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentPanel);
+        CT_SearchStudentPanel.setLayout(CT_SearchStudentPanelLayout);
+        CT_SearchStudentPanelLayout.setHorizontalGroup(
+            CT_SearchStudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_SearchStudentPanelLayout.createSequentialGroup()
+                .addGap(22, 22, 22)
+                .addComponent(CT_SEARCH_STUDENT, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(CT_SearchStudent, javax.swing.GroupLayout.PREFERRED_SIZE, 473, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(CT_Search, javax.swing.GroupLayout.PREFERRED_SIZE, 105, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(CT_Refresh, javax.swing.GroupLayout.PREFERRED_SIZE, 128, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(11, Short.MAX_VALUE))
+        );
+        CT_SearchStudentPanelLayout.setVerticalGroup(
+            CT_SearchStudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_SearchStudentPanelLayout.createSequentialGroup()
+                .addGap(40, 40, 40)
+                .addGroup(CT_SearchStudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(CT_SearchStudent)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, CT_SearchStudentPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(CT_Search, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(CT_Refresh, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(CT_SEARCH_STUDENT, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(39, Short.MAX_VALUE))
+        );
+
+        CT_Table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Student ID", "Student Name", "Date of Birth", "Gender", "Email", "Phone Number", "Father's Name", "Mother's Name", "Guardian's Phone No.", "Address"
+            }
+        ));
+        CT_TableScrollPane.setViewportView(CT_Table);
+
+        javax.swing.GroupLayout CT_RightPanelLayout = new javax.swing.GroupLayout(CT_RightPanel);
+        CT_RightPanel.setLayout(CT_RightPanelLayout);
+        CT_RightPanelLayout.setHorizontalGroup(
+            CT_RightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_RightPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(CT_RightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(CT_SearchStudentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(CT_TableScrollPane))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        CT_RightPanelLayout.setVerticalGroup(
+            CT_RightPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_RightPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(CT_SearchStudentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(CT_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 315, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        CT_BottomPanel.setBackground(new java.awt.Color(0, 30, 58));
+        CT_BottomPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 4, true));
+
+        CT_Save.setBackground(new java.awt.Color(73, 118, 159));
+        CT_Save.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Save.setText("Save");
+        CT_Save.addActionListener(this::CT_SaveActionPerformed);
+
+        CT_Update.setBackground(new java.awt.Color(73, 118, 159));
+        CT_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Update.setText("Update");
+
+        CT_Print.setBackground(new java.awt.Color(73, 118, 159));
+        CT_Print.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Print.setText("Print");
+
+        CT_Clear.setBackground(new java.awt.Color(73, 118, 159));
+        CT_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Clear.setText("Clear");
+
+        CT_Logout.setBackground(new java.awt.Color(73, 118, 159));
+        CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Logout.setText("Logout");
+        CT_Logout.addActionListener(this::CT_LogoutActionPerformed); 
+
+        javax.swing.GroupLayout CT_BottomPanelLayout = new javax.swing.GroupLayout(CT_BottomPanel);
+        CT_BottomPanel.setLayout(CT_BottomPanelLayout);
+        CT_BottomPanelLayout.setHorizontalGroup(
+            CT_BottomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_BottomPanelLayout.createSequentialGroup()
+                .addGap(138, 138, 138)
+                .addComponent(CT_Save)
+                .addGap(53, 53, 53)
+                .addComponent(CT_Update)
+                .addGap(59, 59, 59)
+                .addComponent(CT_Print)
+                .addGap(68, 68, 68)
+                .addComponent(CT_Clear)
+                .addGap(59, 59, 59)
+                .addComponent(CT_Logout)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        CT_BottomPanelLayout.setVerticalGroup(
+            CT_BottomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, CT_BottomPanelLayout.createSequentialGroup()
+                .addContainerGap(25, Short.MAX_VALUE)
+                .addGroup(CT_BottomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_Save)
+                    .addComponent(CT_Update)
+                    .addComponent(CT_Print)
+                    .addComponent(CT_Clear)
+                    .addComponent(CT_Logout))
+                .addGap(21, 21, 21))
+        );
+
+        javax.swing.GroupLayout CourseTabLayout = new javax.swing.GroupLayout(CourseTab);
+        CourseTab.setLayout(CourseTabLayout);
+        CourseTabLayout.setHorizontalGroup(
+            CourseTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CourseTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(CT_LeftPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 508, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CourseTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(CT_RightPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 990, Short.MAX_VALUE)
+                    .addComponent(CT_BottomPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(335, 335, 335))
+        );
+        CourseTabLayout.setVerticalGroup(
+            CourseTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CourseTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(CourseTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(CT_LeftPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
+                    .addGroup(CourseTabLayout.createSequentialGroup()
+                        .addComponent(CT_RightPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(CT_BottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
+        );
+
+        ScoreTab = new javax.swing.JPanel();
         ScoreTab.setBackground(new java.awt.Color(31, 58, 95));
 
         javax.swing.GroupLayout ScoreTabLayout = new javax.swing.GroupLayout(ScoreTab);
@@ -712,8 +1200,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Score",new ScoreTab());
 
-        MarkSheetTab.setBackground(new java.awt.Color(31, 58, 95));
-        MarkSheetTab.setLayout(new java.awt.BorderLayout());
+        MainTabPanel.addTab("Mark Sheet", new Marksheettab());
 
         MainTabPanel.addTab("Schedule", new Scheduletab());
         
@@ -925,9 +1412,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
-        );
+        );*/
 
-        MainTabPanel.addTab("Schedule", ScheduleTab);
+        //MainTabPanel.addTab("Schedule", ScheduleTab); // Removed: Now using Scheduletab instance
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
@@ -962,11 +1449,36 @@ public class StudentCourseTab extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(MainScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 699, Short.MAX_VALUE)
+            .addComponent(MainScrollPane, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 650, Short.MAX_VALUE)
         );
 
-        pack();
+        setSize(1350, 680);
+        setMinimumSize(new java.awt.Dimension(1200, 600));
         setLocationRelativeTo(null);
+        
+        // Add table click listeners for auto-populate
+        ST_Table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int selectedRow = ST_Table.getSelectedRow();
+                if (selectedRow >= 0) {
+                    populateStudentFormFromTable(selectedRow);
+                }
+            }
+        });
+        
+        CT_Table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int selectedRow = CT_Table.getSelectedRow();
+                if (selectedRow >= 0) {
+                    courseTab.populateFormFromTable(selectedRow);
+                }
+            }
+        });
+        
+        // Mark initialization as complete
+        isInitialized = true;
     }// </editor-fold>                        
 
     private void ST_StudentNameActionPerformed(java.awt.event.ActionEvent evt) {                                               
@@ -975,7 +1487,19 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void ST_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
         // TODO add your handling code here:
-    }                                                                                                                                                                                     
+    }                                            
+
+    private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                          
+        // TODO add your handling code here:
+    }                                         
+
+    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
+        // TODO add your handling code here:
+    }                                     
+
+    private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
+        // TODO add your handling code here:
+    }                                                                                                                                         
 
     private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
         ST_SearchStudentActionPerformed(evt);
@@ -1059,6 +1583,82 @@ public class StudentCourseTab extends javax.swing.JFrame {
         javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
     }
     
+    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        String searchName = CT_SearchStudent.getText().trim();
+        if (searchName.isEmpty()) {
+            loadStudentTableData();
+            return;
+        }
+        //Find student by ID
+        for (Student student : students) {
+            if (student.getStudentID().equalsIgnoreCase(searchName)) {
+                // Update table to show only this student
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    0
+                );
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                logger.info("Found student: " + student.getStudentID());
+                
+                // Create and set table
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                CT_TableScrollPane.setViewportView(table);
+                CT_TableScrollPane.revalidate();
+                CT_TableScrollPane.repaint();
+                return;
+            }
+        }
+        
+        // Find student by name
+        for (Student student : students) {
+            if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
+                // Update table to show only this student
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    0
+                );
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                logger.info("Found student: " + student.getStudentName());
+                
+                // Create and set table
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                CT_TableScrollPane.setViewportView(table);
+                CT_TableScrollPane.revalidate();
+                CT_TableScrollPane.repaint();
+                return;
+            }
+        }
+        
+        javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void CT_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        CT_SearchStudent.setText("");
+        loadStudentTableData();
+    }
+    
     private void ST_DeleteActionPerformed(java.awt.event.ActionEvent evt) {                                         
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
         int selectedRow = ST_Table.getSelectedRow();
@@ -1075,7 +1675,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Save to file
             try {
-                studentFileSaver.save(studentFilePath, students);
+                studentFileSaver.save(getStudentFilePath(), students);
                 javax.swing.JOptionPane.showMessageDialog(this, 
                     "Student deleted and saved successfully!", 
                     "Success", 
@@ -1138,12 +1738,20 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 age--;
             }
             
-            // Use defaults for fields not in the form
-            String yearLevel = "";
-            String section = "";
-            String studentType = "";
+            // Get academic information from form
+            String yearLevel = (String) ST_YearLevel.getSelectedItem();
+            String studentType = (String) ST_StudentType.getSelectedItem();
+            String section = ST_Section.getText().equals("(Auto-assigned)") ? "" : ST_Section.getText();
             java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
             double gwa = 0.0;
+            try {
+                String gwaText = ST_GWA.getText().trim();
+                if (!gwaText.isEmpty() && !gwaText.equals("0.00")) {
+                    gwa = Double.parseDouble(gwaText);
+                }
+            } catch (NumberFormatException e) {
+                gwa = 0.0; // Default to 0.0 if parsing fails
+            }
             
             // Create new Student object (constructor without ID will auto-generate)
             Student newStudent = new Student(
@@ -1156,7 +1764,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             students.add(newStudent);
             
             // Save to file
-            studentFileSaver.save(studentFilePath, students);
+            studentFileSaver.save(getStudentFilePath(), students);
             
             // Refresh table
             loadStudentTableData();
@@ -1171,6 +1779,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
             clearStudentForm();
                 
         } catch (Exception e) {
+            logger.severe("Error in Add New: " + e.getMessage());
+            e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Error adding student: " + e.getMessage(), 
                 "Error", 
@@ -1241,22 +1851,30 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 age--;
             }
             
-            // Find the student in the list and preserve their existing data for fields not in form
-            String yearLevel = "";
-            String section = "";
-            String studentType = "";
+            // Get academic information from form
+            String yearLevel = (String) ST_YearLevel.getSelectedItem();
+            String studentType = (String) ST_StudentType.getSelectedItem();
+            String section = ST_Section.getText().equals("(Auto-assigned)") ? "" : ST_Section.getText();
+            
+            // Preserve subjects enrolled from existing student
             java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
             double gwa = 0.0;
             
             for (Student s : students) {
                 if (s.getStudentID().equals(originalID)) {
-                    yearLevel = s.getYearLevel();
-                    section = s.getSection();
-                    studentType = s.getStudentType();
                     subjectsEnrolled = s.getSubjectsEnrolled();
-                    gwa = s.getGwa();
                     break;
                 }
+            }
+            
+            // Parse GWA from field
+            try {
+                String gwaText = ST_GWA.getText().trim();
+                if (!gwaText.isEmpty() && !gwaText.equals("0.00")) {
+                    gwa = Double.parseDouble(gwaText);
+                }
+            } catch (NumberFormatException e) {
+                gwa = 0.0; // Default to 0.0 if parsing fails
             }
             
             // Create updated Student object
@@ -1275,7 +1893,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Save to file
-            studentFileSaver.save(studentFilePath, students);
+            studentFileSaver.save(getStudentFilePath(), students);
             
             // Refresh table
             loadStudentTableData();
@@ -1289,6 +1907,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
                 
         } catch (Exception e) {
+            logger.severe("Error in Update: " + e.getMessage());
+            e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Error updating student: " + e.getMessage(), 
                 "Error", 
@@ -1326,6 +1946,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_GuardiansPhoneNumber.setText("");
         ST_Gender.setSelectedIndex(0);
         ST_DateOfBirth.setValue(new java.util.Date());
+        
+        // Clear academic fields
+        ST_YearLevel.setSelectedIndex(0);
+        ST_CurrentSemester.setSelectedIndex(0);
+        ST_StudentType.setSelectedIndex(0);
+        ST_Section.setText("(Auto-assigned)");
+        ST_GWA.setText("0.00");
+        
         ST_Table.clearSelection();
     }
 
@@ -1376,6 +2004,32 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     logger.warning("Error parsing date: " + e.getMessage());
                     ST_DateOfBirth.setValue(new java.util.Date());
                 }
+                
+                // Populate academic fields
+                String yearLevel = student.getYearLevel();
+                if ("1st Year".equals(yearLevel)) {
+                    ST_YearLevel.setSelectedIndex(0);
+                } else if ("2nd Year".equals(yearLevel)) {
+                    ST_YearLevel.setSelectedIndex(1);
+                } else {
+                    ST_YearLevel.setSelectedIndex(0); // Default to 1st Year
+                }
+                
+                String studentType = student.getStudentType();
+                if ("Regular".equals(studentType)) {
+                    ST_StudentType.setSelectedIndex(0);
+                } else if ("Irregular".equals(studentType)) {
+                    ST_StudentType.setSelectedIndex(1);
+                } else {
+                    ST_StudentType.setSelectedIndex(0); // Default to Regular
+                }
+                
+                ST_Section.setText(student.getSection() != null && !student.getSection().isEmpty() ? 
+                    student.getSection() : "(Auto-assigned)");
+                ST_GWA.setText(String.format("%.2f", student.getGwa()));
+                
+                // Refresh suggested courses with student's enrollment status
+                loadSuggestedCourses();
             }
         } catch (Exception e) {
             logger.warning("Error populating form from table: " + e.getMessage());
@@ -1428,9 +2082,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
 
     private void loadSuggestedCourses() {
-        // This method references missing UI components (ST_YearLevel, ST_CurrentSemester, ST_SuggestedCoursesList)
-        // Commented out until UI is redesigned
-        /*
         try {
             String selectedYearLevel = (String) ST_YearLevel.getSelectedItem();
             String selectedSemester = (String) ST_CurrentSemester.getSelectedItem();
@@ -1517,12 +2168,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
             logger.warning("Error loading suggested courses: " + e.getMessage());
             ST_SuggestedCoursesList.setListData(new String[]{"Error loading courses"});
         }
-        */
     }
 
     private void ST_SaveAndEnrollActionPerformed(java.awt.event.ActionEvent evt) {
-        // This method references missing UI components (ST_YearLevel, ST_StudentType, ST_Section, ST_GWA)
-        // Simplified version that works with available components
+        // First, save the student (same as Add New)
         if (ST_StudentName.getText().trim().isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Student Name is required!", 
@@ -1540,7 +2189,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         Student.setNextIdNum(maxId);
 
         try {
-            // Collect data from form fields
+            // Collect data from form fields (same as Add New)
             String name = ST_StudentName.getText().trim();
             String gender = (String) ST_Gender.getSelectedItem();
             String email = ST_Email.getText().trim();
@@ -1562,12 +2211,19 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 age--;
             }
             
-            // Use default values for missing UI components
-            String yearLevel = "1st Year";  // Default value
-            String studentType = "Regular"; // Default value
-            String section = ""; // Auto-assigned
+            String yearLevel = (String) ST_YearLevel.getSelectedItem();
+            String studentType = (String) ST_StudentType.getSelectedItem();
+            String section = ST_Section.getText().equals("(Auto-assigned)") ? "" : ST_Section.getText();
             java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
-            double gwa = 0.0; // Default value
+            double gwa = 0.0;
+            try {
+                String gwaText = ST_GWA.getText().trim();
+                if (!gwaText.isEmpty() && !gwaText.equals("0.00")) {
+                    gwa = Double.parseDouble(gwaText);
+                }
+            } catch (NumberFormatException e) {
+                gwa = 0.0;
+            }
             
             Student newStudent = new Student(
                 name, age, dob, yearLevel, section, studentType,
@@ -1602,7 +2258,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
     }
 
-    private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    /*private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
         // Placeholder for Schedule tab student search functionality
         // This would search for students in the schedule system
     }
@@ -1615,7 +2271,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private void SCH_RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
         // Placeholder for Schedule tab refresh functionality
         // This would reload the schedule data
-    }
+    }*/
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
         // This method is in CourseTab, not StudentCourseTab
@@ -1647,6 +2303,38 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify                     
+    private javax.swing.JPanel CT_BottomPanel;
+    private javax.swing.JLabel CT_COURSE1;
+    private javax.swing.JLabel CT_COURSE2;
+    private javax.swing.JLabel CT_COURSE3;
+    private javax.swing.JLabel CT_COURSE4;
+    private javax.swing.JLabel CT_COURSE5;
+    private javax.swing.JButton CT_Clear;
+    private javax.swing.JComboBox<String> CT_Course1;
+    private javax.swing.JComboBox<String> CT_Course2;
+    private javax.swing.JComboBox<String> CT_Course3;
+    private javax.swing.JComboBox<String> CT_Course4;
+    private javax.swing.JComboBox<String> CT_Course5;
+    private javax.swing.JLabel CT_ID;
+    private javax.swing.JPanel CT_LeftPanel;
+    private javax.swing.JButton CT_Logout;
+    private javax.swing.JButton CT_Print;
+    private javax.swing.JButton CT_Refresh;
+    private javax.swing.JPanel CT_RightPanel;
+    private javax.swing.JLabel CT_SEARCH_STUDENT;
+    private javax.swing.JLabel CT_SEMESTER;
+    private javax.swing.JLabel CT_STUDENT_ID;
+    private javax.swing.JButton CT_Save;
+    private javax.swing.JButton CT_Search;
+    private javax.swing.JTextField CT_SearchStudent;
+    private javax.swing.JPanel CT_SearchStudentPanel;
+    private javax.swing.JComboBox<String> CT_Semester;
+    private javax.swing.JTextField CT_StudentID;
+    private javax.swing.JTable CT_Table;
+    private javax.swing.JScrollPane CT_TableScrollPane;
+    private javax.swing.JButton CT_Update;
+    private javax.swing.JTextField CT_id;
+    private javax.swing.JPanel CourseTab;
     private javax.swing.JPanel MainPanel;
     private javax.swing.JScrollPane MainScrollPane;
     private javax.swing.JTabbedPane MainTabPanel;
@@ -1691,5 +2379,23 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JPanel ScoreTab;
     private javax.swing.JPanel StudentTab;
     private javax.swing.JSpinner ST_DateOfBirth;
+    
+    // Academic Information Fields
+    private javax.swing.JComboBox<String> ST_YearLevel;
+    private javax.swing.JComboBox<String> ST_CurrentSemester;
+    private javax.swing.JComboBox<String> ST_StudentType;
+    private javax.swing.JTextField ST_Section;
+    private javax.swing.JTextField ST_GWA;
+    private javax.swing.JLabel ST_YEAR_LEVEL;
+    private javax.swing.JLabel ST_CURRENT_SEMESTER;
+    private javax.swing.JLabel ST_STUDENT_TYPE;
+    private javax.swing.JLabel ST_SECTION;
+    private javax.swing.JLabel ST_GWA_LABEL;
+    private javax.swing.JLabel ST_ACADEMIC_INFO;
+    private javax.swing.JPanel ST_SuggestedCoursesPanel;
+    private javax.swing.JScrollPane ST_SuggestedCoursesScrollPane;
+    private javax.swing.JList<String> ST_SuggestedCoursesList;
+    private javax.swing.JButton ST_SaveAndEnroll;
     // End of variables declaration                   
 }
+

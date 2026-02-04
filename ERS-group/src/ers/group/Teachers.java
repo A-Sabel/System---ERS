@@ -1,7 +1,9 @@
 package ers.group;
 
+
 import java.util.ArrayList;
 import java.util.Map;
+
 
 /**
  *
@@ -11,8 +13,10 @@ public class Teachers {
     private final String teacherID;
     private final String teacherName;
 
+
     private final ArrayList<String> qualifiedSubjectIDs;
-    private final ArrayList<String> assignedSchedules; 
+    private final ArrayList<String> assignedSchedules;
+
 
     // Constructor
     public Teachers(String teacherID, String teacherName) {
@@ -21,11 +25,12 @@ public class Teachers {
         this.qualifiedSubjectIDs = new ArrayList<>();
         this.assignedSchedules = new ArrayList<>();
     }
-    
+   
     // Methods
     public boolean canTeachSubject(String subjectID) {
         return this.qualifiedSubjectIDs.contains(subjectID);
     }
+
 
     // Actions
     public void assignSchedule(String schedule) {
@@ -33,13 +38,13 @@ public class Teachers {
             this.assignedSchedules.add(schedule);
         }
     }
-    
+   
     public void addQualifiedSubject(String subjectID) {
         if (subjectID != null && !this.qualifiedSubjectIDs.contains(subjectID)) {
             this.qualifiedSubjectIDs.add(subjectID);
         }
     }
-    
+   
     // Get subject names
     public String getQualifiedSubjectNames(Map<String, CourseSubject> subjectMap) {
         StringBuilder sb = new StringBuilder();
@@ -55,15 +60,18 @@ public class Teachers {
         }
         return sb.toString();
     }
-    
+   
     // Getters
     public String getTeacherID() { return teacherID; }
     public String getTeacherName() { return teacherName; }
     public ArrayList<String> getQualifiedSubjectIDs() { return qualifiedSubjectIDs; }
     public ArrayList<String> getAssignedSchedules() { return assignedSchedules; }
-    
+   
     @Override
     public String toString() {
         return String.format("%s - %s", teacherID, teacherName);
     }
 }
+
+
+

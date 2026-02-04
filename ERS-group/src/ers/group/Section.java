@@ -1,25 +1,25 @@
 package ers.group;
 
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
 
+
+
 public class Section {
-    private String sectionID;
+    private final String sectionID;
     private CourseSubject subject;
     private Teachers instructor;
     private Schedule schedule;
-    
+   
     // Tracks students currently in this specific section
-    private ArrayList<String> enrolledStudentIDs; 
-    private int capacityLimit;
+    private ArrayList<String> enrolledStudentIDs;
+    private final int capacityLimit;
 
-    public Section(String sectionID, CourseSubject subject) {
-        this(sectionID, subject, subject.getStudentCount());
-    }
-    
+
     public Section(String sectionID, CourseSubject subject, int sectionCapacity) {
         this.sectionID = sectionID;
         this.subject = subject;
@@ -27,11 +27,12 @@ public class Section {
         this.enrolledStudentIDs = new ArrayList<>();
     }
 
+
     // Methods
     public boolean isFull() {
         return enrolledStudentIDs.size() >= capacityLimit;
     }
-    
+   
     public boolean addStudent(String studentID) {
         if (!isFull() && !enrolledStudentIDs.contains(studentID)) {
             enrolledStudentIDs.add(studentID);
@@ -39,23 +40,26 @@ public class Section {
         }
         return false;
     }
-    
+   
     public int getCurrentEnrollment() {
         return enrolledStudentIDs.size();
     }
+
 
     public static ArrayList<Section> generateSections(CourseSubject subject, int totalStudents, int sectionCapacity) {
         ArrayList<Section> newSections = new ArrayList<>();
         //calculate number of sections needed
         int numRequired = (totalStudents + sectionCapacity - 1) / sectionCapacity;
 
+
         for (int i = 1; i <= numRequired; i++) {
             String secID = subject.getCourseSubjectID() + "-SEC" + i;
             newSections.add(new Section(secID, subject, sectionCapacity));
         }
-        
+       
         return newSections;
     }
+
 
     // Getters and Setters
     public CourseSubject getSubject() { return subject; }
@@ -66,13 +70,14 @@ public class Section {
     public Teachers getInstructor() { return instructor; }
     public ArrayList<String> getEnrolledStudentIDs() { return enrolledStudentIDs; }
     public int getCapacityLimit() { return capacityLimit; }
-    
+   
     @Override
     public String toString() {
-        return String.format("%s - %s | Enrolled: %d/%d | Instructor: %s", 
+        return String.format("%s - %s | Enrolled: %d/%d | Instructor: %s",
             sectionID, subject.getCourseSubjectName(), getCurrentEnrollment(), capacityLimit,
             instructor != null ? instructor.getTeacherName() : "Unassigned");
     }
+
 
     public void saveSectionsToFile(ArrayList<Section> sections, String fileName) {
         try (PrintWriter writer = new PrintWriter(new FileWriter(fileName))) {
@@ -82,12 +87,12 @@ public class Section {
                 String teacherID = (sec.getInstructor() != null) ? sec.getInstructor().getTeacherID() : "NULL";
                 String scheduleID = (sec.getSchedule() != null) ? sec.getSchedule().getScheduleID() : "NULL";
                 String roomID = (sec.getSchedule() != null) ? sec.getSchedule().getRoom() : "NULL";
-                
+               
                 // Format: SectionID|CourseID|TeacherID|ScheduleID|RoomID|StudentCount|StudentList
-                writer.printf("%s|%s|%s|%s|%s|%d|%s\n", 
-                    sec.getSectionID(), 
+                writer.printf("%s|%s|%s|%s|%s|%d|%s\n",
+                    sec.getSectionID(),
                     sec.getSubject().getCourseSubjectID(),
-                    teacherID, 
+                    teacherID,
                     scheduleID,
                     roomID,
                     sec.getCurrentEnrollment(),
@@ -99,3 +104,6 @@ public class Section {
         }
     }
 }
+
+
+

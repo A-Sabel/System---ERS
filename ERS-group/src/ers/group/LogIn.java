@@ -16,9 +16,9 @@ public class LogIn extends javax.swing.JFrame {
         University = new javax.swing.JLabel();
         SMS = new javax.swing.JLabel();
         SignInPanel = new javax.swing.JPanel();
-        Email = new javax.swing.JTextField();
+        Username = new javax.swing.JTextField();
         Password = new javax.swing.JPasswordField();
-        EmailLabel = new javax.swing.JLabel();
+        UsernameLabel = new javax.swing.JLabel();
         PasswordLabel = new javax.swing.JLabel();
         SignIn = new javax.swing.JButton();
         SignUp = new javax.swing.JButton();
@@ -42,14 +42,14 @@ public class LogIn extends javax.swing.JFrame {
         SignInPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(255, 255, 255), 1, true));
         SignInPanel.setPreferredSize(new java.awt.Dimension(350, 360));
 
-        Email.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        Username.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
 
         Password.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         Password.addActionListener(this::PasswordActionPerformed);
 
-        EmailLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        EmailLabel.setForeground(new java.awt.Color(77, 142, 162));
-        EmailLabel.setText("Username:");
+        UsernameLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        UsernameLabel.setForeground(new java.awt.Color(77, 142, 162));
+        UsernameLabel.setText("Username:");
 
         PasswordLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         PasswordLabel.setForeground(new java.awt.Color(77, 142, 162));
@@ -68,6 +68,12 @@ public class LogIn extends javax.swing.JFrame {
         SignUp.setText("Sign Up Here");
         SignUp.setPreferredSize(new java.awt.Dimension(75, 25));
 
+        SignUp.addActionListener(evt -> {
+            SignUp signUpDialog = new SignUp(this, true);
+            signUpDialog.setLocationRelativeTo(this); // center on login
+            signUpDialog.setVisible(true);
+        });
+
         NoAccount.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         NoAccount.setForeground(new java.awt.Color(77, 142, 162));
         NoAccount.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
@@ -80,9 +86,9 @@ public class LogIn extends javax.swing.JFrame {
             .addGroup(SignInPanelLayout.createSequentialGroup()
                 .addGap(32, 32, 32)
                 .addGroup(SignInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(Email)
+                    .addComponent(Username)
                     .addComponent(Password)
-                    .addComponent(EmailLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(UsernameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 129, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(PasswordLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(SignIn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(SignUp, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -93,9 +99,9 @@ public class LogIn extends javax.swing.JFrame {
             SignInPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(SignInPanelLayout.createSequentialGroup()
                 .addGap(34, 34, 34)
-                .addComponent(EmailLabel)
+                .addComponent(UsernameLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Email, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(Username, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(31, 31, 31)
                 .addComponent(PasswordLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -157,13 +163,13 @@ public class LogIn extends javax.swing.JFrame {
     }                                        
 
     private void SignInActionPerformed(java.awt.event.ActionEvent evt) {                                       
-        String email = Email.getText();
+        String username = Username.getText();
         String password = new String(Password.getPassword());
 
-        if (email.isEmpty() || password.isEmpty()) {
+        if (username.isEmpty() || password.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(
                 this,
-                "Please enter both username and password.",
+                "Please fill in all fields.",
                 "Sign In Error",
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
@@ -199,8 +205,8 @@ public class LogIn extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify                     
-    private javax.swing.JTextField Email;
-    private javax.swing.JLabel EmailLabel;
+    private javax.swing.JTextField Username;
+    private javax.swing.JLabel UsernameLabel;
     private javax.swing.JPanel MainPanel;
     private javax.swing.JPasswordField Password;
     private javax.swing.JLabel PasswordLabel;

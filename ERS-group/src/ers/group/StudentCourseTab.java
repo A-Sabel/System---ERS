@@ -1,19 +1,11 @@
 package ers.group;
 
-import java.awt.BorderLayout;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.table.DefaultTableModel;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
-import java.awt.Color;
-import java.awt.Component;
 
-/**
- *
- * @author Eli
- */
 public class StudentCourseTab extends javax.swing.JFrame {
     
     // Session Manager - holds current student for auto-population in Course Tab

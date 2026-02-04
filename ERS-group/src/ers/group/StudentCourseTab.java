@@ -14,9 +14,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
-    
-    // File paths
-    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
+    private String studentFilePath; // Store the actual file path found during loading
 
     /**
      * Creates new form Student
@@ -48,6 +46,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
                     filePath = path;
+                    studentFilePath = path; // Store for later use in saving
                     logger.info("Found student data at: " + f.getAbsolutePath());
                     break;
                 }
@@ -71,47 +70,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
     
     private void loadStudentTableData() {
-        DefaultTableModel model = null;
-        javax.swing.JTable table = null;
+        // Get the model from ST_Table directly
+        DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
         
-        // Try to get existing model from table if it exists
-        if (ST_TableScrollPane.getComponentCount() > 0 && ST_TableScrollPane.getComponent(0) instanceof javax.swing.JScrollPane) {
-            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_TableScrollPane.getComponent(0);
-            if (pane.getViewport().getView() instanceof javax.swing.JTable) {
-                table = (javax.swing.JTable) pane.getViewport().getView();
-                if (table.getModel() instanceof DefaultTableModel) {
-                    model = (DefaultTableModel) table.getModel();
-                }
-            }
-        }
-        
-        // Create a proper table if it doesn't exist
-        if (model == null) {
-            model = new DefaultTableModel(
-                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
-                0
-            );
-            table = new javax.swing.JTable(model);
-            table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            
-            // Configure table selection behavior
-            table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-            table.setRowSelectionAllowed(true);
-            table.setColumnSelectionAllowed(false);
-            
-            // Add selection listener to populate form when row is clicked
-            final javax.swing.JTable finalTable = table;
-            table.getSelectionModel().addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting() && finalTable.getSelectedRow() >= 0) {
-                    populateStudentFormFromTable(finalTable.getSelectedRow());
-                }
-            });
-            
-            // Clear panel and add the new table
-            ST_TableScrollPane.setViewportView(table);
-        } else {
-            model.setRowCount(0);
-        }
+        // Clear existing rows
+        model.setRowCount(0);
         
         // Add student data to table
         for (Student stud : students) {
@@ -127,16 +90,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getPhoneNumber()
             });
         }
-        
-        // Refresh display
-        if (ST_TableScrollPane.getParent() != null) {
-            ST_TableScrollPane.revalidate();
-            ST_TableScrollPane.repaint();
-        }
     }
 
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         MainScrollPane = new javax.swing.JScrollPane();
@@ -1189,7 +1144,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Save to file
             try {
-                studentFileSaver.save(STUDENT_FILE, students);
+                studentFileSaver.save(studentFilePath, students);
                 javax.swing.JOptionPane.showMessageDialog(this, 
                     "Student deleted and saved successfully!", 
                     "Success", 
@@ -1274,7 +1229,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             students.add(newStudent);
             
             // Save to file
-            studentFileSaver.save(STUDENT_FILE, students);
+            studentFileSaver.save(studentFilePath, students);
             
             // Refresh table
             loadStudentTableData();
@@ -1390,7 +1345,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Save to file
-            studentFileSaver.save(STUDENT_FILE, students);
+            studentFileSaver.save(studentFilePath, students);
             
             // Refresh table
             loadStudentTableData();

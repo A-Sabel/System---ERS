@@ -26,9 +26,34 @@ public class Student {
     private String mothersName;
     private String guardiansPhoneNumber;
 
+    // generate student number
+    private static int nextIdNum = 1;
+
+
     // constructors
-    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String section, ArrayList<String> subjectsEnrolled, double gwa, String studentType, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName) {
+    // Constructor for loading existing students from file (uses provided ID)
+    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = studentID;
+        this.studentName = studentName;
+        this.age = age;
+        this.dob = dob;
+        this.yearLevel = yearLevel;
+        this.section = section;
+        this.studentType = studentType;
+        this.subjectsEnrolled = subjectsEnrolled;
+        this.gwa = gwa;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.gender = gender;
+        this.address = address;
+        this.fathersName = fathersName;
+        this.mothersName = mothersName;
+        this.guardiansPhoneNumber = guardiansPhoneNumber;
+    }
+    
+    // Constructor for creating new students (generates new ID)
+    public Student(String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
+        this.studentID = generateNewID();
         this.studentName = studentName;
         this.age = age;
         this.dob = dob;
@@ -83,6 +108,13 @@ public class Student {
         return gwa;
     }
 
+    public static String generateNewID() {
+        return String.format("STU-%03d", nextIdNum++);
+    }
+
+    public static void setNextIdNum(int lastID) {
+        nextIdNum = lastID + 1;
+    }
     // Setters
     public void setStudentName(String studentName) {
         this.studentName = studentName;

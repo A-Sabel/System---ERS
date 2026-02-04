@@ -86,6 +86,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getAge(),
                 stud.getDateOfBirth(),
                 stud.getYearLevel(),
+                stud.getSection(),
                 stud.getStudentType(),
                 stud.getGwa(),
                 stud.getEmail(),
@@ -417,7 +418,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Student ID", "Student Name", "Age", "Date of Birth", "Year Level", "Student Status", "GWA", "Email", "Phone No.", "Address"
+                "Student ID", "Student Name", "Age", "Date of Birth", "Year Level", "Section", "Student Status", "GWA", "Email", "Phone No.",
             }
         ));
         
@@ -678,7 +679,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Section", "Type", "GWA", "Email", "Phone"},
                     0
                 );
                 model.addRow(new Object[]{
@@ -687,6 +688,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getAge(),
                     student.getDateOfBirth(),
                     student.getYearLevel(),
+                    student.getSection(),
                     student.getStudentType(),
                     student.getGwa(),
                     student.getEmail(),
@@ -744,27 +746,22 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void ST_AddNewActionPerformed(java.awt.event.ActionEvent evt) {
         // Validate required fields
-        if (ST_StudentID.getText().trim().isEmpty() || 
-            ST_StudentName.getText().trim().isEmpty()) {
+        if (ST_StudentName.getText().trim().isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(this, 
-                "Student ID and Name are required!", 
+                "Student Name are required!", 
                 "Validation Error", 
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-
-        String studentID = ST_StudentID.getText().trim();
         
-        // Check for duplicate student ID
+        // Syncing student ID
+        int maxId = 0;
         for (Student s : students) {
-            if (s.getStudentID().equals(studentID)) {
-                javax.swing.JOptionPane.showMessageDialog(this, 
-                    "Student ID already exists!", 
-                    "Duplicate Error", 
-                    javax.swing.JOptionPane.WARNING_MESSAGE);
-                return;
-            }
+            int idNum = Integer.parseInt(s.getStudentID().replace("STU-", ""));
+            if (idNum > maxId) maxId = idNum;
         }
+        Student.setNextIdNum(maxId); 
+        
 
         try {
             // Collect data from form fields
@@ -793,13 +790,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Use defaults for fields not in the form
             String yearLevel = "";
+            String section = "";
             String studentType = "";
             java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
             double gwa = 0.0;
             
-            // Create new Student object
+            // Create new Student object (constructor without ID will auto-generate)
             Student newStudent = new Student(
-                studentID, name, age, dob, yearLevel, studentType,
+                name, age, dob, yearLevel, section, studentType,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
@@ -813,13 +811,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
             // Refresh table
             loadStudentTableData();
             
-            // Clear form
-            clearStudentForm();
-            
+            // Show success message with generated ID
             javax.swing.JOptionPane.showMessageDialog(this, 
-                "Student added successfully!", 
+                "Student added successfully!\nGenerated ID: " + newStudent.getStudentID(), 
                 "Success", 
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            
+            // Clear form and show next available ID
+            clearStudentForm();
                 
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, 
@@ -894,6 +893,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Find the student in the list and preserve their existing data for fields not in form
             String yearLevel = "";
+            String section = "";
             String studentType = "";
             java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
             double gwa = 0.0;
@@ -901,6 +901,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             for (Student s : students) {
                 if (s.getStudentID().equals(originalID)) {
                     yearLevel = s.getYearLevel();
+                    section = s.getSection();
                     studentType = s.getStudentType();
                     subjectsEnrolled = s.getSubjectsEnrolled();
                     gwa = s.getGwa();
@@ -910,7 +911,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Create updated Student object
             Student updatedStudent = new Student(
-                newID, name, age, dob, yearLevel, studentType,
+                newID, name, age, dob, yearLevel, section, studentType,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
@@ -950,7 +951,22 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
 
     private void clearStudentForm() {
-        ST_StudentID.setText("");
+        // Generate and display next Student ID
+        int maxId = 0;
+        for (Student s : students) {
+            String idStr = s.getStudentID().replace("STU-", "");
+            try {
+                int idNum = Integer.parseInt(idStr);
+                if (idNum > maxId) maxId = idNum;
+            } catch (NumberFormatException e) {
+                // Skip invalid IDs
+            }
+        }
+        String nextID = String.format("STU-%03d", maxId + 1);
+        ST_StudentID.setText(nextID);
+        ST_StudentID.setEditable(false); // Make read-only for new students
+        ST_StudentID.setBackground(new java.awt.Color(240, 240, 240)); // Gray background
+        
         ST_StudentName.setText("");
         ST_Email.setText("");
         ST_PhoneNumber.setText("");
@@ -965,6 +981,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void populateStudentFormFromTable(int rowIndex) {
         try {
+            // Enable Student ID field for updates (keep read-only to prevent ID changes)
+            ST_StudentID.setEditable(false); // Keep read-only even for updates to prevent ID conflicts
+            ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
+            
             javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
             
             // Get student ID from table and find full student object

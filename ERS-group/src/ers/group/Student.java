@@ -27,12 +27,7 @@ public class Student {
     private String guardiansPhoneNumber;
 
     // constructors
-    public Student(String studentID, String studentName, int age,
-                    String dob, String yearLevel, String section, String studentType,
-                    ArrayList<String> subjectsEnrolled, double gwa,
-                    String email, String phoneNumber, String gender,
-                    String address, String fathersName, String mothersName,
-                    String guardiansPhoneNumber) {
+    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String section, ArrayList<String> subjectsEnrolled, double gwa, String studentType, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName) {
         this.studentID = studentID;
         this.studentName = studentName;
         this.age = age;

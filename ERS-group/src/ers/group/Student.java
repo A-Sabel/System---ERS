@@ -10,6 +10,7 @@ public class Student {
     private int age;
     private final String dob;
     private String yearLevel;
+    private String section;
     private String studentType;
     private ArrayList<String> subjectsEnrolled;
     private double gwa;
@@ -25,18 +26,39 @@ public class Student {
     private String mothersName;
     private String guardiansPhoneNumber;
 
+    // generate student number
+    private static int nextIdNum = 1;
+
+
     // constructors
-    public Student(String studentID, String studentName, int age,
-                    String dob, String yearLevel, String studentType,
-                    ArrayList<String> subjectsEnrolled, double gwa,
-                    String email, String phoneNumber, String gender,
-                    String address, String fathersName, String mothersName,
-                    String guardiansPhoneNumber) {
+    // Constructor for loading existing students from file (uses provided ID)
+    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = studentID;
         this.studentName = studentName;
         this.age = age;
         this.dob = dob;
         this.yearLevel = yearLevel;
+        this.section = section;
+        this.studentType = studentType;
+        this.subjectsEnrolled = subjectsEnrolled;
+        this.gwa = gwa;
+        this.email = email;
+        this.phoneNumber = phoneNumber;
+        this.gender = gender;
+        this.address = address;
+        this.fathersName = fathersName;
+        this.mothersName = mothersName;
+        this.guardiansPhoneNumber = guardiansPhoneNumber;
+    }
+    
+    // Constructor for creating new students (generates new ID)
+    public Student(String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
+        this.studentID = generateNewID();
+        this.studentName = studentName;
+        this.age = age;
+        this.dob = dob;
+        this.yearLevel = yearLevel;
+        this.section = section;
         this.studentType = studentType;
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
@@ -70,6 +92,10 @@ public class Student {
         return yearLevel;
     }
 
+    public String getSection() {
+        return section;
+    }
+
     public String getStudentType() {
         return studentType;
     }
@@ -82,6 +108,13 @@ public class Student {
         return gwa;
     }
 
+    public static String generateNewID() {
+        return String.format("STU-%03d", nextIdNum++);
+    }
+
+    public static void setNextIdNum(int lastID) {
+        nextIdNum = lastID + 1;
+    }
     // Setters
     public void setStudentName(String studentName) {
         this.studentName = studentName;
@@ -93,6 +126,10 @@ public class Student {
 
     public void setYearLevel(String yearLevel) {
         this.yearLevel = yearLevel;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
     }
 
     public void setStudentType(String studentType) {
@@ -170,6 +207,7 @@ public class Student {
         System.out.println("Age: " + age);
         System.out.println("Date of Birth: " + dob);
         System.out.println("Year Level: " + yearLevel);
+        System.out.println("Section: " + section);
         System.out.println("Student Type: " + studentType);
         System.out.println("Subjects Enrolled: " + subjectsEnrolled);
         System.out.println("GWA: " + gwa);

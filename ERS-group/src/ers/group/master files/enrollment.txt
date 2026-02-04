@@ -1,4 +1,3 @@
-enrollmentID,studentID,courseID,yearLevel,semester,status
 ENR-001,STU-001,CS101,1st Year,1,ENROLLED
 ENR-002,STU-001,CS102,1st Year,1,NOTENROLLED
 ENR-003,STU-001,CS103,2nd Year,1,ENROLLED

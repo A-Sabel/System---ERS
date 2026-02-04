@@ -194,32 +194,33 @@ class StudentFileLoader extends BaseFileLoader {
         readFile(filePath, line -> {
             String[] parts = line.split(",");
             // Format: ID, Name, Age, DOB, YearLevel, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
-            if (parts.length < 15) return;
+            if (parts.length < 16) return;
             
             String id = parts[0].trim();
             String name = parts[1].trim();
             int age = Integer.parseInt(parts[2].trim());
             String dob = parts[3].trim();
             String yearLevel = parts[4].trim();
-            String studentType = parts[5].trim();
+            String section = parts[5].trim();
+            String studentType = parts[6].trim();
             ArrayList<String> subjects = new ArrayList<>();
-            if (!parts[6].trim().isEmpty()) {
-                String[] subjectList = parts[6].split(";");
+            if (!parts[7].trim().isEmpty()) {
+                String[] subjectList = parts[7].split(";");
                 for (String subject : subjectList) {
                     subjects.add(subject.trim());
                 }
             }
-            double gwa = Double.parseDouble(parts[7].trim());
-            String email = parts[8].trim();
-            String phoneNumber = parts[9].trim();
-            String gender = parts[10].trim();
-            String address = parts[11].trim();
-            String fathersName = parts[12].trim();
-            String mothersName = parts[13].trim();
-            String guardiansPhoneNumber = parts[14].trim();
+            double gwa = Double.parseDouble(parts[8].trim());
+            String email = parts[9].trim();
+            String phoneNumber = parts[10].trim();
+            String gender = parts[11].trim();
+            String address = parts[12].trim();
+            String fathersName = parts[13].trim();
+            String mothersName = parts[14].trim();
+            String guardiansPhoneNumber = parts[15].trim();
             
-            Student student = new Student(id, name, age, dob, yearLevel, studentType, 
-                    subjects, gwa, email, phoneNumber, gender, address, 
+            Student student = new Student(id, name, age, dob, yearLevel, section, 
+                    studentType, subjects, gwa, email, phoneNumber, gender, address, 
                     fathersName, mothersName, guardiansPhoneNumber);
             allStudents.add(student);
         });
@@ -302,5 +303,52 @@ class EnrollmentFileLoader extends BaseFileLoader {
             enrollmentMap.put(key, enrollment);
         }
         return enrollmentMap;
+    }
+}
+
+class MarksheetFileLoader extends BaseFileLoader {
+    private final List<Marksheet> allMarksheets = new ArrayList<>();
+    
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split(",");
+            // Format: ID, StudentID, Semester, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
+            if (parts.length < 14) return;
+            
+            String id = parts[0].trim();
+            String studentID = parts[1].trim();
+            String semester = parts[2].trim();
+            
+            // Extract 5 course-score pairs
+            String[] subjects = new String[5];
+            double[] marks = new double[5];
+            
+            for (int i = 0; i < 5; i++) {
+                int courseIndex = 3 + (i * 2);
+                int scoreIndex = 4 + (i * 2);
+                
+                subjects[i] = parts[courseIndex].trim();
+                String scoreStr = parts[scoreIndex].trim();
+                marks[i] = scoreStr.isEmpty() ? 0.0 : Double.parseDouble(scoreStr);
+            }
+            
+            // Note: Marksheet constructor needs studentName, but file only has ID
+            // We'll use empty string for now or need to look up from student data
+            Marksheet marksheet = new Marksheet(studentID, "", "", semester, subjects, marks);
+            allMarksheets.add(marksheet);
+        });
+    }
+    
+    public Collection<Marksheet> getAllMarksheets() {
+        return allMarksheets;
+    }
+    
+    public Map<String, Marksheet> getMarksheetMap() {
+        Map<String, Marksheet> marksheetMap = new LinkedHashMap<>();
+        for (Marksheet marksheet : allMarksheets) {
+            marksheetMap.put(marksheet.getStudentID() + "_" + marksheet.getSemester(), marksheet);
+        }
+        return marksheetMap;
     }
 }

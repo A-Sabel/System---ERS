@@ -49,6 +49,7 @@ class StudentFileSaver extends BaseFileSaver<Student> {
             String.valueOf(s.getAge()),
             s.getDateOfBirth(),
             s.getYearLevel(),
+            s.getSection(),
             s.getStudentType(),
             subjects,
             String.valueOf(s.getGwa()),
@@ -144,5 +145,40 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
             enrollment.getSectionID(),
             enrollment.getCourseID()
         );
+    }
+}
+
+class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
+    @Override
+    protected String formatLine(Marksheet m) {
+        // Format: ID, StudentID, Semester, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
+        StringBuilder sb = new StringBuilder();
+        
+        // Generate ID (e.g., MRK-001)
+        sb.append("MRK-").append(String.format("%03d", System.currentTimeMillis() % 1000)).append(",");
+        sb.append(m.getStudentID()).append(",");
+        sb.append(m.getSemester()).append(",");
+        
+        // Add 5 course-score pairs
+        String[] subjects = m.getSubjects();
+        double[] marks = m.getMarks();
+        for (int i = 0; i < 5; i++) {
+            sb.append(subjects[i] != null ? subjects[i] : "").append(",");
+            sb.append(marks[i]).append(",");
+        }
+        
+        // Calculate and add average
+        double average = 0.0;
+        int count = 0;
+        for (double mark : marks) {
+            if (mark > 0) {
+                average += mark;
+                count++;
+            }
+        }
+        average = count > 0 ? average / count : 0.0;
+        sb.append(String.format("%.2f", average));
+        
+        return sb.toString();
     }
 }

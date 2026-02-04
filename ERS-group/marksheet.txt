@@ -1,2 +1,0 @@
-STU-01,Renegago,1,1,Programming 1,1.0,true,Computer Fundamentals,2.0,true,Discrete Mathematics,2.5,true,Ethics in Computing,3.0,true,Programming 2,1.7,true,2.04
-STU-02,HI,1,1,Programming 1,1.0,true,Computer Fundamentals,2.0,true,Discrete Mathematics,3.0,true,Object-Oriented Programming,3.0,true,Web Technologies,2.0,true,2.2

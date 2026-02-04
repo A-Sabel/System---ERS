@@ -3,9 +3,9 @@
 package ers.group;
 
 
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.awt.BorderLayout;
 import javax.swing.table.DefaultTableModel;
 
 public class StudentCourseTab extends javax.swing.JFrame {
@@ -15,8 +15,64 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
     private String studentFilePath; // Store the actual file path found during loading
+
     // reference to embedded marksheet panel
     private Marksheettab marksheetTab;
+
+    private CourseSubjectFileLoader courseLoader; // For loading suggested courses
+    private CourseTab courseTab; // Reference to CourseTab for refreshing
+    private boolean isInitialized = false; // Flag to prevent premature tab change events
+
+    
+    // Schedule Data - commented out as not used in this version
+    // private ArrayList<Schedule> schedules;
+    // private Map<String, ArrayList<String>> studentCourses;
+    
+    // Static inner class to hold session data for cross-tab communication
+    static class SessionManager {
+        private static String currentStudentID = "";
+        private static String currentStudentName = "";
+        
+        public static void setCurrentStudent(String id, String name) {
+            currentStudentID = id;
+            currentStudentName = name;
+        }
+        
+        public static String getCurrentStudentID() {
+            return currentStudentID;
+        }
+        
+        public static String getCurrentStudentName() {
+            return currentStudentName;
+        }
+        
+        public static void clear() {
+            currentStudentID = "";
+            currentStudentName = "";
+        }
+    }
+    
+    // Schedule Tab Components - Commented out as now using Scheduletab instance
+    /*private javax.swing.JPanel SCH_SearchPanel;
+    private javax.swing.JPanel SCH_FiltersPanel;
+    private javax.swing.JLabel SCH_SemesterIDLabel;
+    private javax.swing.JTextField SCH_StudentSearchField;
+    private javax.swing.JButton SCH_SearchStudentButton;
+    private javax.swing.JTextField SCH_SemesterSearchField;
+    private javax.swing.JLabel SCH_StudentIDLabel;
+    private javax.swing.JButton SCH_SearchSemesterButton;
+    private javax.swing.JPanel SCH_GWAPanel;
+    private javax.swing.JLabel SCH_GWALabel;
+    private javax.swing.JPanel SCH_MonthYearPanel;
+    private javax.swing.JComboBox<String> SCH_MonthComboBox;
+    private javax.swing.JSpinner SCH_YearSpinner;
+    private javax.swing.JLabel SCH_MonthYearDisplayLabel;
+    private javax.swing.JButton SCH_RefreshButton;
+    private javax.swing.JScrollPane SCH_TableScrollPane;
+    private javax.swing.JTable SCH_Table;*/
+    
+    // File paths
+    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
 
     /**
      * Creates new form Student
@@ -151,6 +207,29 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getPhoneNumber()
             });
         }
+    }
+
+    private String getStudentFilePath() {
+        if (studentFilePath != null) {
+            return studentFilePath;
+        }
+        
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/student.txt",
+            "src/ers/group/master files/student.txt",
+            "master files/student.txt",
+            "student.txt",
+            "ERS-group/student.txt",
+            "../student.txt"
+        };
+        
+        for (String path : possiblePaths) {
+            if (new java.io.File(path).exists()) {
+                return path;
+            }
+        }
+        
+        return possiblePaths[0]; // Fallback to first path
     }
 
     private void initComponents() {
@@ -625,6 +704,220 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Schedule", ScheduleTab);
 
+        MainTabPanel.addTab("Schedule", new Scheduletab());
+        
+        /*ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
+        
+        SCH_SearchPanel = new javax.swing.JPanel();
+        SCH_FiltersPanel = new javax.swing.JPanel();
+        SCH_SemesterIDLabel = new javax.swing.JLabel();
+        SCH_StudentSearchField = new javax.swing.JTextField();
+        SCH_SearchStudentButton = new javax.swing.JButton();
+        SCH_SemesterSearchField = new javax.swing.JTextField();
+        SCH_StudentIDLabel = new javax.swing.JLabel();
+        SCH_SearchSemesterButton = new javax.swing.JButton();
+        SCH_GWAPanel = new javax.swing.JPanel();
+        SCH_GWALabel = new javax.swing.JLabel();
+        SCH_MonthYearPanel = new javax.swing.JPanel();
+        SCH_MonthComboBox = new javax.swing.JComboBox<>();
+        SCH_YearSpinner = new javax.swing.JSpinner();
+        SCH_MonthYearDisplayLabel = new javax.swing.JLabel();
+        SCH_RefreshButton = new javax.swing.JButton();
+        SCH_TableScrollPane = new javax.swing.JScrollPane();
+        SCH_Table = new javax.swing.JTable();
+
+        SCH_SearchPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_SearchPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        SCH_FiltersPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_FiltersPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
+
+        SCH_SemesterIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SemesterIDLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_SemesterIDLabel.setText("Semester's ID");
+
+        SCH_StudentSearchField.setBackground(new java.awt.Color(146, 190, 219));
+
+        SCH_SearchStudentButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_SearchStudentButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SearchStudentButton.setText("Search");
+        SCH_SearchStudentButton.addActionListener(this::SCH_SearchStudentButtonActionPerformed);
+
+        SCH_SemesterSearchField.setBackground(new java.awt.Color(146, 190, 219));
+
+        SCH_StudentIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_StudentIDLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_StudentIDLabel.setText("Student ID");
+
+        SCH_SearchSemesterButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_SearchSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SearchSemesterButton.setText("Search");
+
+        javax.swing.GroupLayout SCH_FiltersPanelLayout = new javax.swing.GroupLayout(SCH_FiltersPanel);
+        SCH_FiltersPanel.setLayout(SCH_FiltersPanelLayout);
+        SCH_FiltersPanelLayout.setHorizontalGroup(
+            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                .addGap(23, 23, 23)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SCH_StudentIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SemesterIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                            .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(SCH_SearchSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, SCH_FiltersPanelLayout.createSequentialGroup()
+                            .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(31, 31, 31)
+                            .addComponent(SCH_SearchStudentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        SCH_FiltersPanelLayout.setVerticalGroup(
+            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(SCH_StudentIDLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SearchStudentButton))
+                .addGap(18, 18, 18)
+                .addComponent(SCH_SemesterIDLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SearchSemesterButton))
+                .addContainerGap(25, Short.MAX_VALUE))
+        );
+
+        SCH_GWAPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_GWAPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
+
+        SCH_GWALabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); 
+        SCH_GWALabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_GWALabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        SCH_GWALabel.setText("GWA. --");
+
+        javax.swing.GroupLayout SCH_GWAPanelLayout = new javax.swing.GroupLayout(SCH_GWAPanel);
+        SCH_GWAPanel.setLayout(SCH_GWAPanelLayout);
+        SCH_GWAPanelLayout.setHorizontalGroup(
+            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        SCH_GWAPanelLayout.setVerticalGroup(
+            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout SCH_SearchPanelLayout = new javax.swing.GroupLayout(SCH_SearchPanel);
+        SCH_SearchPanel.setLayout(SCH_SearchPanelLayout);
+        SCH_SearchPanelLayout.setHorizontalGroup(
+            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        SCH_SearchPanelLayout.setVerticalGroup(
+            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
+                .addGap(22, 22, 22)
+                .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        SCH_MonthYearPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_MonthYearPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        SCH_MonthComboBox.addActionListener(this::SCH_MonthComboBoxActionPerformed);
+
+        SCH_MonthYearDisplayLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
+        SCH_MonthYearDisplayLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_MonthYearDisplayLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        SCH_MonthYearDisplayLabel.setText("January 2026");
+
+        SCH_RefreshButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_RefreshButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
+        SCH_RefreshButton.setText("Refresh");
+        SCH_RefreshButton.addActionListener(this::SCH_RefreshButtonActionPerformed);
+
+        SCH_Table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {},
+            new String [] {
+                "Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+            }
+        ));
+        SCH_TableScrollPane.setViewportView(SCH_Table);
+
+        javax.swing.GroupLayout SCH_MonthYearPanelLayout = new javax.swing.GroupLayout(SCH_MonthYearPanel);
+        SCH_MonthYearPanel.setLayout(SCH_MonthYearPanelLayout);
+        SCH_MonthYearPanelLayout.setHorizontalGroup(
+            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(36, 36, 36)
+                        .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(SCH_RefreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(SCH_TableScrollPane)))
+                .addContainerGap())
+        );
+        SCH_MonthYearPanelLayout.setVerticalGroup(
+            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_RefreshButton))
+                .addGap(18, 18, 18)
+                .addComponent(SCH_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout ScheduleTabLayout = new javax.swing.GroupLayout(ScheduleTab);
+        ScheduleTab.setLayout(ScheduleTabLayout);
+        ScheduleTabLayout.setHorizontalGroup(
+            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ScheduleTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        ScheduleTabLayout.setVerticalGroup(
+            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ScheduleTabLayout.createSequentialGroup()
+                .addGap(15, 15, 15)
+                .addGroup(ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );*/
+
+        //MainTabPanel.addTab("Schedule", ScheduleTab); // Removed: Now using Scheduletab instance
+
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
         MainPanelLayout.setHorizontalGroup(
@@ -1091,6 +1384,235 @@ public class StudentCourseTab extends javax.swing.JFrame {
             // Optionally, close the window
             this.dispose();
         }
+    }
+
+    private void loadCourseData() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/courseSubject.txt",
+                "src/ers/group/master files/courseSubject.txt",
+                "master files/courseSubject.txt",
+                "courseSubject.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    filePath = path;
+                    logger.info("Found course data at: " + f.getAbsolutePath());
+                    break;
+                }
+            }
+            
+            if (filePath != null) {
+                courseLoader.load(filePath);
+                logger.info("Loaded " + courseLoader.getAllSubjects().size() + " courses from file");
+            } else {
+                logger.warning("Could not find courseSubject.txt");
+            }
+        } catch (Exception e) {
+            logger.severe("Error loading course data: " + e.getMessage());
+        }
+    }
+
+    private void loadSuggestedCourses() {
+        // This method references missing UI components (ST_YearLevel, ST_CurrentSemester, ST_SuggestedCoursesList)
+        // Commented out until UI is redesigned
+        /*
+        try {
+            String selectedYearLevel = (String) ST_YearLevel.getSelectedItem();
+            String selectedSemester = (String) ST_CurrentSemester.getSelectedItem();
+            
+            if (selectedYearLevel == null || selectedSemester == null) {
+                return;
+            }
+            
+            // Parse year level (1st Year -> 1, 2nd Year -> 2)
+            int yearLevel = selectedYearLevel.equals("1st Year") ? 1 : 2;
+            int semester = Integer.parseInt(selectedSemester);
+            
+            // Get current student's ID from form
+            String currentStudentID = ST_StudentID.getText().trim();
+            Student currentStudent = null;
+            
+            // Find the student object
+            if (!currentStudentID.isEmpty()) {
+                for (Student s : students) {
+                    if (s.getStudentID().equals(currentStudentID)) {
+                        currentStudent = s;
+                        break;
+                    }
+                }
+            }
+            
+            // Filter courses by year level and semester with status indicators
+            java.util.List<String> courseList = new java.util.ArrayList<>();
+            Collection<CourseSubject> allCourses = courseLoader.getAllSubjects();
+            
+            if (allCourses != null && !allCourses.isEmpty()) {
+                for (CourseSubject course : allCourses) {
+                    if (course.getYearLevel() == yearLevel && course.getSemester() == semester) {
+                        String statusPrefix = "[A]"; // Available
+                        String prereqNote = "";
+                        
+                        // Determine status if we have a student selected
+                        if (currentStudent != null) {
+                            String courseID = course.getCourseSubjectID();
+                            java.util.ArrayList<String> enrolledSubjects = currentStudent.getSubjectsEnrolled();
+                            
+                            // Check if student has passed or is enrolled in this course
+                            if (enrolledSubjects != null && enrolledSubjects.contains(courseID)) {
+                                statusPrefix = "[/]"; // Passed/Enrolled
+                            }
+                            // Check if course has prerequisites and student hasn't taken them
+                            else if (course.getPrerequisites() != null && !course.getPrerequisites().isEmpty()) {
+                                java.util.ArrayList<CourseSubject> prerequisites = course.getPrerequisites();
+                                java.util.ArrayList<String> missingPrereqs = new java.util.ArrayList<>();
+                                
+                                for (CourseSubject prereq : prerequisites) {
+                                    String prereqID = prereq.getCourseSubjectID();
+                                    if (enrolledSubjects == null || !enrolledSubjects.contains(prereqID)) {
+                                        missingPrereqs.add(prereqID);
+                                    }
+                                }
+                                
+                                if (!missingPrereqs.isEmpty()) {
+                                    statusPrefix = "[X]"; // Blocked by prerequisite
+                                    prereqNote = " (Need: " + String.join(", ", missingPrereqs) + ")";
+                                }
+                            }
+                        }
+                        
+                        String courseInfo = String.format("%s %s - %s (%d units)%s", 
+                            statusPrefix,
+                            course.getCourseSubjectID(), 
+                            course.getCourseSubjectName(), 
+                            course.getUnits(),
+                            prereqNote);
+                        courseList.add(courseInfo);
+                    }
+                }
+            }
+            
+            // Update the list
+            if (courseList.isEmpty()) {
+                courseList.add("No courses found for " + selectedYearLevel + ", Semester " + selectedSemester);
+            }
+            
+            ST_SuggestedCoursesList.setListData(courseList.toArray(new String[0]));
+            
+        } catch (Exception e) {
+            logger.warning("Error loading suggested courses: " + e.getMessage());
+            ST_SuggestedCoursesList.setListData(new String[]{"Error loading courses"});
+        }
+        */
+    }
+
+    private void ST_SaveAndEnrollActionPerformed(java.awt.event.ActionEvent evt) {
+        // This method references missing UI components (ST_YearLevel, ST_StudentType, ST_Section, ST_GWA)
+        // Simplified version that works with available components
+        if (ST_StudentName.getText().trim().isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Student Name is required!", 
+                "Validation Error", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Syncing student ID
+        int maxId = 0;
+        for (Student s : students) {
+            int idNum = Integer.parseInt(s.getStudentID().replace("STU-", ""));
+            if (idNum > maxId) maxId = idNum;
+        }
+        Student.setNextIdNum(maxId);
+
+        try {
+            // Collect data from form fields
+            String name = ST_StudentName.getText().trim();
+            String gender = (String) ST_Gender.getSelectedItem();
+            String email = ST_Email.getText().trim();
+            String phoneNumber = ST_PhoneNumber.getText().trim();
+            String address = ST_Address.getText().trim();
+            String fathersName = ST_FathersName.getText().trim();
+            String mothersName = ST_MothersName.getText().trim();
+            String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
+            
+            java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            String dob = sdf.format(dobDate);
+            
+            java.util.Calendar dobCal = java.util.Calendar.getInstance();
+            dobCal.setTime(dobDate);
+            java.util.Calendar today = java.util.Calendar.getInstance();
+            int age = today.get(java.util.Calendar.YEAR) - dobCal.get(java.util.Calendar.YEAR);
+            if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DAY_OF_YEAR)) {
+                age--;
+            }
+            
+            // Use default values for missing UI components
+            String yearLevel = "1st Year";  // Default value
+            String studentType = "Regular"; // Default value
+            String section = ""; // Auto-assigned
+            java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
+            double gwa = 0.0; // Default value
+            
+            Student newStudent = new Student(
+                name, age, dob, yearLevel, section, studentType,
+                subjectsEnrolled, gwa, email, phoneNumber, gender,
+                address, fathersName, mothersName, guardiansPhone
+            );
+            
+            students.add(newStudent);
+            
+            // Save to file
+            studentFileSaver.save(getStudentFilePath(), students);
+            loadStudentTableData();
+            
+            // Store student in session for auto-population in Course Tab
+            SessionManager.setCurrentStudent(newStudent.getStudentID(), newStudent.getStudentName());
+            
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Student saved successfully!\nID: " + newStudent.getStudentID() + "\n\nSwitching to Course Tab for enrollment...", 
+                "Success", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            
+            // Switch to Course Tab
+            MainTabPanel.setSelectedIndex(1);
+            
+        } catch (Exception e) {
+            logger.severe("Error in Save & Enroll: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace to console for debugging
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Error saving student: " + e.getMessage(), 
+                "Error",
+                javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /*private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // Placeholder for Schedule tab student search functionality
+        // This would search for students in the schedule system
+    }
+
+    private void SCH_MonthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
+        // Placeholder for Schedule tab month selection
+        // This would filter schedules by selected month
+    }
+
+    private void SCH_RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // Placeholder for Schedule tab refresh functionality
+        // This would reload the schedule data
+    }*/
+
+    private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
+        // This method is in CourseTab, not StudentCourseTab
+        // The action listener should be handled by CourseTab instance
+    }
+
+    private void CT_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
+        ST_LogoutActionPerformed(evt);
     }
 
     /**

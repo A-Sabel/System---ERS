@@ -646,7 +646,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             if (student.getStudentID().equalsIgnoreCase(searchName)) {
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Section","Type", "GWA", "Email", "Phone"},
                     0
                 );
                 model.addRow(new Object[]{
@@ -655,6 +655,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getAge(),
                     student.getDateOfBirth(),
                     student.getYearLevel(),
+                    student.getSection(),
                     student.getStudentType(),
                     student.getGwa(),
                     student.getEmail(),

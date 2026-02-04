@@ -1,4 +1,3 @@
-scheduleID,courseID,room,day,startTime,endTime,teacherName
 SCH-001,CS101,Room 201,Monday,8:00 AM,9:30 AM,Alice Santos
 SCH-002,CS102,Room 202,Tuesday,10:00 AM,11:30 AM,Bob Reyes
 SCH-003,CS103,Room 203,Wednesday,8:00 AM,9:30 AM,Clara Diaz

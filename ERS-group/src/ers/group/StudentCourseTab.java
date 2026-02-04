@@ -18,6 +18,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
     private String studentFilePath; // Store the actual file path found during loading
+    // reference to embedded marksheet panel
+    private Marksheettab marksheetTab;
 
     /**
      * Creates new form Student
@@ -38,9 +40,43 @@ public class StudentCourseTab extends javax.swing.JFrame {
         try {
             MarkSheetTab.removeAll();
             MarkSheetTab.setLayout(new BorderLayout());
-            MarkSheetTab.add(new Marksheettab(), BorderLayout.CENTER);
+
+            // create and keep a reference to the marksheet panel
+            marksheetTab = new Marksheettab();
+
+            // Wrap the marksheet panel in a scroll pane so its main content can scroll
+            javax.swing.JScrollPane marksheetScroll = new javax.swing.JScrollPane(marksheetTab);
+            marksheetScroll.setBorder(null);
+            marksheetScroll.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+            MarkSheetTab.add(marksheetScroll, BorderLayout.CENTER);
+
+            // Reparent the marksheet's control panel (Print/Clear/Logout) to the bottom
+            javax.swing.JPanel control = marksheetTab.getControlPanel();
+            if (control != null) {
+                java.awt.Container oldParent = control.getParent();
+                if (oldParent != null) oldParent.remove(control);
+                control.setVisible(true);
+                MarkSheetTab.add(control, BorderLayout.SOUTH);
+                // hide internal copy inside the marksheet
+                marksheetTab.setControlPanelVisible(false);
+            }
+
             MarkSheetTab.revalidate();
             MarkSheetTab.repaint();
+
+            // After layout, size the embedded marksheet to the available tab area
+            java.awt.EventQueue.invokeLater(() -> {
+                try {
+                    java.awt.Dimension size = MarkSheetTab.getSize();
+                    if (size != null && size.width > 0 && size.height > 0) {
+                        java.awt.Component south = ((java.awt.BorderLayout) MarkSheetTab.getLayout()).getLayoutComponent(java.awt.BorderLayout.SOUTH);
+                        int southHeight = (south != null) ? south.getPreferredSize().height : 0;
+                        marksheetTab.setPreferredSize(new java.awt.Dimension(size.width, Math.max(200, size.height - southHeight)));
+                        marksheetTab.revalidate();
+                        marksheetTab.repaint();
+                    }
+                } catch (Exception ignored) {}
+            });
         } catch (Exception e) {
             logger.severe("Failed to add Marksheettab panel: " + e.getMessage());
         }

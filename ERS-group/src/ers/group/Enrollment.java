@@ -2,23 +2,35 @@ package ers.group;
 
 public class Enrollment {
 
+    private String enrollmentID;
     private String studentID;
     private String sectionID;
     private String courseID;
+    private String yearLevel;
+    private String semester;
+    private String status;
+    
+    private static int enrollmentCounter = 1;
 
-    public Enrollment(String studentID, String sectionID, String courseID) {
-        if (studentID == null || studentID.isEmpty()) {
-            throw new IllegalArgumentException("Student ID cannot be empty");
-        }
-        if (sectionID == null || sectionID.isEmpty()) {
-            throw new IllegalArgumentException("Section ID cannot be empty");
-        }
-        if (courseID == null || courseID.isEmpty()) {
-            throw new IllegalArgumentException("Course ID cannot be empty");
-        }
+    // Constructor for CourseTab
+    public Enrollment(String enrollmentID, String studentID, String courseID, String yearLevel, String semester, String status) {
+        this.enrollmentID = enrollmentID != null ? enrollmentID : generateEnrollmentID();
         this.studentID = studentID;
-        this.sectionID = sectionID;
         this.courseID = courseID;
+        this.yearLevel = yearLevel;
+        this.semester = semester;
+        this.status = status != null ? status : "ENROLLED";
+        this.sectionID = "";
+    }
+
+    // Legacy constructor
+    public Enrollment(String studentID, String sectionID, String courseID) {
+        this(null, studentID, courseID, "", "", "ENROLLED");
+        this.sectionID = sectionID;
+    }
+
+    public static String generateEnrollmentID() {
+        return "ENR-" + String.format("%03d", enrollmentCounter++);
     }
 
     // Validate prerequisites
@@ -37,10 +49,15 @@ public class Enrollment {
         return section.getEnrolledStudentIDs().size() >= section.getCapacityLimit();
     }
 
+    public String getEnrollmentID() { return enrollmentID; }
     public String getStudentID() { return studentID; }
     public String getSectionID() { return sectionID; }
     public String getCourseID() { return courseID; }
+    public String getYearLevel() { return yearLevel; }
+    public String getSemester() { return semester; }
+    public String getStatus() { return status; }
     
+    public void setEnrollmentID(String enrollmentID) { this.enrollmentID = enrollmentID; }
     public void setStudentID(String studentID) {
         if (studentID == null || studentID.isEmpty()) {
             throw new IllegalArgumentException("Student ID cannot be empty");
@@ -56,14 +73,16 @@ public class Enrollment {
     }
     
     public void setCourseID(String courseID) {
-        if (courseID == null || courseID.isEmpty()) {
-            throw new IllegalArgumentException("Course ID cannot be empty");
-        }
         this.courseID = courseID;
     }
+    
+    public void setYearLevel(String yearLevel) { this.yearLevel = yearLevel; }
+    public void setSemester(String semester) { this.semester = semester; }
+    public void setStatus(String status) { this.status = status; }
 
     @Override
     public String toString() {
-        return "Student " + studentID + " enrolled in Course " + courseID + " (Section " + sectionID + ")";
+        return "Enrollment[" + enrollmentID + "] Student " + studentID + " in Course " + courseID + 
+               " (Section " + sectionID + ", Status: " + status + ")";
     }
 }

@@ -2,6 +2,8 @@ package ers.group;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
@@ -9,15 +11,31 @@ import javax.swing.table.DefaultTableModel;
 public class CourseTab extends JPanel {
 
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(CourseTab.class.getName());
+    private static final int MAX_SECTION_CAPACITY = 15;
+    
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
+    private StudentFileSaver studentFileSaver;
     private String studentFilePath; 
+    
+    private ArrayList<Enrollment> enrollments;
+    private EnrollmentFileLoader enrollmentFileLoader;
+    private EnrollmentFileSaver enrollmentFileSaver;
+    
+    private Map<String, CourseSubject> availableCourses;
+    private CourseSubjectFileLoader courseFileLoader;
 
     public CourseTab() {
         initComponents();
         students = new ArrayList<>();
+        enrollments = new ArrayList<>();
+        availableCourses = new HashMap<>();
+        studentFileSaver = new StudentFileSaver();
+        enrollmentFileSaver = new EnrollmentFileSaver();
         loadStudentData();
         loadStudentTableData();
+        loadCourseData();
+        loadEnrollmentData();
     }
 
     private void loadStudentData() {
@@ -82,6 +100,68 @@ public class CourseTab extends JPanel {
                 stud.getPhoneNumber()
             });
         }
+    }
+
+    private void loadCourseData() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/courseSubject.txt",
+                "src/ers/group/master files/courseSubject.txt",
+                "master files/courseSubject.txt",
+                "courseSubject.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                if (new java.io.File(path).exists()) {
+                    filePath = path;
+                    break;
+                }
+            }
+            
+            if (filePath != null) {
+                courseFileLoader = new CourseSubjectFileLoader();
+                courseFileLoader.load(filePath);
+                availableCourses = courseFileLoader.getSubjectMap();
+                logger.info("Loaded courses");
+            }
+        } catch (Exception e) {
+            logger.severe("Error loading course data");
+            availableCourses = new HashMap<>();
+        }
+    }
+
+    private void loadEnrollmentData() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                if (new java.io.File(path).exists()) {
+                    filePath = path;
+                    break;
+                }
+            }
+            
+            if (filePath != null) {
+                enrollmentFileLoader = new EnrollmentFileLoader();
+                enrollmentFileLoader.load(filePath);
+                enrollments = new ArrayList<>(enrollmentFileLoader.getAllEnrollments());
+                logger.info("Loaded enrollments");
+            }
+        } catch (Exception e) {
+            logger.severe("Error loading enrollment data");
+            enrollments = new ArrayList<>();
+        }
+    }
+
+    public void CT_LoadCoursesActionPerformed(java.awt.event.ActionEvent evt) {
+        // Refresh course dropdowns
     }
 
     private void initComponents() {
@@ -444,7 +524,6 @@ public class CourseTab extends JPanel {
     }
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
-<<<<<<< HEAD
         // Validate required fields
         String studentID = CT_StudentID.getText().trim();
         String semesterStr = (String) CT_Semester.getSelectedItem();
@@ -812,9 +891,6 @@ public class CourseTab extends JPanel {
             }
         }
         return true;
-=======
-        javax.swing.JOptionPane.showMessageDialog(this, "Course details have been saved!", "Save", javax.swing.JOptionPane.INFORMATION_MESSAGE);
->>>>>>> bdc322b6e3a4e85bf61531309fc4ba4f58b39d69
     }
 
     private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                

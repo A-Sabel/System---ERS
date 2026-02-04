@@ -1,3 +1,5 @@
+// student course tab TAMA SHA
+
 package ers.group;
 
 import java.util.ArrayList;
@@ -14,9 +16,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
-    
-    // File paths
-    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
+    private String studentFilePath; // Store the actual file path found during loading
 
     /**
      * Creates new form Student
@@ -48,6 +48,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
                     filePath = path;
+                    studentFilePath = path; // Store for later use in saving
                     logger.info("Found student data at: " + f.getAbsolutePath());
                     break;
                 }
@@ -71,47 +72,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
     
     private void loadStudentTableData() {
-        DefaultTableModel model = null;
-        javax.swing.JTable table = null;
+        // Get the model from ST_Table directly
+        DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
         
-        // Try to get existing model from table if it exists
-        if (ST_TableScrollPane.getComponentCount() > 0 && ST_TableScrollPane.getComponent(0) instanceof javax.swing.JScrollPane) {
-            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_TableScrollPane.getComponent(0);
-            if (pane.getViewport().getView() instanceof javax.swing.JTable) {
-                table = (javax.swing.JTable) pane.getViewport().getView();
-                if (table.getModel() instanceof DefaultTableModel) {
-                    model = (DefaultTableModel) table.getModel();
-                }
-            }
-        }
-        
-        // Create a proper table if it doesn't exist
-        if (model == null) {
-            model = new DefaultTableModel(
-                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
-                0
-            );
-            table = new javax.swing.JTable(model);
-            table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            
-            // Configure table selection behavior
-            table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-            table.setRowSelectionAllowed(true);
-            table.setColumnSelectionAllowed(false);
-            
-            // Add selection listener to populate form when row is clicked
-            final javax.swing.JTable finalTable = table;
-            table.getSelectionModel().addListSelectionListener(e -> {
-                if (!e.getValueIsAdjusting() && finalTable.getSelectedRow() >= 0) {
-                    populateStudentFormFromTable(finalTable.getSelectedRow());
-                }
-            });
-            
-            // Clear panel and add the new table
-            ST_TableScrollPane.setViewportView(table);
-        } else {
-            model.setRowCount(0);
-        }
+        // Clear existing rows
+        model.setRowCount(0);
         
         // Add student data to table
         for (Student stud : students) {
@@ -127,16 +92,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getPhoneNumber()
             });
         }
-        
-        // Refresh display
-        if (ST_TableScrollPane.getParent() != null) {
-            ST_TableScrollPane.revalidate();
-            ST_TableScrollPane.repaint();
-        }
     }
 
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         MainScrollPane = new javax.swing.JScrollPane();
@@ -205,10 +162,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_COURSE3 = new javax.swing.JLabel();
         CT_COURSE4 = new javax.swing.JLabel();
         CT_COURSE5 = new javax.swing.JLabel();
-        CT_SearchStudentIDPanel = new javax.swing.JPanel();
-        CT_SEARCH_STUDENT_ID = new javax.swing.JLabel();
-        CT_SearchStudentId = new javax.swing.JTextField();
-        CT_SearchStudentID = new javax.swing.JButton();
         CT_Course1 = new javax.swing.JComboBox<>();
         CT_Course2 = new javax.swing.JComboBox<>();
         CT_Course3 = new javax.swing.JComboBox<>();
@@ -231,7 +184,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_Logout = new javax.swing.JButton();
         ScoreTab = new javax.swing.JPanel();
         MarkSheetTab = new javax.swing.JPanel();
-        ScheduleTab = new javax.swing.JPanel();
+        ScheduleTab = new Scheduletab();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -667,46 +620,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_COURSE5.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE5.setText("Course 5");
 
-        CT_SearchStudentIDPanel.setBackground(new java.awt.Color(0, 30, 58));
-        CT_SearchStudentIDPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
-
-        CT_SEARCH_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        CT_SEARCH_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
-        CT_SEARCH_STUDENT_ID.setText("Student ID");
-
-        CT_SearchStudentId.setBackground(new java.awt.Color(146, 190, 219));
-        CT_SearchStudentId.addActionListener(this::CT_SearchStudentIdActionPerformed);
-
-        CT_SearchStudentID.setBackground(new java.awt.Color(146, 190, 219));
-        CT_SearchStudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        CT_SearchStudentID.setText("Search");
-
-        javax.swing.GroupLayout CT_SearchStudentIDPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentIDPanel);
-        CT_SearchStudentIDPanel.setLayout(CT_SearchStudentIDPanelLayout);
-        CT_SearchStudentIDPanelLayout.setHorizontalGroup(
-            CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(CT_SEARCH_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
-                        .addComponent(CT_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(CT_SearchStudentID)))
-                .addContainerGap(7, Short.MAX_VALUE))
-        );
-        CT_SearchStudentIDPanelLayout.setVerticalGroup(
-            CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
-                .addGap(12, 12, 12)
-                .addComponent(CT_SEARCH_STUDENT_ID)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(CT_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(CT_SearchStudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(32, Short.MAX_VALUE))
-        );
-
         CT_Course1.setBackground(new java.awt.Color(146, 190, 219));
         CT_Course1.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         CT_Course1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
@@ -743,7 +656,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(CT_SearchStudentIDPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                         .addComponent(CT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -778,7 +690,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(CT_SearchStudentIDPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(32, 32, 32)
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
@@ -1010,20 +921,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
 
-        ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
-
-        javax.swing.GroupLayout ScheduleTabLayout = new javax.swing.GroupLayout(ScheduleTab);
-        ScheduleTab.setLayout(ScheduleTabLayout);
-        ScheduleTabLayout.setHorizontalGroup(
-            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1520, Short.MAX_VALUE)
-        );
-        ScheduleTabLayout.setVerticalGroup(
-            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 571, Short.MAX_VALUE)
-        );
-
         MainTabPanel.addTab("Schedule", ScheduleTab);
+
+        
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
@@ -1077,21 +977,13 @@ public class StudentCourseTab extends javax.swing.JFrame {
         // TODO add your handling code here:
     }                                         
 
-    private void CT_SearchStudentIdActionPerformed(java.awt.event.ActionEvent evt) {                                                   
-        // TODO add your handling code here:
-    }                                                  
-
     private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
         // TODO add your handling code here:
     }                                     
 
     private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
         // TODO add your handling code here:
-    }                                                                                         
-
-    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        // TODO add your handling code here:
-    }                                                
+    }                                                                                                                                         
 
     private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
         ST_SearchStudentActionPerformed(evt);
@@ -1171,7 +1063,83 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
         
         javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-    }                                       
+    }
+    
+    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        String searchName = CT_SearchStudent.getText().trim();
+        if (searchName.isEmpty()) {
+            loadStudentTableData();
+            return;
+        }
+        //Find student by ID
+        for (Student student : students) {
+            if (student.getStudentID().equalsIgnoreCase(searchName)) {
+                // Update table to show only this student
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    0
+                );
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                logger.info("Found student: " + student.getStudentID());
+                
+                // Create and set table
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                CT_TableScrollPane.setViewportView(table);
+                CT_TableScrollPane.revalidate();
+                CT_TableScrollPane.repaint();
+                return;
+            }
+        }
+        
+        // Find student by name
+        for (Student student : students) {
+            if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
+                // Update table to show only this student
+                DefaultTableModel model = new DefaultTableModel(
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    0
+                );
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getAge(),
+                    student.getDateOfBirth(),
+                    student.getYearLevel(),
+                    student.getStudentType(),
+                    student.getGwa(),
+                    student.getEmail(),
+                    student.getPhoneNumber()
+                });
+
+                logger.info("Found student: " + student.getStudentName());
+                
+                // Create and set table
+                javax.swing.JTable table = new javax.swing.JTable(model);
+                CT_TableScrollPane.setViewportView(table);
+                CT_TableScrollPane.revalidate();
+                CT_TableScrollPane.repaint();
+                return;
+            }
+        }
+        
+        javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void CT_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
+        CT_SearchStudent.setText("");
+        loadStudentTableData();
+    }
     
     private void ST_DeleteActionPerformed(java.awt.event.ActionEvent evt) {                                         
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
@@ -1189,7 +1157,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Save to file
             try {
-                studentFileSaver.save(STUDENT_FILE, students);
+                studentFileSaver.save(studentFilePath, students);
                 javax.swing.JOptionPane.showMessageDialog(this, 
                     "Student deleted and saved successfully!", 
                     "Success", 
@@ -1274,7 +1242,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             students.add(newStudent);
             
             // Save to file
-            studentFileSaver.save(STUDENT_FILE, students);
+            studentFileSaver.save(studentFilePath, students);
             
             // Refresh table
             loadStudentTableData();
@@ -1390,7 +1358,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Save to file
-            studentFileSaver.save(STUDENT_FILE, students);
+            studentFileSaver.save(studentFilePath, students);
             
             // Refresh table
             loadStudentTableData();
@@ -1548,15 +1516,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JButton CT_Refresh;
     private javax.swing.JPanel CT_RightPanel;
     private javax.swing.JLabel CT_SEARCH_STUDENT;
-    private javax.swing.JLabel CT_SEARCH_STUDENT_ID;
     private javax.swing.JLabel CT_SEMESTER;
     private javax.swing.JLabel CT_STUDENT_ID;
     private javax.swing.JButton CT_Save;
     private javax.swing.JButton CT_Search;
     private javax.swing.JTextField CT_SearchStudent;
-    private javax.swing.JButton CT_SearchStudentID;
-    private javax.swing.JPanel CT_SearchStudentIDPanel;
-    private javax.swing.JTextField CT_SearchStudentId;
     private javax.swing.JPanel CT_SearchStudentPanel;
     private javax.swing.JComboBox<String> CT_Semester;
     private javax.swing.JTextField CT_StudentID;

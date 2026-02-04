@@ -11,17 +11,17 @@ public class ERSGroup {
     private static final Scanner scanner = new Scanner(System.in);
     
     // File Loaders
-    private static StudentFileLoader studentLoader = new StudentFileLoader();
-    private static CourseSubjectFileLoader courseLoader = new CourseSubjectFileLoader();
-    private static TeacherFileLoader teacherLoader = new TeacherFileLoader();
-    private static RoomFileLoader roomLoader = new RoomFileLoader();
-    private static ScheduleFileLoader scheduleLoader = new ScheduleFileLoader();
-    private static EnrollmentFileLoader enrollmentLoader = new EnrollmentFileLoader();
+    private final static StudentFileLoader studentLoader = new StudentFileLoader();
+    private final static CourseSubjectFileLoader courseLoader = new CourseSubjectFileLoader();
+    private final static TeacherFileLoader teacherLoader = new TeacherFileLoader();
+    private final static RoomFileLoader roomLoader = new RoomFileLoader();
+    private final static ScheduleFileLoader scheduleLoader = new ScheduleFileLoader();
+    private final static EnrollmentFileLoader enrollmentLoader = new EnrollmentFileLoader();
     
     // File Savers
-    private static StudentFileSaver studentSaver = new StudentFileSaver();
-    private static ScheduleFileSaver scheduleSaver = new ScheduleFileSaver();
-    private static EnrollmentFileSaver enrollmentSaver = new EnrollmentFileSaver();
+    private final static StudentFileSaver studentSaver = new StudentFileSaver();
+    private final static ScheduleFileSaver scheduleSaver = new ScheduleFileSaver();
+    private final static EnrollmentFileSaver enrollmentSaver = new EnrollmentFileSaver();
     
     // File paths
     private static final String STUDENT_FILE = "ERS-group/src/ers/group/master files/student.txt";

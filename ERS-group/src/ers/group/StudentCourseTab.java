@@ -1,10 +1,13 @@
-// student course tab TAMA SHA
-
 package ers.group;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import javax.swing.table.DefaultTableModel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.awt.Color;
+import java.awt.Component;
 
 /**
  *
@@ -16,7 +19,32 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
-    private String studentFilePath; // Store the actual file path found during loading
+    
+    // Schedule Data
+    private ArrayList<Schedule> schedules;
+    private Map<String, ArrayList<String>> studentCourses;
+    
+    // Schedule Tab Components
+    private javax.swing.JPanel SCH_SearchPanel;
+    private javax.swing.JPanel SCH_FiltersPanel;
+    private javax.swing.JLabel SCH_SemesterIDLabel;
+    private javax.swing.JTextField SCH_StudentSearchField;
+    private javax.swing.JButton SCH_SearchStudentButton;
+    private javax.swing.JTextField SCH_SemesterSearchField;
+    private javax.swing.JLabel SCH_StudentIDLabel;
+    private javax.swing.JButton SCH_SearchSemesterButton;
+    private javax.swing.JPanel SCH_GWAPanel;
+    private javax.swing.JLabel SCH_GWALabel;
+    private javax.swing.JPanel SCH_MonthYearPanel;
+    private javax.swing.JComboBox<String> SCH_MonthComboBox;
+    private javax.swing.JSpinner SCH_YearSpinner;
+    private javax.swing.JLabel SCH_MonthYearDisplayLabel;
+    private javax.swing.JButton SCH_RefreshButton;
+    private javax.swing.JScrollPane SCH_TableScrollPane;
+    private javax.swing.JTable SCH_Table;
+    
+    // File paths
+    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
 
     /**
      * Creates new form Student
@@ -28,6 +56,26 @@ public class StudentCourseTab extends javax.swing.JFrame {
         studentFileSaver = new StudentFileSaver();
         loadStudentData();
         loadStudentTableData();
+        
+        // Schedule Tab Initialization
+        schedules = new ArrayList<>();
+        studentCourses = new HashMap<>();
+        loadScheduleData();
+        loadStudentCourseMappings();
+        
+        // Fix Year spinner
+        SCH_YearSpinner.setModel(new javax.swing.SpinnerNumberModel(2026, 2000, 2100, 1));
+        SCH_YearSpinner.addChangeListener(e -> updateMonthYearLabel());
+
+        // Set correct months
+        SCH_MonthComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[]{
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        }));
+
+        // Initial label update
+        updateMonthYearLabel();
+        displayEmptySchedule();
     }
     
     private void loadStudentData() {
@@ -48,7 +96,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
                     filePath = path;
-                    studentFilePath = path; // Store for later use in saving
                     logger.info("Found student data at: " + f.getAbsolutePath());
                     break;
                 }
@@ -72,11 +119,42 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
     
     private void loadStudentTableData() {
-        // Get the model from ST_Table directly
-        DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
+        DefaultTableModel model = null;
+        javax.swing.JTable table = null;
         
-        // Clear existing rows
-        model.setRowCount(0);
+        // Try to get existing model from table if it exists
+        if (ST_TableScrollPane.getComponentCount() > 0 && ST_TableScrollPane.getComponent(0) instanceof javax.swing.JScrollPane) {
+            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_TableScrollPane.getComponent(0);
+            if (pane.getViewport().getView() instanceof javax.swing.JTable) {
+                table = (javax.swing.JTable) pane.getViewport().getView();
+                if (table.getModel() instanceof DefaultTableModel) {
+                    model = (DefaultTableModel) table.getModel();
+                }
+            }
+        }
+        
+        // Create a proper table if it doesn't exist
+        if (model == null) {
+            model = new DefaultTableModel(
+                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                0
+            );
+            table = new javax.swing.JTable(model);
+            table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+            
+            // Add selection listener to populate form when row is clicked
+            final javax.swing.JTable finalTable = table;
+            table.getSelectionModel().addListSelectionListener(e -> {
+                if (!e.getValueIsAdjusting() && finalTable.getSelectedRow() >= 0) {
+                    populateStudentFormFromTable(finalTable.getSelectedRow());
+                }
+            });
+            
+            // Clear panel and add the new table
+            ST_TableScrollPane.setViewportView(table);
+        } else {
+            model.setRowCount(0);
+        }
         
         // Add student data to table
         for (Student stud : students) {
@@ -92,8 +170,16 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getPhoneNumber()
             });
         }
+        
+        // Refresh display
+        if (ST_TableScrollPane.getParent() != null) {
+            ST_TableScrollPane.revalidate();
+            ST_TableScrollPane.repaint();
+        }
     }
 
+    @SuppressWarnings("unchecked")
+    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
     private void initComponents() {
 
         MainScrollPane = new javax.swing.JScrollPane();
@@ -162,6 +248,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_COURSE3 = new javax.swing.JLabel();
         CT_COURSE4 = new javax.swing.JLabel();
         CT_COURSE5 = new javax.swing.JLabel();
+        CT_SearchStudentIDPanel = new javax.swing.JPanel();
+        CT_SEARCH_STUDENT_ID = new javax.swing.JLabel();
+        CT_SearchStudentId = new javax.swing.JTextField();
+        CT_SearchStudentID = new javax.swing.JButton();
         CT_Course1 = new javax.swing.JComboBox<>();
         CT_Course2 = new javax.swing.JComboBox<>();
         CT_Course3 = new javax.swing.JComboBox<>();
@@ -184,7 +274,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_Logout = new javax.swing.JButton();
         ScoreTab = new javax.swing.JPanel();
         MarkSheetTab = new javax.swing.JPanel();
-        ScheduleTab = new Scheduletab();
+        ScheduleTab = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -452,19 +542,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 "Student ID", "Student Name", "Date of Birth", "Gender", "Email", "Phone Number", "Father's Name", "Mother's Name", "Guardian's Phone No.", "Address"
             }
         ));
-        
-        // Configure table selection behavior
-        ST_Table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
-        ST_Table.setRowSelectionAllowed(true);
-        ST_Table.setColumnSelectionAllowed(false);
-        
-        // Add selection listener to populate form when row is clicked
-        ST_Table.getSelectionModel().addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting() && ST_Table.getSelectedRow() >= 0) {
-                populateStudentFormFromTable(ST_Table.getSelectedRow());
-            }
-        });
-        
         ST_TableScrollPane.setViewportView(ST_Table);
 
         javax.swing.GroupLayout ST_RightPanelLayout = new javax.swing.GroupLayout(ST_RightPanel);
@@ -620,6 +697,46 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_COURSE5.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE5.setText("Course 5");
 
+        CT_SearchStudentIDPanel.setBackground(new java.awt.Color(0, 30, 58));
+        CT_SearchStudentIDPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
+
+        CT_SEARCH_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_SEARCH_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
+        CT_SEARCH_STUDENT_ID.setText("Student ID");
+
+        CT_SearchStudentId.setBackground(new java.awt.Color(146, 190, 219));
+        CT_SearchStudentId.addActionListener(this::CT_SearchStudentIdActionPerformed);
+
+        CT_SearchStudentID.setBackground(new java.awt.Color(146, 190, 219));
+        CT_SearchStudentID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_SearchStudentID.setText("Search");
+
+        javax.swing.GroupLayout CT_SearchStudentIDPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentIDPanel);
+        CT_SearchStudentIDPanel.setLayout(CT_SearchStudentIDPanelLayout);
+        CT_SearchStudentIDPanelLayout.setHorizontalGroup(
+            CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
+                .addGap(15, 15, 15)
+                .addGroup(CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(CT_SEARCH_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 179, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
+                        .addComponent(CT_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 366, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(CT_SearchStudentID)))
+                .addContainerGap(7, Short.MAX_VALUE))
+        );
+        CT_SearchStudentIDPanelLayout.setVerticalGroup(
+            CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(CT_SearchStudentIDPanelLayout.createSequentialGroup()
+                .addGap(12, 12, 12)
+                .addComponent(CT_SEARCH_STUDENT_ID)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(CT_SearchStudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(CT_SearchStudentId, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(CT_SearchStudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(32, Short.MAX_VALUE))
+        );
+
         CT_Course1.setBackground(new java.awt.Color(146, 190, 219));
         CT_Course1.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         CT_Course1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
@@ -656,6 +773,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(CT_SearchStudentIDPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                         .addComponent(CT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -690,6 +808,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
+                .addComponent(CT_SearchStudentIDPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(32, 32, 32)
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
@@ -921,9 +1040,217 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
 
-        MainTabPanel.addTab("Schedule", ScheduleTab);
-
+        ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
         
+        SCH_SearchPanel = new javax.swing.JPanel();
+        SCH_FiltersPanel = new javax.swing.JPanel();
+        SCH_SemesterIDLabel = new javax.swing.JLabel();
+        SCH_StudentSearchField = new javax.swing.JTextField();
+        SCH_SearchStudentButton = new javax.swing.JButton();
+        SCH_SemesterSearchField = new javax.swing.JTextField();
+        SCH_StudentIDLabel = new javax.swing.JLabel();
+        SCH_SearchSemesterButton = new javax.swing.JButton();
+        SCH_GWAPanel = new javax.swing.JPanel();
+        SCH_GWALabel = new javax.swing.JLabel();
+        SCH_MonthYearPanel = new javax.swing.JPanel();
+        SCH_MonthComboBox = new javax.swing.JComboBox<>();
+        SCH_YearSpinner = new javax.swing.JSpinner();
+        SCH_MonthYearDisplayLabel = new javax.swing.JLabel();
+        SCH_RefreshButton = new javax.swing.JButton();
+        SCH_TableScrollPane = new javax.swing.JScrollPane();
+        SCH_Table = new javax.swing.JTable();
+
+        SCH_SearchPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_SearchPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        SCH_FiltersPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_FiltersPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
+
+        SCH_SemesterIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SemesterIDLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_SemesterIDLabel.setText("Semester's ID");
+
+        SCH_StudentSearchField.setBackground(new java.awt.Color(146, 190, 219));
+
+        SCH_SearchStudentButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_SearchStudentButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SearchStudentButton.setText("Search");
+        SCH_SearchStudentButton.addActionListener(this::SCH_SearchStudentButtonActionPerformed);
+
+        SCH_SemesterSearchField.setBackground(new java.awt.Color(146, 190, 219));
+
+        SCH_StudentIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_StudentIDLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_StudentIDLabel.setText("Student ID");
+
+        SCH_SearchSemesterButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_SearchSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SearchSemesterButton.setText("Search");
+
+        javax.swing.GroupLayout SCH_FiltersPanelLayout = new javax.swing.GroupLayout(SCH_FiltersPanel);
+        SCH_FiltersPanel.setLayout(SCH_FiltersPanelLayout);
+        SCH_FiltersPanelLayout.setHorizontalGroup(
+            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                .addGap(23, 23, 23)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SCH_StudentIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SemesterIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                            .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(SCH_SearchSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, SCH_FiltersPanelLayout.createSequentialGroup()
+                            .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(31, 31, 31)
+                            .addComponent(SCH_SearchStudentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        SCH_FiltersPanelLayout.setVerticalGroup(
+            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(SCH_StudentIDLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SearchStudentButton))
+                .addGap(18, 18, 18)
+                .addComponent(SCH_SemesterIDLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SearchSemesterButton))
+                .addContainerGap(25, Short.MAX_VALUE))
+        );
+
+        SCH_GWAPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_GWAPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
+
+        SCH_GWALabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); 
+        SCH_GWALabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_GWALabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        SCH_GWALabel.setText("GWA. --");
+
+        javax.swing.GroupLayout SCH_GWAPanelLayout = new javax.swing.GroupLayout(SCH_GWAPanel);
+        SCH_GWAPanel.setLayout(SCH_GWAPanelLayout);
+        SCH_GWAPanelLayout.setHorizontalGroup(
+            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        SCH_GWAPanelLayout.setVerticalGroup(
+            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout SCH_SearchPanelLayout = new javax.swing.GroupLayout(SCH_SearchPanel);
+        SCH_SearchPanel.setLayout(SCH_SearchPanelLayout);
+        SCH_SearchPanelLayout.setHorizontalGroup(
+            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        SCH_SearchPanelLayout.setVerticalGroup(
+            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
+                .addGap(22, 22, 22)
+                .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        SCH_MonthYearPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_MonthYearPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        SCH_MonthComboBox.addActionListener(this::SCH_MonthComboBoxActionPerformed);
+
+        SCH_MonthYearDisplayLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
+        SCH_MonthYearDisplayLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_MonthYearDisplayLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        SCH_MonthYearDisplayLabel.setText("January 2026");
+
+        SCH_RefreshButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_RefreshButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
+        SCH_RefreshButton.setText("Refresh");
+        SCH_RefreshButton.addActionListener(this::SCH_RefreshButtonActionPerformed);
+
+        SCH_Table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {},
+            new String [] {
+                "Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+            }
+        ));
+        SCH_TableScrollPane.setViewportView(SCH_Table);
+
+        javax.swing.GroupLayout SCH_MonthYearPanelLayout = new javax.swing.GroupLayout(SCH_MonthYearPanel);
+        SCH_MonthYearPanel.setLayout(SCH_MonthYearPanelLayout);
+        SCH_MonthYearPanelLayout.setHorizontalGroup(
+            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(36, 36, 36)
+                        .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(SCH_RefreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(SCH_TableScrollPane)))
+                .addContainerGap())
+        );
+        SCH_MonthYearPanelLayout.setVerticalGroup(
+            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_RefreshButton))
+                .addGap(18, 18, 18)
+                .addComponent(SCH_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout ScheduleTabLayout = new javax.swing.GroupLayout(ScheduleTab);
+        ScheduleTab.setLayout(ScheduleTabLayout);
+        ScheduleTabLayout.setHorizontalGroup(
+            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ScheduleTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        ScheduleTabLayout.setVerticalGroup(
+            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ScheduleTabLayout.createSequentialGroup()
+                .addGap(15, 15, 15)
+                .addGroup(ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+
+        MainTabPanel.addTab("Schedule", ScheduleTab);
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
@@ -977,13 +1304,21 @@ public class StudentCourseTab extends javax.swing.JFrame {
         // TODO add your handling code here:
     }                                         
 
+    private void CT_SearchStudentIdActionPerformed(java.awt.event.ActionEvent evt) {                                                   
+        // TODO add your handling code here:
+    }                                                  
+
     private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
         // TODO add your handling code here:
     }                                     
 
     private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
         // TODO add your handling code here:
-    }                                                                                                                                         
+    }                                                                                         
+
+    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
+        // TODO add your handling code here:
+    }                                                
 
     private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
         ST_SearchStudentActionPerformed(evt);
@@ -1063,83 +1398,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
         
         javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-    }
-    
-    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        String searchName = CT_SearchStudent.getText().trim();
-        if (searchName.isEmpty()) {
-            loadStudentTableData();
-            return;
-        }
-        //Find student by ID
-        for (Student student : students) {
-            if (student.getStudentID().equalsIgnoreCase(searchName)) {
-                // Update table to show only this student
-                DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
-                    0
-                );
-                model.addRow(new Object[]{
-                    student.getStudentID(),
-                    student.getStudentName(),
-                    student.getAge(),
-                    student.getDateOfBirth(),
-                    student.getYearLevel(),
-                    student.getStudentType(),
-                    student.getGwa(),
-                    student.getEmail(),
-                    student.getPhoneNumber()
-                });
-
-                logger.info("Found student: " + student.getStudentID());
-                
-                // Create and set table
-                javax.swing.JTable table = new javax.swing.JTable(model);
-                CT_TableScrollPane.setViewportView(table);
-                CT_TableScrollPane.revalidate();
-                CT_TableScrollPane.repaint();
-                return;
-            }
-        }
-        
-        // Find student by name
-        for (Student student : students) {
-            if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
-                // Update table to show only this student
-                DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
-                    0
-                );
-                model.addRow(new Object[]{
-                    student.getStudentID(),
-                    student.getStudentName(),
-                    student.getAge(),
-                    student.getDateOfBirth(),
-                    student.getYearLevel(),
-                    student.getStudentType(),
-                    student.getGwa(),
-                    student.getEmail(),
-                    student.getPhoneNumber()
-                });
-
-                logger.info("Found student: " + student.getStudentName());
-                
-                // Create and set table
-                javax.swing.JTable table = new javax.swing.JTable(model);
-                CT_TableScrollPane.setViewportView(table);
-                CT_TableScrollPane.revalidate();
-                CT_TableScrollPane.repaint();
-                return;
-            }
-        }
-        
-        javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-    }
-
-    private void CT_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
-        CT_SearchStudent.setText("");
-        loadStudentTableData();
-    }
+    }                                       
     
     private void ST_DeleteActionPerformed(java.awt.event.ActionEvent evt) {                                         
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
@@ -1157,7 +1416,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Save to file
             try {
-                studentFileSaver.save(studentFilePath, students);
+                studentFileSaver.save(STUDENT_FILE, students);
                 javax.swing.JOptionPane.showMessageDialog(this, 
                     "Student deleted and saved successfully!", 
                     "Success", 
@@ -1242,7 +1501,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             students.add(newStudent);
             
             // Save to file
-            studentFileSaver.save(studentFilePath, students);
+            studentFileSaver.save(STUDENT_FILE, students);
             
             // Refresh table
             loadStudentTableData();
@@ -1358,7 +1617,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Save to file
-            studentFileSaver.save(studentFilePath, students);
+            studentFileSaver.save(STUDENT_FILE, students);
             
             // Refresh table
             loadStudentTableData();
@@ -1470,6 +1729,469 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private void CT_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
         ST_LogoutActionPerformed(evt);
     }
+    
+    // Schedule Tab Methods
+    private void loadScheduleData() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/Schedule.txt",
+                "src/ers/group/master files/Schedule.txt",
+                "ERS-group/src/ers/group/master files/schedule.txt",
+                "src/ers/group/master files/schedule.txt",
+                "Schedule.txt",
+                "schedule.txt",
+                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/Schedule.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    filePath = path;
+                    break;
+                }
+            }
+            
+            if (filePath == null) {
+                logger.warning("Could not find schedule.txt");
+                return;
+            }
+            
+            try (java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath))) {
+                scanner.nextLine(); // skip header
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.trim().isEmpty()) continue;
+                    
+                    String[] parts = line.split(",");
+                    if (parts.length < 7) continue;
+                    
+                    Schedule schedule = new Schedule(
+                        parts[0].trim(),    // scheduleID
+                        parts[1].trim(),    // courseID
+                        parts[2].trim(),    // room
+                        parts[3].trim(),    // day
+                        parts[4].trim(),    // startTime
+                        parts[5].trim(),    // endTime
+                        parts[6].trim()     // teacherName
+                    );
+                    schedules.add(schedule);
+                }
+                logger.info("Loaded " + schedules.size() + " schedules");
+            }
+        } catch (Exception e) {
+            logger.warning("Error loading schedule data: " + e.getMessage());
+        }
+    }
+    
+    private void loadStudentCourseMappings() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/studentcourse.txt",
+                "src/ers/group/master files/studentcourse.txt",
+                "studentcourse.txt",
+                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/studentcourse.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    filePath = path;
+                    break;
+                }
+            }
+            
+            if (filePath == null) {
+                logger.warning("Could not find studentcourse.txt");
+                return;
+            }
+            
+            try (java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath))) {
+                scanner.nextLine(); // skip header
+                while (scanner.hasNextLine()) {
+                    String line = scanner.nextLine();
+                    if (line.trim().isEmpty()) continue;
+                    
+                    String[] parts = line.split(",");
+                    if (parts.length < 2) continue;
+                    
+                    String studentID = parts[0].trim();
+                    String courseID = parts[1].trim();
+                    
+                    studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(courseID);
+                }
+                logger.info("Loaded student-course mappings");
+            }
+        } catch (Exception e) {
+            logger.warning("Error loading student-course mappings: " + e.getMessage());
+        }
+    }
+    
+    private void displayStudentSchedule(String studentID) {
+        DefaultTableModel model = new DefaultTableModel(
+            new String[]{"Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
+            0
+        );
+        SCH_Table.setBackground(new java.awt.Color(230, 230, 240));
+        
+        ArrayList<String> courses = studentCourses.getOrDefault(studentID, new ArrayList<>());
+        
+        // Initialize time slots (15-minute intervals for better granularity)
+        String[] timeSlots = {
+            "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+            "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+            "16:00", "16:30", "17:00"
+        };
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        
+        // Create a 2D grid for the schedule
+        Map<String, Map<String, CourseSlot>> scheduleGrid = new HashMap<>();
+        for (String timeSlot : timeSlots) {
+            Map<String, CourseSlot> dayMap = new HashMap<>();
+            for (String day : days) {
+                dayMap.put(day, null);
+            }
+            scheduleGrid.put(timeSlot, dayMap);
+        }
+        
+        // Colors for courses
+        java.awt.Color[] colors = {
+            new java.awt.Color(112, 161, 255),  // Soft Steel Blue
+            new java.awt.Color(46, 213, 115),   // Emerald Mint
+            new java.awt.Color(255, 165, 94),   // Soft Orange
+            new java.awt.Color(255, 107, 129),  // Watermelon Red
+            new java.awt.Color(179, 136, 255)   // Lavender Purple
+        };
+        
+        Map<String, java.awt.Color> courseColorMap = new HashMap<>();
+        for (int i = 0; i < courses.size(); i++) {
+            courseColorMap.put(courses.get(i), colors[i % colors.length]);
+        }
+        
+        // Fill in the schedule
+        for (String courseID : courses) {
+            java.awt.Color courseColor = courseColorMap.get(courseID);
+            
+            for (Schedule schedule : schedules) {
+                if (schedule.getCourseID().equals(courseID)) {
+                    String startTime = schedule.getStartTime().trim();
+                    String endTime = schedule.getEndTime().trim();
+                    String timeKey = parseTimeTo24Hour(startTime);
+                    String endTimeKey = parseTimeTo24Hour(endTime);
+                    
+                    int startMinutes = timeToMinutes(timeKey);
+                    int endMinutes = timeToMinutes(endTimeKey);
+                    
+                    CourseSlot slot = new CourseSlot(courseID, schedule.getRoom(), courseColor);
+                    
+                    for (String slot_time : timeSlots) {
+                        int slotMinutes = timeToMinutes(slot_time);
+                        if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
+                            if (scheduleGrid.containsKey(slot_time)) {
+                                Map<String, CourseSlot> daySlots = scheduleGrid.get(slot_time);
+                                if (daySlots.get(schedule.getDay()) == null) {
+                                    daySlots.put(schedule.getDay(), slot);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Populate table
+        for (String timeSlot : timeSlots) {
+            Map<String, CourseSlot> dayMap = scheduleGrid.get(timeSlot);
+            if (dayMap != null) {
+                model.addRow(new Object[]{
+                    timeSlot,
+                    dayMap.getOrDefault("Monday", new CourseSlot("", "", null)),
+                    dayMap.getOrDefault("Tuesday", new CourseSlot("", "", null)),
+                    dayMap.getOrDefault("Wednesday", new CourseSlot("", "", null)),
+                    dayMap.getOrDefault("Thursday", new CourseSlot("", "", null)),
+                    dayMap.getOrDefault("Friday", new CourseSlot("", "", null)),
+                    dayMap.getOrDefault("Saturday", new CourseSlot("", "", null))
+                });
+            }
+        }
+        
+        SCH_Table.setModel(model);
+        
+        // Modernize the table
+        SCH_Table.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        SCH_Table.setRowHeight(30);
+        SCH_Table.setShowGrid(false);
+        SCH_Table.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        SCH_Table.setCellSelectionEnabled(false);
+        SCH_Table.setFocusable(false);
+        
+        SCH_Table.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        SCH_Table.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
+        SCH_Table.getTableHeader().setForeground(java.awt.Color.WHITE);
+        SCH_Table.getTableHeader().setPreferredSize(new java.awt.Dimension(100, 40));
+        ((javax.swing.table.DefaultTableCellRenderer)SCH_Table.getTableHeader().getDefaultRenderer())
+            .setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        javax.swing.table.DefaultTableCellRenderer timeRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(
+                javax.swing.JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (row % 2 == 0) {
+                    setBackground(new java.awt.Color(255, 255, 255));
+                } else {
+                    setBackground(new java.awt.Color(248, 249, 252));
+                }
+                setHorizontalAlignment(javax.swing.JLabel.CENTER);
+                setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                setForeground(new java.awt.Color(0, 30, 58));
+                return this;
+            }
+        };
+        SCH_Table.getColumnModel().getColumn(0).setCellRenderer(timeRenderer);
+        SCH_Table.getColumnModel().getColumn(0).setPreferredWidth(80);
+        
+        for (int i = 1; i < SCH_Table.getColumnCount(); i++) {
+            SCH_Table.getColumnModel().getColumn(i).setCellRenderer(new ScheduleCellRenderer());
+            SCH_Table.getColumnModel().getColumn(i).setPreferredWidth(150);
+        }
+        
+        SCH_Table.repaint();
+        SCH_TableScrollPane.repaint();
+    }
+    
+    private void displayEmptySchedule() {
+        DefaultTableModel model = new DefaultTableModel(
+            new String[]{"Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
+            0
+        );
+        
+        String[] timeSlots = {
+            "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+            "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+            "16:00", "16:30", "17:00"
+        };
+        
+        for (String timeSlot : timeSlots) {
+            model.addRow(new Object[]{
+                timeSlot,
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null)
+            });
+        }
+        
+        SCH_Table.setModel(model);
+        // Apply styling (same as above)
+        SCH_Table.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        SCH_Table.setRowHeight(30);
+        SCH_Table.setShowGrid(false);
+        SCH_Table.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        SCH_Table.setCellSelectionEnabled(false);
+        SCH_Table.setFocusable(false);
+        
+        SCH_Table.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        SCH_Table.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
+        SCH_Table.getTableHeader().setForeground(java.awt.Color.WHITE);
+        SCH_Table.getTableHeader().setPreferredSize(new java.awt.Dimension(100, 40));
+        ((javax.swing.table.DefaultTableCellRenderer)SCH_Table.getTableHeader().getDefaultRenderer())
+            .setHorizontalAlignment(javax.swing.JLabel.CENTER);
+            
+        // Re-apply renderers
+        javax.swing.table.DefaultTableCellRenderer timeRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(
+                javax.swing.JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (row % 2 == 0) {
+                    setBackground(new java.awt.Color(255, 255, 255));
+                } else {
+                    setBackground(new java.awt.Color(248, 249, 252));
+                }
+                setHorizontalAlignment(javax.swing.JLabel.CENTER);
+                setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                setForeground(new java.awt.Color(0, 30, 58));
+                return this;
+            }
+        };
+        SCH_Table.getColumnModel().getColumn(0).setCellRenderer(timeRenderer);
+        SCH_Table.getColumnModel().getColumn(0).setPreferredWidth(80);
+        
+        for (int i = 1; i < SCH_Table.getColumnCount(); i++) {
+            SCH_Table.getColumnModel().getColumn(i).setCellRenderer(new ScheduleCellRenderer());
+            SCH_Table.getColumnModel().getColumn(i).setPreferredWidth(150);
+        }
+    }
+    
+    private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        String searchID = SCH_StudentSearchField.getText().trim();
+        if (searchID.isEmpty()) {
+            displayEmptySchedule();
+            SCH_GWALabel.setText("GWA. --");
+            return;
+        }
+        
+        for (Student student : students) {
+            if (student.getStudentID().equals(searchID)) {
+                SCH_GWALabel.setText("GWA. " + student.getGwa());
+                displayStudentSchedule(searchID);
+                return;
+            }
+        }
+        
+        SCH_GWALabel.setText("GWA. Not found");
+        displayEmptySchedule();
+    }
+    
+    private void SCH_RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        SCH_StudentSearchField.setText("");
+        SCH_SemesterSearchField.setText("");
+        SCH_GWALabel.setText("GWA. --");
+        displayEmptySchedule();
+    }
+    
+    private void SCH_MonthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
+        updateMonthYearLabel();
+    }
+    
+    private void updateMonthYearLabel() {
+        if (SCH_MonthComboBox.getSelectedItem() != null && SCH_YearSpinner.getValue() != null) {
+            String month = SCH_MonthComboBox.getSelectedItem().toString();
+            int year = (int) SCH_YearSpinner.getValue();
+            SCH_MonthYearDisplayLabel.setText(month + " " + year);
+        }
+    }
+    
+    private String parseTimeTo24Hour(String time) {
+        time = time.trim().toUpperCase();
+        if (time.matches("\\d{1,2}:\\d{2}\\s*(AM|PM)")) {
+            String[] parts = time.split(":");
+            int hour = Integer.parseInt(parts[0].trim());
+            String minute = parts[1].split(" ")[0].trim();
+            if (time.contains("PM") && hour != 12) hour += 12;
+            else if (time.contains("AM") && hour == 12) hour = 0;
+            return String.format("%02d:%s", hour, minute);
+        }
+        if (time.matches("\\d{1,2}:\\d{2}")) {
+            String[] parts = time.split(":");
+            int hour = Integer.parseInt(parts[0]);
+            return String.format("%02d:%s", hour, parts[1]);
+        }
+        return time;
+    }
+    
+    private int timeToMinutes(String time) {
+        String[] parts = time.split(":");
+        if (parts.length == 2) {
+            try {
+                int hours = Integer.parseInt(parts[0]);
+                int minutes = Integer.parseInt(parts[1]);
+                return hours * 60 + minutes;
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return 0;
+    }
+    
+    // Inner class to store course information with color
+    class CourseSlot {
+        String courseID;
+        String room;
+        java.awt.Color color;
+        
+        CourseSlot(String courseID, String room, java.awt.Color color) {
+            this.courseID = courseID;
+            this.room = room;
+            this.color = color;
+        }
+        
+        @Override
+        public String toString() {
+            if (courseID.isEmpty()) return "";
+            return courseID + "\n(" + room + ")";
+        }
+    }
+    
+    // Custom cell renderer for colored schedule cells with continuous block effect
+    class ScheduleCellRenderer extends javax.swing.table.DefaultTableCellRenderer {
+        @Override
+        public java.awt.Component getTableCellRendererComponent(
+            javax.swing.JTable table, Object value, boolean isSelected,
+            boolean hasFocus, int row, int column) {
+            
+            super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            
+            if (value instanceof CourseSlot) {
+                CourseSlot slot = (CourseSlot) value;
+                if (!slot.courseID.isEmpty()) {
+                    setBackground(slot.color);
+                    setForeground(new java.awt.Color(30, 30, 30));
+                    setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                    setHorizontalAlignment(javax.swing.JLabel.CENTER);
+                    setVerticalAlignment(javax.swing.JLabel.CENTER);
+                    
+                    boolean sameAbove = false;
+                    if (row > 0) {
+                        Object aboveValue = table.getValueAt(row - 1, column);
+                        if (aboveValue instanceof CourseSlot) {
+                            sameAbove = ((CourseSlot) aboveValue).courseID.equals(slot.courseID);
+                        }
+                    }
+                    
+                    boolean sameBelow = false;
+                    if (row < table.getRowCount() - 1) {
+                        Object belowValue = table.getValueAt(row + 1, column);
+                        if (belowValue instanceof CourseSlot) {
+                            sameBelow = ((CourseSlot) belowValue).courseID.equals(slot.courseID);
+                        }
+                    }
+                    
+                    if (sameAbove) setText("");
+                    else setText(slot.toString());
+                    
+                    java.awt.Color lightLine = new java.awt.Color(255, 255, 255, 50);
+                    java.awt.Color darkLine = new java.awt.Color(255, 255, 255, 120);
+                    
+                    int topWidth = sameAbove ? 1 : 2;
+                    int bottomWidth = sameBelow ? 1 : 2;
+                    java.awt.Color topColor = sameAbove ? lightLine : darkLine;
+                    
+                    javax.swing.border.Border matteBorder = javax.swing.BorderFactory.createMatteBorder(
+                        topWidth, 1, bottomWidth, 1, topColor
+                    );
+                    javax.swing.border.Border paddingBorder = javax.swing.BorderFactory.createEmptyBorder(
+                        4, 6, 4, 6
+                    );
+                    setBorder(javax.swing.BorderFactory.createCompoundBorder(matteBorder, paddingBorder));
+                } else {
+                    if (row % 2 == 0) setBackground(new java.awt.Color(255, 255, 255));
+                    else setBackground(new java.awt.Color(248, 249, 252));
+                    setForeground(new java.awt.Color(100, 100, 100));
+                    setText("");
+                    setBorder(javax.swing.BorderFactory.createMatteBorder(
+                        0, 0, 1, 1, new java.awt.Color(230, 230, 230)
+                    ));
+                }
+            } else {
+                if (row % 2 == 0) setBackground(new java.awt.Color(255, 255, 255));
+                else setBackground(new java.awt.Color(248, 249, 252));
+                setForeground(new java.awt.Color(100, 100, 100));
+                setText("");
+                setBorder(javax.swing.BorderFactory.createMatteBorder(
+                    0, 0, 1, 1, new java.awt.Color(230, 230, 230)
+                ));
+            }
+            
+            return this;
+        }
+    }
 
     /**
      * @param args the command line arguments
@@ -1516,11 +2238,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JButton CT_Refresh;
     private javax.swing.JPanel CT_RightPanel;
     private javax.swing.JLabel CT_SEARCH_STUDENT;
+    private javax.swing.JLabel CT_SEARCH_STUDENT_ID;
     private javax.swing.JLabel CT_SEMESTER;
     private javax.swing.JLabel CT_STUDENT_ID;
     private javax.swing.JButton CT_Save;
     private javax.swing.JButton CT_Search;
     private javax.swing.JTextField CT_SearchStudent;
+    private javax.swing.JButton CT_SearchStudentID;
+    private javax.swing.JPanel CT_SearchStudentIDPanel;
+    private javax.swing.JTextField CT_SearchStudentId;
     private javax.swing.JPanel CT_SearchStudentPanel;
     private javax.swing.JComboBox<String> CT_Semester;
     private javax.swing.JTextField CT_StudentID;

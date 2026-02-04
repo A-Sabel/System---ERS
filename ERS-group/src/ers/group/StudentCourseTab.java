@@ -55,8 +55,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private ArrayList<Schedule> schedules;
     private Map<String, ArrayList<String>> studentCourses;
     
-    // Schedule Tab Components
-    private javax.swing.JPanel SCH_SearchPanel;
+    // Schedule Tab Components - Commented out as now using Scheduletab instance
+    /*private javax.swing.JPanel SCH_SearchPanel;
     private javax.swing.JPanel SCH_FiltersPanel;
     private javax.swing.JLabel SCH_SemesterIDLabel;
     private javax.swing.JTextField SCH_StudentSearchField;
@@ -72,7 +72,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JLabel SCH_MonthYearDisplayLabel;
     private javax.swing.JButton SCH_RefreshButton;
     private javax.swing.JScrollPane SCH_TableScrollPane;
-    private javax.swing.JTable SCH_Table;
+    private javax.swing.JTable SCH_Table;*/
     
     // File paths
     private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
@@ -1202,7 +1202,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Mark Sheet", new Marksheettab());
 
-        ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
+        MainTabPanel.addTab("Schedule", new Scheduletab());
+        
+        /*ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
         
         SCH_SearchPanel = new javax.swing.JPanel();
         SCH_FiltersPanel = new javax.swing.JPanel();
@@ -1410,9 +1412,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
-        );
+        );*/
 
-        MainTabPanel.addTab("Schedule", ScheduleTab);
+        //MainTabPanel.addTab("Schedule", ScheduleTab); // Removed: Now using Scheduletab instance
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
@@ -2256,7 +2258,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
     }
 
-    private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
+    /*private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
         // Placeholder for Schedule tab student search functionality
         // This would search for students in the schedule system
     }
@@ -2269,7 +2271,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private void SCH_RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
         // Placeholder for Schedule tab refresh functionality
         // This would reload the schedule data
-    }
+    }*/
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
         // This method is in CourseTab, not StudentCourseTab

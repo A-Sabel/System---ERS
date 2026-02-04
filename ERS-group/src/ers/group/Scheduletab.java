@@ -10,7 +10,7 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author fedoc
  */
-public class Scheduletab extends javax.swing.JFrame {
+public class Scheduletab extends javax.swing.JPanel {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Scheduletab.class.getName());
     private ArrayList<Student> students;
@@ -52,12 +52,8 @@ public class Scheduletab extends javax.swing.JFrame {
         // Update label when year changes
         yearSpinner.addChangeListener(e -> updateMonthYearLabel());
         
-        // Set window properties
-        setTitle("Student Management System - ERS");
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setSize(1400, 800);
-        setLocationRelativeTo(null); // Center window on screen
-        setResizable(true);
+        // Preserve preferred size similar to the previous JFrame size
+        setPreferredSize(new java.awt.Dimension(1400, 800));
         
         // Load initial data into tables
         loadStudentTableData();
@@ -601,8 +597,6 @@ public class Scheduletab extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         Scheduletable = new javax.swing.JTable();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
         mainPanel.setBackground(new java.awt.Color(31, 58, 95));
 
         headerPanel.setBackground(new java.awt.Color(0, 30, 58));
@@ -632,233 +626,63 @@ public class Scheduletab extends javax.swing.JFrame {
 
         student.setBackground(new java.awt.Color(31, 58, 95));
 
-        studentFormPanel.setBackground(new java.awt.Color(0, 30, 58));
-        studentFormPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-
-        javax.swing.GroupLayout studentFormPanelLayout = new javax.swing.GroupLayout(studentFormPanel);
-        studentFormPanel.setLayout(studentFormPanelLayout);
-        studentFormPanelLayout.setHorizontalGroup(
-            studentFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 502, Short.MAX_VALUE)
-        );
-        studentFormPanelLayout.setVerticalGroup(
-            studentFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 581, Short.MAX_VALUE)
-        );
-
-        studentTablePanel.setBackground(new java.awt.Color(0, 30, 58));
-        studentTablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-        studentTablePanel.setLayout(new java.awt.BorderLayout());
-        
-        // Create table for students
-        javax.swing.JTable studentTable = new javax.swing.JTable(new DefaultTableModel(
-            new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
-            0
-        ));
-        studentTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-        javax.swing.JScrollPane studentScrollPane = new javax.swing.JScrollPane(studentTable);
-        studentTablePanel.add(studentScrollPane, java.awt.BorderLayout.CENTER);
-
         javax.swing.GroupLayout studentLayout = new javax.swing.GroupLayout(student);
         student.setLayout(studentLayout);
         studentLayout.setHorizontalGroup(
             studentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(studentLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(studentFormPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(studentTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 1302, Short.MAX_VALUE)
         );
         studentLayout.setVerticalGroup(
             studentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, studentLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(studentLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(studentTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(studentFormPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-
-        alltabs.addTab("Student", student);
-
-        course.setBackground(new java.awt.Color(31, 58, 95));
-
-        courseFormPanel.setBackground(new java.awt.Color(0, 30, 58));
-        courseFormPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-
-        javax.swing.GroupLayout courseFormPanelLayout = new javax.swing.GroupLayout(courseFormPanel);
-        courseFormPanel.setLayout(courseFormPanelLayout);
-        courseFormPanelLayout.setHorizontalGroup(
-            courseFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 502, Short.MAX_VALUE)
-        );
-        courseFormPanelLayout.setVerticalGroup(
-            courseFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 581, Short.MAX_VALUE)
         );
 
-        courseTablePanel.setBackground(new java.awt.Color(0, 30, 58));
-        courseTablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        // Student tab removed per design — keep layout components but don't add to tabs
 
-        javax.swing.GroupLayout courseTablePanelLayout = new javax.swing.GroupLayout(courseTablePanel);
-        courseTablePanel.setLayout(courseTablePanelLayout);
-        courseTablePanelLayout.setHorizontalGroup(
-            courseTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1314, Short.MAX_VALUE)
-        );
-        courseTablePanelLayout.setVerticalGroup(
-            courseTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        course.setBackground(new java.awt.Color(31, 58, 95));
 
         javax.swing.GroupLayout courseLayout = new javax.swing.GroupLayout(course);
         course.setLayout(courseLayout);
         courseLayout.setHorizontalGroup(
             courseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(courseLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(courseFormPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(courseTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 1302, Short.MAX_VALUE)
         );
         courseLayout.setVerticalGroup(
             courseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, courseLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(courseLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(courseTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(courseFormPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-
-        alltabs.addTab("Course", course);
-
-        score.setBackground(new java.awt.Color(31, 58, 95));
-
-        scoreFormPanel.setBackground(new java.awt.Color(0, 30, 58));
-        scoreFormPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-
-        javax.swing.GroupLayout scoreFormPanelLayout = new javax.swing.GroupLayout(scoreFormPanel);
-        scoreFormPanel.setLayout(scoreFormPanelLayout);
-        scoreFormPanelLayout.setHorizontalGroup(
-            scoreFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 502, Short.MAX_VALUE)
-        );
-        scoreFormPanelLayout.setVerticalGroup(
-            scoreFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 581, Short.MAX_VALUE)
         );
 
-        scoreTablePanel.setBackground(new java.awt.Color(0, 30, 58));
-        scoreTablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        // Course tab removed per design — keep layout components but don't add to tabs
 
-        javax.swing.GroupLayout scoreTablePanelLayout = new javax.swing.GroupLayout(scoreTablePanel);
-        scoreTablePanel.setLayout(scoreTablePanelLayout);
-        scoreTablePanelLayout.setHorizontalGroup(
-            scoreTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1314, Short.MAX_VALUE)
-        );
-        scoreTablePanelLayout.setVerticalGroup(
-            scoreTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
-        );
+        score.setBackground(new java.awt.Color(31, 58, 95));
 
         javax.swing.GroupLayout scoreLayout = new javax.swing.GroupLayout(score);
         score.setLayout(scoreLayout);
         scoreLayout.setHorizontalGroup(
             scoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(scoreLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(scoreFormPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(scoreTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 1302, Short.MAX_VALUE)
         );
         scoreLayout.setVerticalGroup(
             scoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, scoreLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(scoreLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(scoreTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(scoreFormPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-
-        alltabs.addTab("Score", score);
-
-        Marksheet.setBackground(new java.awt.Color(31, 58, 95));
-
-        marksheetFormPanel.setBackground(new java.awt.Color(0, 30, 58));
-        marksheetFormPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-
-        javax.swing.GroupLayout marksheetFormPanelLayout = new javax.swing.GroupLayout(marksheetFormPanel);
-        marksheetFormPanel.setLayout(marksheetFormPanelLayout);
-        marksheetFormPanelLayout.setHorizontalGroup(
-            marksheetFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 502, Short.MAX_VALUE)
-        );
-        marksheetFormPanelLayout.setVerticalGroup(
-            marksheetFormPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGap(0, 581, Short.MAX_VALUE)
         );
 
-        marksheetTablePanel.setBackground(new java.awt.Color(0, 30, 58));
-        marksheetTablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        // Score tab removed per design — keep layout components but don't add to tabs
 
-        footerPanel.setBackground(new java.awt.Color(0, 30, 58));
-
-        javax.swing.GroupLayout footerPanelLayout = new javax.swing.GroupLayout(footerPanel);
-        footerPanel.setLayout(footerPanelLayout);
-        footerPanelLayout.setHorizontalGroup(
-            footerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1302, Short.MAX_VALUE)
-        );
-        footerPanelLayout.setVerticalGroup(
-            footerPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 448, Short.MAX_VALUE)
-        );
-
-        javax.swing.GroupLayout marksheetTablePanelLayout = new javax.swing.GroupLayout(marksheetTablePanel);
-        marksheetTablePanel.setLayout(marksheetTablePanelLayout);
-        marksheetTablePanelLayout.setHorizontalGroup(
-            marksheetTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(marksheetTablePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(footerPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        marksheetTablePanelLayout.setVerticalGroup(
-            marksheetTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(marksheetTablePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(footerPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
+        Marksheet.setBackground(new java.awt.Color(31, 58, 95));
 
         javax.swing.GroupLayout MarksheetLayout = new javax.swing.GroupLayout(Marksheet);
         Marksheet.setLayout(MarksheetLayout);
         MarksheetLayout.setHorizontalGroup(
             MarksheetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(MarksheetLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(marksheetFormPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(marksheetTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addGap(0, 1302, Short.MAX_VALUE)
         );
         MarksheetLayout.setVerticalGroup(
             MarksheetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, MarksheetLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(MarksheetLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(marksheetTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(marksheetFormPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
+            .addGap(0, 581, Short.MAX_VALUE)
         );
 
-        alltabs.addTab("Marksheet", Marksheet);
+        // Marksheet tab removed per design — keep layout components but don't add to tabs
 
         Schedule.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -970,7 +794,7 @@ public class Scheduletab extends javax.swing.JFrame {
                 .addGap(22, 22, 22)
                 .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(scheduleTablePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(scheduleTablePanel)
                 .addContainerGap())
         );
 
@@ -1089,8 +913,8 @@ public class Scheduletab extends javax.swing.JFrame {
                 .addGap(12, 12, 12))
         );
 
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(this);
+        this.setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
@@ -1108,7 +932,88 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     }
 
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        updateMonthYearLabel();
+        studentSearchField.setText("");
+        semesterSearchField.setText("");
+        loadStudentTableData();
+        gwaLabel.setText("GWA. --");
+        displayEmptySchedule();
+    }
+    
+    private void displayEmptySchedule() {
+        DefaultTableModel model = new DefaultTableModel(
+            new String[]{"Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"},
+            0
+        );
+        
+        // Initialize time slots (15-minute intervals)
+        String[] timeSlots = {
+            "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+            "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
+            "16:00", "16:30", "17:00"
+        };
+        String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+        
+        // Populate table with empty slots
+        for (String timeSlot : timeSlots) {
+            model.addRow(new Object[]{
+                timeSlot,
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null),
+                new CourseSlot("", "", null)
+            });
+        }
+        
+        Scheduletable.setModel(model);
+        
+        // Modernize the table
+        Scheduletable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+        Scheduletable.setRowHeight(30);
+        Scheduletable.setShowGrid(false);
+        Scheduletable.setIntercellSpacing(new java.awt.Dimension(0, 0));
+        Scheduletable.setCellSelectionEnabled(false);
+        Scheduletable.setFocusable(false);
+        
+        // Header styling - match dark theme
+        Scheduletable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+        Scheduletable.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
+        Scheduletable.getTableHeader().setForeground(java.awt.Color.WHITE);
+        Scheduletable.getTableHeader().setPreferredSize(new java.awt.Dimension(100, 40));
+        ((javax.swing.table.DefaultTableCellRenderer)Scheduletable.getTableHeader().getDefaultRenderer())
+            .setHorizontalAlignment(javax.swing.JLabel.CENTER);
+        
+        // Time column styling with zebra striping
+        javax.swing.table.DefaultTableCellRenderer timeRenderer = new javax.swing.table.DefaultTableCellRenderer() {
+            @Override
+            public java.awt.Component getTableCellRendererComponent(
+                javax.swing.JTable table, Object value, boolean isSelected,
+                boolean hasFocus, int row, int column) {
+                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                // Zebra striping - alternating subtle background colors
+                if (row % 2 == 0) {
+                    setBackground(new java.awt.Color(255, 255, 255));
+                } else {
+                    setBackground(new java.awt.Color(248, 249, 252));
+                }
+                setHorizontalAlignment(javax.swing.JLabel.CENTER);
+                setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                setForeground(new java.awt.Color(0, 30, 58));
+                return this;
+            }
+        };
+        Scheduletable.getColumnModel().getColumn(0).setCellRenderer(timeRenderer);
+        Scheduletable.getColumnModel().getColumn(0).setPreferredWidth(80);
+        
+        // Set custom cell renderer for colored schedule cells
+        for (int i = 1; i < Scheduletable.getColumnCount(); i++) {
+            Scheduletable.getColumnModel().getColumn(i).setCellRenderer(new ScheduleCellRenderer());
+            Scheduletable.getColumnModel().getColumn(i).setPreferredWidth(150);
+        }
+        
+        Scheduletable.repaint();
+        jScrollPane2.repaint();
     }
     
     private void searchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1179,7 +1084,18 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        java.awt.EventQueue.invokeLater(() -> new Scheduletab().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            javax.swing.JFrame frame = new javax.swing.JFrame();
+            frame.setTitle("Student Management System - ERS");
+            frame.setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+            Scheduletab panel = new Scheduletab();
+            frame.setContentPane(panel);
+            frame.pack();
+            frame.setSize(1400, 800);
+            frame.setLocationRelativeTo(null);
+            frame.setResizable(true);
+            frame.setVisible(true);
+        });
     }
 
     // Variables declaration - do not modify                     

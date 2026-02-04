@@ -94,6 +94,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
             table = new javax.swing.JTable(model);
             table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
             
+            // Configure table selection behavior
+            table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+            table.setRowSelectionAllowed(true);
+            table.setColumnSelectionAllowed(false);
+            
             // Add selection listener to populate form when row is clicked
             final javax.swing.JTable finalTable = table;
             table.getSelectionModel().addListSelectionListener(e -> {
@@ -490,6 +495,19 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 "Student ID", "Student Name", "Date of Birth", "Gender", "Email", "Phone Number", "Father's Name", "Mother's Name", "Guardian's Phone No.", "Address"
             }
         ));
+        
+        // Configure table selection behavior
+        ST_Table.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+        ST_Table.setRowSelectionAllowed(true);
+        ST_Table.setColumnSelectionAllowed(false);
+        
+        // Add selection listener to populate form when row is clicked
+        ST_Table.getSelectionModel().addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && ST_Table.getSelectedRow() >= 0) {
+                populateStudentFormFromTable(ST_Table.getSelectedRow());
+            }
+        });
+        
         ST_TableScrollPane.setViewportView(ST_Table);
 
         javax.swing.GroupLayout ST_RightPanelLayout = new javax.swing.GroupLayout(ST_RightPanel);

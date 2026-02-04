@@ -2,9 +2,9 @@
 
 package ers.group;
 
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.awt.BorderLayout;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -89,34 +89,18 @@ public class StudentCourseTab extends javax.swing.JFrame {
     
     private void loadStudentTableData() {
         DefaultTableModel model = null;
-        javax.swing.JTable table = null;
         
-        // Try to get existing model from table if it exists
-        if (ST_TableScrollPane.getComponentCount() > 0 && ST_TableScrollPane.getComponent(0) instanceof javax.swing.JScrollPane) {
-            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_TableScrollPane.getComponent(0);
-            if (pane.getViewport().getView() instanceof javax.swing.JTable) {
-                table = (javax.swing.JTable) pane.getViewport().getView();
-                if (table.getModel() instanceof DefaultTableModel) {
-                    model = (DefaultTableModel) table.getModel();
-                }
-            }
-        }
-        
-        // Create a proper table if it doesn't exist
-        if (model == null) {
+        // Try to get existing table from ST_Table (which is already defined in initComponents)
+        if (ST_Table != null && ST_Table.getModel() instanceof DefaultTableModel) {
+            model = (DefaultTableModel) ST_Table.getModel();
+            model.setRowCount(0); // Clear existing rows
+        } else {
+            // This shouldn't happen since ST_Table is created in initComponents
             model = new DefaultTableModel(
-                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Section", "Type", "GWA", "Email", "Phone"},
                 0
             );
-            table = new javax.swing.JTable(model);
-            table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            
-            // Clear panel and add the new table
-            ST_TableScrollPane.removeAll();
-            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
-            ST_TableScrollPane.add(scrollPane, java.awt.BorderLayout.CENTER);
-        } else {
-            model.setRowCount(0);
+            ST_Table.setModel(model);
         }
         
         // Add student data to table
@@ -602,17 +586,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         MainTabPanel.addTab("Score",new ScoreTab());
 
         MarkSheetTab.setBackground(new java.awt.Color(31, 58, 95));
-
-        javax.swing.GroupLayout MarkSheetTabLayout = new javax.swing.GroupLayout(MarkSheetTab);
-        MarkSheetTab.setLayout(MarkSheetTabLayout);
-        MarkSheetTabLayout.setHorizontalGroup(
-            MarkSheetTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1520, Short.MAX_VALUE)
-        );
-        MarkSheetTabLayout.setVerticalGroup(
-            MarkSheetTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 571, Short.MAX_VALUE)
-        );
+        MarkSheetTab.setLayout(new java.awt.BorderLayout());
 
         MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
 

@@ -7,19 +7,15 @@ import java.util.ArrayList;
 
 
 public class Section {
-    private String sectionID;
+    private final String sectionID;
     private CourseSubject subject;
     private Teachers instructor;
     private Schedule schedule;
     
     // Tracks students currently in this specific section
     private ArrayList<String> enrolledStudentIDs; 
-    private int capacityLimit;
+    private final int capacityLimit;
 
-    public Section(String sectionID, CourseSubject subject) {
-        this(sectionID, subject, subject.getStudentCount());
-    }
-    
     public Section(String sectionID, CourseSubject subject, int sectionCapacity) {
         this.sectionID = sectionID;
         this.subject = subject;

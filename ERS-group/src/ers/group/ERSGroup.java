@@ -491,20 +491,24 @@ public class ERSGroup {
         System.out.print("\nEnter Student ID: ");
         String studentID = scanner.nextLine().trim();
         
-        System.out.print("Enter Section ID: ");
-        String sectionID = scanner.nextLine().trim();
-        
         System.out.print("Enter Course ID: ");
         String courseID = scanner.nextLine().trim();
         
-        Enrollment newEnrollment = new Enrollment(studentID, sectionID, courseID);
+        System.out.print("Enter Year Level (1st Year/2nd Year): ");
+        String yearLevel = scanner.nextLine().trim();
+        
+        System.out.print("Enter Semester (1/2): ");
+        String semester = scanner.nextLine().trim();
+        
+        String enrollmentID = Enrollment.generateEnrollmentID();
+        Enrollment newEnrollment = new Enrollment(enrollmentID, studentID, courseID, yearLevel, semester, "ENROLLED");
         
         List<Enrollment> enrollments = new ArrayList<>(enrollmentLoader.getAllEnrollments());
         enrollments.add(newEnrollment);
         
         try {
             enrollmentSaver.save(ENROLLMENT_FILE, enrollments);
-            System.out.println("✓ Student enrolled successfully!");
+            System.out.println("✓ Student enrolled successfully with ID: " + enrollmentID);
             enrollmentLoader.load(ENROLLMENT_FILE);
         } catch (IOException e) {
             System.out.println("✗ Error enrolling student: " + e.getMessage());

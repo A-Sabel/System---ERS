@@ -229,6 +229,7 @@ public class Marksheettab extends javax.swing.JPanel {
         Searchbutton.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         Searchbutton.setText("Search");
         Searchbutton.setForeground(new java.awt.Color(0, 0, 0));
+        Searchbutton.addActionListener(this::SearchbuttonActionPerformed);
 
         javax.swing.GroupLayout StudentIDPanelLayout = new javax.swing.GroupLayout(StudentIDPanel);
         StudentIDPanel.setLayout(StudentIDPanelLayout);
@@ -481,7 +482,14 @@ public class Marksheettab extends javax.swing.JPanel {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new Marksheettab().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> {
+            javax.swing.JFrame frame = new javax.swing.JFrame("Marksheet Tab");
+            frame.setDefaultCloseOperation(javax.swing.JFrame.EXIT_ON_CLOSE);
+            frame.setContentPane(new Marksheettab());
+            frame.pack();
+            frame.setLocationRelativeTo(null);
+            frame.setVisible(true);
+        });
     }
 
     // Variables declaration - do not modify                     

@@ -49,7 +49,7 @@ public class LogIn extends javax.swing.JFrame {
 
         EmailLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         EmailLabel.setForeground(new java.awt.Color(77, 142, 162));
-        EmailLabel.setText("Email:");
+        EmailLabel.setText("Username:");
 
         PasswordLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         PasswordLabel.setForeground(new java.awt.Color(77, 142, 162));
@@ -163,14 +163,14 @@ public class LogIn extends javax.swing.JFrame {
         if (email.isEmpty() || password.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(
                 this,
-                "Please enter both email and password.",
+                "Please enter both username and password.",
                 "Sign In Error",
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
         } else {
             javax.swing.JOptionPane.showMessageDialog(
                 this,
-                "Sign In successful!",
+                "Sign in successful!",
                 "Welcome",
                 javax.swing.JOptionPane.INFORMATION_MESSAGE
             );

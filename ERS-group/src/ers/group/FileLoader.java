@@ -219,8 +219,8 @@ class StudentFileLoader extends BaseFileLoader {
             String mothersName = parts[14].trim();
             String guardiansPhoneNumber = parts[15].trim();
             
-            Student student = new Student(id, name, age, dob, yearLevel, section, studentType, 
-                    subjects, gwa, email, phoneNumber, gender, address, 
+            Student student = new Student(id, name, age, dob, yearLevel, section, 
+                    studentType, subjects, gwa, email, phoneNumber, gender, address, 
                     fathersName, mothersName, guardiansPhoneNumber);
             allStudents.add(student);
         });

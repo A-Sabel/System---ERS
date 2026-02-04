@@ -49,6 +49,7 @@ class StudentFileSaver extends BaseFileSaver<Student> {
             String.valueOf(s.getAge()),
             s.getDateOfBirth(),
             s.getYearLevel(),
+            s.getSection(),
             s.getStudentType(),
             subjects,
             String.valueOf(s.getGwa()),

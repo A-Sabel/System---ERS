@@ -52,8 +52,23 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
     }
     
-    // Schedule Tab Components
-    private javax.swing.JPanel SCH_SearchPanel;
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
+    private ArrayList<Student> students;
+    private StudentFileLoader studentFileLoader;
+    private StudentFileSaver studentFileSaver;
+
+    private String studentFilePath; // Store the actual file path found during loading
+    private CourseSubjectFileLoader courseLoader; // For loading suggested courses
+    private CourseTab courseTab; // Reference to CourseTab for refreshing
+    private boolean isInitialized = false; // Flag to prevent premature tab change events
+
+    
+    // Schedule Data
+    private ArrayList<Schedule> schedules;
+    private Map<String, ArrayList<String>> studentCourses;
+    
+    // Schedule Tab Components - Commented out as now using Scheduletab instance
+    /*private javax.swing.JPanel SCH_SearchPanel;
     private javax.swing.JPanel SCH_FiltersPanel;
     private javax.swing.JLabel SCH_SemesterIDLabel;
     private javax.swing.JTextField SCH_StudentSearchField;
@@ -700,11 +715,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
         MarkSheetTab.setBackground(new java.awt.Color(31, 58, 95));
         MarkSheetTab.setLayout(new java.awt.BorderLayout());
 
-        MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
-
-        MainTabPanel.addTab("Schedule", ScheduleTab);
-
-        ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
+        MainTabPanel.addTab("Schedule", new Scheduletab());
+        
+        /*ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
         
         SCH_SearchPanel = new javax.swing.JPanel();
         SCH_FiltersPanel = new javax.swing.JPanel();

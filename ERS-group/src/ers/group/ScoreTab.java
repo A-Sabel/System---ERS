@@ -181,7 +181,7 @@
 
         private JButton makeButton(String text){
             JButton btn = new JButton(text);
-            btn.setFont(new Font("Segoe UI", Font.BOLD,18));
+            btn.setFont(new Font("Segoe UI", Font.BOLD,14));
             btn.setForeground(Color.BLACK);
             btn.setBackground(new Color(139,169,201));
             btn.setFocusPainted(false);
@@ -202,7 +202,7 @@
         private JLabel label(String t){
             JLabel l = new JLabel(t);
             l.setForeground(Color.WHITE);
-            l.setFont(new Font("Segoe UI", Font.BOLD,16));
+            l.setFont(new Font("Segoe UI", Font.BOLD,14));
             return l;
         }
 

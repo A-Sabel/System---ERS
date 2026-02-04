@@ -2,6 +2,7 @@ package ers.group;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.awt.BorderLayout;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -23,6 +24,21 @@ public class StudentCourseTab extends javax.swing.JFrame {
         students = new ArrayList<>();
         loadStudentData();
         loadStudentTableData();
+        // embed the separate Marksheettab panel into this tab
+        addMarksheetPanel();
+    }
+
+    // Add the existing Marksheettab panel into the MarkSheetTab container
+    private void addMarksheetPanel() {
+        try {
+            MarkSheetTab.removeAll();
+            MarkSheetTab.setLayout(new BorderLayout());
+            MarkSheetTab.add(new Marksheettab(), BorderLayout.CENTER);
+            MarkSheetTab.revalidate();
+            MarkSheetTab.repaint();
+        } catch (Exception e) {
+            logger.severe("Failed to add Marksheettab panel: " + e.getMessage());
+        }
     }
     
     private void loadStudentData() {
@@ -68,18 +84,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private void loadStudentTableData() {
         DefaultTableModel model = null;
         javax.swing.JTable table = null;
-        
-        // Try to get existing model from table if it exists
-        if (ST_TableScrollPane.getComponentCount() > 0 && ST_TableScrollPane.getComponent(0) instanceof javax.swing.JScrollPane) {
-            javax.swing.JScrollPane pane = (javax.swing.JScrollPane) ST_TableScrollPane.getComponent(0);
-            if (pane.getViewport().getView() instanceof javax.swing.JTable) {
-                table = (javax.swing.JTable) pane.getViewport().getView();
-                if (table.getModel() instanceof DefaultTableModel) {
-                    model = (DefaultTableModel) table.getModel();
-                }
+
+        // Try to get existing model from the scroll pane's viewport if it exists
+        if (ST_TableScrollPane.getViewport() != null && ST_TableScrollPane.getViewport().getView() instanceof javax.swing.JTable) {
+            table = (javax.swing.JTable) ST_TableScrollPane.getViewport().getView();
+            if (table.getModel() instanceof DefaultTableModel) {
+                model = (DefaultTableModel) table.getModel();
             }
         }
-        
+
         // Create a proper table if it doesn't exist
         if (model == null) {
             model = new DefaultTableModel(
@@ -88,11 +101,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             );
             table = new javax.swing.JTable(model);
             table.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-            
-            // Clear panel and add the new table
-            ST_TableScrollPane.removeAll();
-            javax.swing.JScrollPane scrollPane = new javax.swing.JScrollPane(table);
-            ST_TableScrollPane.add(scrollPane, java.awt.BorderLayout.CENTER);
+
+            // Set the table as the viewport view of the scroll pane
+            ST_TableScrollPane.setViewportView(table);
         } else {
             model.setRowCount(0);
         }

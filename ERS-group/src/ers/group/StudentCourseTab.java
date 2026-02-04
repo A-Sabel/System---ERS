@@ -2,15 +2,12 @@
 
 package ers.group;
 
-import java.awt.BorderLayout;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.awt.BorderLayout;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author Eli
- */
 public class StudentCourseTab extends javax.swing.JFrame {
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
@@ -627,8 +624,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
 
         MainTabPanel.addTab("Schedule", ScheduleTab);
-
-        
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);

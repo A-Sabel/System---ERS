@@ -5,9 +5,6 @@
 
 package ers.group;
 
-import java.awt.print.PrinterJob;
-import java.awt.print.Printable;
-import java.awt.print.PageFormat;
 import java.util.*;
 import javax.swing.table.DefaultTableModel;
 

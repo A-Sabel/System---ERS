@@ -44,12 +44,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
-<<<<<<< HEAD
+
     private String studentFilePath; // Store the actual file path found during loading
     private CourseSubjectFileLoader courseLoader; // For loading suggested courses
     private CourseTab courseTab; // Reference to CourseTab for refreshing
     private boolean isInitialized = false; // Flag to prevent premature tab change events
-=======
+
     
     // Schedule Data
     private ArrayList<Schedule> schedules;
@@ -76,7 +76,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     
     // File paths
     private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
->>>>>>> 184b698ae06ca8a1985b4c05488f70e88b790a67
+
 
     /**
      * Creates new form Student
@@ -806,7 +806,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Student", StudentTab);
 
-<<<<<<< HEAD
         courseTab = new CourseTab();
         MainTabPanel.addTab("Course", courseTab);
         
@@ -839,7 +838,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 }
             }
         });
-=======
+
         CourseTab.setBackground(new java.awt.Color(31, 58, 95));
 
         CT_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
@@ -1156,8 +1155,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         );
 
         MainTabPanel.addTab("Course", CourseTab);
->>>>>>> 184b698ae06ca8a1985b4c05488f70e88b790a67
 
+        ScoreTab = new javax.swing.JPanel();
         ScoreTab.setBackground(new java.awt.Color(31, 58, 95));
 
         javax.swing.GroupLayout ScoreTabLayout = new javax.swing.GroupLayout(ScoreTab);
@@ -1429,6 +1428,27 @@ public class StudentCourseTab extends javax.swing.JFrame {
         setSize(1350, 680);
         setMinimumSize(new java.awt.Dimension(1200, 600));
         setLocationRelativeTo(null);
+        
+        // Add table click listeners for auto-populate
+        ST_Table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int selectedRow = ST_Table.getSelectedRow();
+                if (selectedRow >= 0) {
+                    populateStudentFormFromTable(selectedRow);
+                }
+            }
+        });
+        
+        CT_Table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                int selectedRow = CT_Table.getSelectedRow();
+                if (selectedRow >= 0) {
+                    courseTab.populateFormFromTable(selectedRow);
+                }
+            }
+        });
         
         // Mark initialization as complete
         isInitialized = true;
@@ -2000,7 +2020,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
     }
 
-<<<<<<< HEAD
     private void loadCourseData() {
         try {
             String[] possiblePaths = {
@@ -2199,13 +2218,33 @@ public class StudentCourseTab extends javax.swing.JFrame {
         } catch (Exception e) {
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Error saving student: " + e.getMessage(), 
-                "Error", 
+                "Error",
                 javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-=======
+    }
+
+    private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // Placeholder for Schedule tab student search functionality
+        // This would search for students in the schedule system
+    }
+
+    private void SCH_MonthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
+        // Placeholder for Schedule tab month selection
+        // This would filter schedules by selected month
+    }
+
+    private void SCH_RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        // Placeholder for Schedule tab refresh functionality
+        // This would reload the schedule data
+    }
+
+    private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
+        // This method is in CourseTab, not StudentCourseTab
+        // The action listener should be handled by CourseTab instance
+    }
+
     private void CT_LogoutActionPerformed(java.awt.event.ActionEvent evt) {
         ST_LogoutActionPerformed(evt);
->>>>>>> 184b698ae06ca8a1985b4c05488f70e88b790a67
     }
 
     /**

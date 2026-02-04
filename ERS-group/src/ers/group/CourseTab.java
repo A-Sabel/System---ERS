@@ -966,7 +966,7 @@ public class CourseTab extends JPanel {
             cleanName = cleanName.substring(4);
         } else if (cleanName.startsWith("[X] ")) {
             cleanName = cleanName.substring(4);
-        } else if (cleanName.startsWith("[ ] ")) {
+        } else if (cleanName.startsWith("[A] ")) {
             cleanName = cleanName.substring(4);
         }
         
@@ -1214,7 +1214,7 @@ public class CourseTab extends JPanel {
                 String courseID = course.getCourseSubjectID();
                 
                 // Determine status
-                String statusPrefix = "[ ] ";
+                String statusPrefix = "[A] ";
                 if (enrolledSubjects != null && enrolledSubjects.contains(courseID)) {
                     statusPrefix = "[/] ";
                 } else {
@@ -1360,6 +1360,33 @@ public class CourseTab extends JPanel {
     private javax.swing.JLabel CT_PrereqStatus3;
     private javax.swing.JLabel CT_PrereqStatus4;
     private javax.swing.JLabel CT_PrereqStatus5;
+
+    /**
+     * Populate the enrollment form from a selected table row.
+     * Called when user clicks on a row in the student table.
+     */
+    public void populateFormFromTable(int rowIndex) {
+        try {
+            DefaultTableModel model = (DefaultTableModel) CT_Table.getModel();
+            if (rowIndex < 0 || rowIndex >= model.getRowCount()) {
+                return;
+            }
+            
+            // Get student ID from the first column
+            String studentID = model.getValueAt(rowIndex, 0).toString();
+            
+            // Auto-populate the student ID field
+            CT_StudentID.setText(studentID);
+            
+            // Auto-trigger Load Courses
+            CT_LoadCoursesActionPerformed(null);
+            
+            logger.info("Auto-populated form for student: " + studentID);
+            
+        } catch (Exception e) {
+            logger.warning("Error populating form from table: " + e.getMessage());
+        }
+    }
 
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {

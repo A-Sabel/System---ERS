@@ -1,327 +1,307 @@
-package ers.group;
+    package ers.group;
 
+    import javax.swing.*;
+    import javax.swing.table.DefaultTableModel;
+    import java.awt.*;
+    import java.io.*;
 
-import javax.swing.*;
-import javax.swing.border.TitledBorder;
-import javax.swing.table.DefaultTableModel;
-import java.awt.*;
-import java.io.*;
-import java.util.*;
+    public class ScoreTab extends JPanel {
 
-public class ScoreTab extends JPanel {
+        private JTextField studentIdField, studentNameField, schoolYearField, semesterField;
+        private JComboBox<String>[] courseDropdowns = new JComboBox[5];
+        private JTextField[] courseScores = new JTextField[5];
+        private JTable table;
+        private DefaultTableModel model;
 
-    private JPanel leftPanel, rightPanel;
-    private JTextField studentIdField, studentNameField, schoolYearField, semesterField;
-    private java.util.List<JComboBox<String>> courseDropdowns = new ArrayList<>();
-    private java.util.List<JTextField> courseScores = new ArrayList<>();
-    private JTable table;
-    private DefaultTableModel model;
+        // Search fields
+        private JTextField searchIdField, searchSemField, searchYearField;
 
-    // 20 possible courses
-    private String[] courseOptions = {
-        "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems",
-        "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies",
-        "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms",
-        "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks",
-        "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security",
-        "Distributed Systems", "Systems Integration Project"
-    };
-
-    public ScoreTab() {
-        setLayout(new BorderLayout(10, 10));
-        setBackground(new Color(31, 58, 95));
-
-        initLeftPanel();
-        initRightPanel();
-
-        add(leftPanel, BorderLayout.WEST);
-        add(rightPanel, BorderLayout.CENTER);
-    }
-
-    private void initLeftPanel() {
-    leftPanel = new JPanel();
-    leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
-    leftPanel.setBackground(new Color(0, 30, 58));
-    leftPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
-    leftPanel.setPreferredSize(new Dimension(460, 703));
-
-    Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
-    Color labelColor = Color.WHITE;
-    Color fieldBg = new Color(146, 190, 219);
-
-    // Student ID
-    leftPanel.add(makeRow("Student ID", labelFont, labelColor, fieldBg));
-    studentIdField = (JTextField) ((JPanel) leftPanel.getComponent(leftPanel.getComponentCount()-1)).getComponent(1);
-
-    // Student Name
-    leftPanel.add(makeRow("Student Name", labelFont, labelColor, fieldBg));
-    studentNameField = (JTextField) ((JPanel) leftPanel.getComponent(leftPanel.getComponentCount()-1)).getComponent(1);
-
-
-    // School Year
-    leftPanel.add(makeRow("Year Level", labelFont, labelColor, fieldBg));
-    schoolYearField = (JTextField) ((JPanel) leftPanel.getComponent(leftPanel.getComponentCount()-1)).getComponent(1);
-
-    // Semester
-    leftPanel.add(makeRow("Semester", labelFont, labelColor, fieldBg));
-    semesterField = (JTextField) ((JPanel) leftPanel.getComponent(leftPanel.getComponentCount()-1)).getComponent(1);
-
-    // 5 Course rows
-    for (int i = 1; i <= 5; i++) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        row.setBackground(new Color(0, 30, 58));
-
-        JLabel label = new JLabel("Course " + i);
-        label.setFont(labelFont);
-        label.setForeground(labelColor);
-        label.setPreferredSize(new Dimension(120, 32));
-
-        JComboBox<String> dropdown = new JComboBox<>(courseOptions);
-        dropdown.setPreferredSize(new Dimension(220, 32));
-        dropdown.setBackground(fieldBg);
-        dropdown.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        JTextField scoreField = new JTextField("0.0", 5);
-        scoreField.setPreferredSize(new Dimension(60, 32));
-        scoreField.setBackground(fieldBg);
-        scoreField.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-
-        row.add(label);
-        row.add(dropdown);
-        row.add(scoreField);
-
-        leftPanel.add(row);
-
-        courseDropdowns.add(dropdown);
-        courseScores.add(scoreField);
-        }
-    }
-
-    private void initRightPanel() {
-        rightPanel = new JPanel(new BorderLayout(10, 10));
-        rightPanel.setBackground(new Color(0, 30, 58));
-        rightPanel.setBorder(BorderFactory.createLineBorder(new Color(189, 216, 233), 4, true));
-
-    // Search section (TOP)
-    JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
-    searchPanel.setBackground(new Color(0, 30, 58));
-
-    JLabel searchLabel = new JLabel("Search Student");
-    searchLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
-    searchLabel.setForeground(Color.WHITE);
-
-    // Student ID field
-    JTextField searchIdField = makeField("", new Color(146, 190, 219));
-    searchIdField.setPreferredSize(new Dimension(150, 32));
-
-    // Semester field
-    JTextField searchSemesterField = makeField("", new Color(146, 190, 219));
-    searchSemesterField.setPreferredSize(new Dimension(100, 32));
-
-    // Year Level field
-    JTextField searchYearField = makeField("", new Color(146, 190, 219));
-    searchYearField.setPreferredSize(new Dimension(100, 32));
-
-    // Search button
-    JButton searchBtn = makeButton("Search");
-    searchBtn.addActionListener(e -> {
-        String searchId = searchIdField.getText();
-        String searchSemester = searchSemesterField.getText();
-        String searchYear = searchYearField.getText();
-        searchStudentData(searchId, searchSemester, searchYear);
-    });
-
-    // Refresh button
-    JButton refreshBtn = makeButton("Refresh");
-    refreshBtn.addActionListener(e -> {
-        model.setRowCount(0);
-        loadAllStudents();
-    });
-
-    // Add everything to the panel
-    searchPanel.add(searchLabel);
-    searchPanel.add(new JLabel("ID"));
-    searchPanel.add(searchIdField);
-    searchPanel.add(new JLabel("Semester"));
-    searchPanel.add(searchSemesterField);
-    searchPanel.add(new JLabel("Year"));
-    searchPanel.add(searchYearField);
-    searchPanel.add(searchBtn);
-    searchPanel.add(refreshBtn);
-
-        rightPanel.add(searchPanel, BorderLayout.NORTH);
-
-        // Table (CENTER)
-        String[] columns = {
-            "ID","Student Name","Year Level","Semester",
-            "Course 1","Grade 1","Passed 1",
-            "Course 2","Grade 2","Passed 2",
-            "Course 3","Grade 3","Passed 3",
-            "Course 4","Grade 4","Passed 4",
-            "Course 5","Grade 5","Passed 5",
-            "GPA"
+        private final String[] courseOptions = {
+                "Programming 1","Computer Fundamentals","Discrete Mathematics","Introduction to IT Systems",
+                "Ethics in Computing","Programming 2","Object-Oriented Programming","Web Technologies",
+                "Linear Algebra for Computing","Human-Computer Interaction",
+                "Data Structures and Algorithms","Design and Analysis of Algorithms",
+                "Database Management Systems","Computer Networks",
+                "Advanced Programming Concepts","Operating Systems",
+                "Compiler Design","Information Security",
+                "Distributed Systems","Systems Integration Project"
         };
-        model = new DefaultTableModel(columns, 0);
-        table = new JTable(model);
-        table.setBackground(new Color(146, 190, 219));
-        table.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        table.setRowHeight(28);
 
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setBorder(BorderFactory.createLineBorder(new Color(189, 216, 233), 2));
-        rightPanel.add(scrollPane, BorderLayout.CENTER);
+        private final File marksheetFile = new File("C:\\Users\\Katri\\OneDrive\\Networking\\System---ERS\\ERS-group\\marksheet.txt");
 
-        // Bottom panel (Save/Update/Print/Clear/Logout)
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
-        bottomPanel.setBackground(new Color(0, 30, 58));
-        bottomPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 4));
+        public ScoreTab() {
+            setLayout(new BorderLayout(10,10));
+            setBackground(new Color(11,29,56));
 
-        String[] buttons = {"Save", "Update", "Print", "Clear", "Logout"};
-        for (String text : buttons) {
-            JButton btn = makeButton(text);
-            if (text.equals("Save")) {
-                btn.addActionListener(e -> saveStudentData());
-            }
-            bottomPanel.add(btn);
+            add(createLeftPanel(), BorderLayout.WEST);
+            add(createRightContainer(), BorderLayout.CENTER);
         }
 
-        rightPanel.add(bottomPanel, BorderLayout.SOUTH);
-    }
+        // ================= LEFT PANEL =================
+        private JPanel createLeftPanel() {
+            JPanel leftPanel = new JPanel();
+            leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
+            leftPanel.setBackground(new Color(11,29,56));
+            leftPanel.setPreferredSize(new Dimension(350,600));
+            leftPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
 
-    // Save student data to marksheet.txt in CSV format
-    private void saveStudentData() {
-        try (FileWriter writer = new FileWriter(
-            "C:/Users/Katri/OneDrive/Networking/System---ERS/ERS-group/marksheet.txt", true)) {
+            Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
+            Color fieldBg = new Color(139,169,201);
 
-            StringBuilder sb = new StringBuilder();
-            sb.append(studentIdField.getText()).append(",");
-            sb.append(studentNameField.getText()).append(",");
-            sb.append(schoolYearField.getText()).append(",");
-            sb.append(semesterField.getText()).append(",");
+            studentIdField = addField(leftPanel,"Student ID",labelFont,fieldBg);
+            studentNameField = addField(leftPanel,"Student Name",labelFont,fieldBg);
+            schoolYearField = addField(leftPanel,"Year Level",labelFont,fieldBg);
+            semesterField = addField(leftPanel,"Semester",labelFont,fieldBg);
 
-            double total = 0;
-            for (int i = 0; i < 5; i++) {
-                String course = (String) courseDropdowns.get(i).getSelectedItem();
-                double grade = Double.parseDouble(courseScores.get(i).getText());
-                boolean passed = grade <= 3.0;
-                total += grade;
+            for(int i=0;i<5;i++){
+                JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT,10,5));
+                row.setBackground(new Color(11,29,56));
 
-                sb.append(course).append(",");
-                sb.append(grade).append(",");
-                sb.append(passed).append(",");
+                JLabel label = new JLabel("Course "+(i+1));
+                label.setForeground(Color.WHITE);
+                label.setFont(labelFont);
+                label.setPreferredSize(new Dimension(120,32));
+
+                JComboBox<String> box = new JComboBox<>(courseOptions);
+                box.setPreferredSize(new Dimension(220,32));
+                box.setBackground(fieldBg);
+
+                JTextField grade = new JTextField();
+                grade.setPreferredSize(new Dimension(60,32));
+                grade.setBackground(fieldBg);
+                grade.setFont(new Font("Segoe UI", Font.BOLD,14));
+
+                row.add(label); row.add(box); row.add(grade);
+
+                courseDropdowns[i]=box;
+                courseScores[i]=grade;
+
+                leftPanel.add(row);
             }
 
-            double gpa = total / 5.0;
-            sb.append(gpa);
-
-            writer.write(sb.toString() + "\n");
-            JOptionPane.showMessageDialog(this, "Data saved successfully!");
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error saving data: " + e.getMessage());
+            return leftPanel;
         }
-    }
 
-    // Search for a specific student record
-    private void searchStudentData(String searchId, String searchSemester, String searchYear) {
-        try (BufferedReader reader = new BufferedReader(
-            new FileReader("C:/Users/Katri/OneDrive/Networking/System---ERS/ERS-group/marksheet.txt"))) {
+        private JTextField addField(JPanel panel,String text,Font font,Color bg){
+            JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT,10,5));
+            p.setBackground(new Color(11,29,56));
+            JLabel l = new JLabel(text);
+            l.setForeground(Color.WHITE);
+            l.setFont(font);
+            JTextField tf = new JTextField();
+            tf.setPreferredSize(new Dimension(250,32));
+            tf.setBackground(bg);
+            tf.setFont(new Font("Segoe UI", Font.BOLD,14));
+            p.add(l); p.add(tf);
+            panel.add(p);
+            return tf;
+        }
 
-            String line;
-            model.setRowCount(0);
+        // ================= RIGHT CONTAINER =================
+        private JPanel createRightContainer() {
+            JPanel rightContainer = new JPanel(new BorderLayout(10,10));
+            rightContainer.setBackground(new Color(11,29,56));
 
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 20) {
-                    String studentId = parts[0].trim();
-                    String yearLevel = parts[2].trim();
-                    String semester = parts[3].trim();
+            rightContainer.add(createRightTopPanel(), BorderLayout.NORTH);
+            rightContainer.add(createTablePanel(), BorderLayout.CENTER);
+            rightContainer.add(createBottomButtonPanel(), BorderLayout.SOUTH);
 
-                    if (studentId.equals(searchId.trim()) &&
-                        semester.equals(searchSemester.trim()) &&
-                        yearLevel.equals(searchYear.trim())) {
-                        model.addRow(parts);
-                        return;
+            return rightContainer;
+        }
+
+        private JPanel createRightTopPanel() {
+            JPanel rightTop = new JPanel(new FlowLayout(FlowLayout.LEFT,10,10));
+            rightTop.setBackground(new Color(11,29,56));
+            rightTop.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
+
+            // assign to class-level search fields
+            searchIdField = makeField(150);
+            searchSemField = makeField(100);
+            searchYearField = makeField(100);
+
+            JButton searchBtn = makeButton("Search");
+            JButton refreshBtn = makeButton("Refresh");
+
+            rightTop.add(label("ID")); rightTop.add(searchIdField);
+            rightTop.add(label("Semester")); rightTop.add(searchSemField);
+            rightTop.add(label("Year")); rightTop.add(searchYearField);
+            rightTop.add(searchBtn); rightTop.add(refreshBtn);
+
+            // ===== ACTIONS =====
+            searchBtn.addActionListener(e -> searchRecord(
+                    searchIdField.getText().trim(),
+                    searchSemField.getText().trim(),
+                    searchYearField.getText().trim()
+            ));
+            refreshBtn.addActionListener(e -> model.setRowCount(0)); // refresh clears table
+
+            return rightTop;
+        }
+
+        private JScrollPane createTablePanel() {
+            String[] cols = {
+                    "ID","Name","Year","Sem",
+                    "C1","G1","P1","C2","G2","P2",
+                    "C3","G3","P3","C4","G4","P4",
+                    "C5","G5","P5","GPA"
+            };
+            model = new DefaultTableModel(cols,0);
+            table = new JTable(model);
+            table.setRowHeight(28);
+            table.setBackground(new Color(139,169,201));
+            table.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD,14));
+
+            JScrollPane scroll = new JScrollPane(table);
+            scroll.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
+            return scroll;
+        }
+
+        private JPanel createBottomButtonPanel() {
+            JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER,15,10));
+            bottom.setBackground(new Color(11,29,56));
+            bottom.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
+
+            JButton save = makeButton("Save");
+            JButton update = makeButton("Update"); // visually present but no action yet
+            JButton clear = makeButton("Clear");
+            JButton logout = makeButton("Logout");
+
+            bottom.add(save);
+            bottom.add(update);
+            bottom.add(clear);
+            bottom.add(logout);
+
+            // ===== ACTIONS =====
+            save.addActionListener(e -> saveRecord());
+            clear.addActionListener(e -> clearFields());
+            logout.addActionListener(e -> System.exit(0));
+
+            return bottom;
+        }
+
+        private JButton makeButton(String text){
+            JButton btn = new JButton(text);
+            btn.setFont(new Font("Segoe UI", Font.BOLD,18));
+            btn.setForeground(Color.BLACK);
+            btn.setBackground(new Color(139,169,201));
+            btn.setFocusPainted(false);
+            btn.setOpaque(true);
+            btn.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
+            btn.setPreferredSize(new Dimension(120,45));
+            return btn;
+        }
+
+        private JTextField makeField(int w){
+            JTextField t = new JTextField();
+            t.setPreferredSize(new Dimension(w,32));
+            t.setBackground(new Color(139,169,201));
+            t.setFont(new Font("Segoe UI", Font.BOLD,14));
+            return t;
+        }
+
+        private JLabel label(String t){
+            JLabel l = new JLabel(t);
+            l.setForeground(Color.WHITE);
+            l.setFont(new Font("Segoe UI", Font.BOLD,16));
+            return l;
+        }
+
+        // ================== FILE FUNCTIONS ==================
+        private void saveRecord(){
+            try(PrintWriter pw = new PrintWriter(new FileWriter(marksheetFile,true))){
+                StringBuilder sb = new StringBuilder();
+                sb.append(studentIdField.getText().trim()).append(",")
+                .append(studentNameField.getText().trim()).append(",")
+                .append(schoolYearField.getText().trim()).append(",")
+                .append(semesterField.getText().trim());
+
+                for(int i=0;i<5;i++){
+                    sb.append(",").append(courseDropdowns[i].getSelectedItem())
+                    .append(",").append(courseScores[i].getText().trim())
+                    .append(",").append(true); // always true as in your file
+                }
+
+                double gpa = calculateGPA();
+                sb.append(",").append(String.format("%.2f",gpa));
+
+                pw.println(sb.toString());
+                JOptionPane.showMessageDialog(this,"Record saved successfully!");
+            } catch(Exception ex){
+                JOptionPane.showMessageDialog(this,"Error saving record: "+ex.getMessage());
+            }
+        }
+
+        private double calculateGPA(){
+            double sum=0;
+            int count=0;
+            for(JTextField score : courseScores){
+                try{
+                    double s = Double.parseDouble(score.getText().trim());
+                    sum+=s;
+                    count++;
+                }catch(NumberFormatException e){}
+            }
+            return count>0 ? sum/count : 0;
+        }
+
+        private void searchRecord(String id, String sem, String year){
+            if(!marksheetFile.exists()) return;
+            try(BufferedReader br = new BufferedReader(new FileReader(marksheetFile))){
+                String line;
+                boolean found=false;
+                model.setRowCount(0); // clear table first
+                while((line=br.readLine())!=null){
+                    String[] data = line.split(",");
+                    if(data[0].equals(id) && data[2].equals(year) && data[3].equals(sem)){
+                        // populate left panel
+                        studentIdField.setText(data[0]);
+                        studentNameField.setText(data[1]);
+                        schoolYearField.setText(data[2]);
+                        semesterField.setText(data[3]);
+                        for(int i=0;i<5;i++){
+                            courseDropdowns[i].setSelectedItem(data[4+i*3]);
+                            courseScores[i].setText(data[5+i*3]);
+                        }
+                        // show only this record in table
+                        model.addRow(data);
+                        found=true;
+                        break;
                     }
                 }
+                if(!found) JOptionPane.showMessageDialog(this,"Record not found!");
+            } catch(Exception e){
+                JOptionPane.showMessageDialog(this,"Error searching record: "+e.getMessage());
+            }
+        }
+
+        private void clearFields(){
+            // left panel
+            studentIdField.setText("");
+            studentNameField.setText("");
+            schoolYearField.setText("");
+            semesterField.setText("");
+            for(int i=0;i<5;i++){
+                courseDropdowns[i].setSelectedIndex(0);
+                courseScores[i].setText("");
             }
 
-            JOptionPane.showMessageDialog(this,
-                "No record found for Student ID " + searchId +
-                " Semester " + searchSemester +
-                " Year " + searchYear);
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error searching data: " + e.getMessage());
+            // search fields
+            searchIdField.setText("");
+            searchSemField.setText("");
+            searchYearField.setText("");
+
+            // clear table
+            model.setRowCount(0);
+        }
+
+        public static void main(String[] args){
+            SwingUtilities.invokeLater(() -> {
+                JFrame frame = new JFrame("Score Tab Styled Panels");
+                frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                frame.setSize(1200,800);
+                frame.setLocationRelativeTo(null);
+                frame.setContentPane(new ScoreTab());
+                frame.setVisible(true);
+            });
         }
     }
-
-    // Load all students into the table
-    private void loadAllStudents() {
-        try (BufferedReader reader = new BufferedReader(
-            new FileReader("C:/Users/Katri/OneDrive/Networking/System---ERS/ERS-group/marksheet.txt"))) {
-
-            String line;
-            model.setRowCount(0); // clear table before loading
-
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length >= 20) {
-                    model.addRow(parts);
-                } else {
-                    System.out.println("Skipping malformed line: " + line);
-                }
-            }
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error loading data: " + e.getMessage());
-        }
-    }
-
-
-        // Helper methods
-    private JPanel makeRow(String labelText, Font font, Color labelColor, Color fieldBg) {
-        JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
-        row.setBackground(new Color(0, 30, 58));
-
-        JLabel label = new JLabel(labelText);
-        label.setFont(font);
-        label.setForeground(labelColor);
-        label.setPreferredSize(new Dimension(120, 32));
-
-        JTextField field = new JTextField("", 12);
-        field.setBackground(fieldBg);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        field.setPreferredSize(new Dimension(250, 32));
-        field.setBorder(BorderFactory.createLineBorder(new Color(189, 216, 233), 2, true));
-
-        row.add(label);
-        row.add(field);
-
-        return row;
-    }
-
-    private JTextField makeField(String defaultText, Color bg) {
-        JTextField field = new JTextField(defaultText, 12);
-        field.setBackground(bg);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-        field.setPreferredSize(new Dimension(200, 32));
-        field.setBorder(BorderFactory.createLineBorder(new Color(189, 216, 233), 2, true));
-        return field;
-    }
-
-    private JButton makeButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setBackground(new Color(146, 190, 219));
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 16));
-        btn.setPreferredSize(new Dimension(100, 32));
-        return btn;
-    }
-
-    // For standalone testing
-    public static void main(String[] args) {
-        JFrame frame = new JFrame("STUDENT MANAGEMENT SYSTEM - SCORE");
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1200, 800);
-        frame.setLocationRelativeTo(null);
-        frame.setContentPane(new ScoreTab());
-        frame.setVisible(true);
-    }
-}

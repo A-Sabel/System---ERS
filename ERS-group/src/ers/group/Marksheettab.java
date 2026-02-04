@@ -4,12 +4,7 @@ package ers.group;
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JPanel.java to edit this template
  */
 
-import java.io.*;
-import java.util.*;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.JOptionPane;
 import javax.swing.JFrame;
-import javax.swing.SwingUtilities;
 
 /**
  *
@@ -285,155 +280,63 @@ public class Marksheettab extends javax.swing.JPanel {
         }
     }                                           
 
-    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
-        SearchbarID.setText("");
-        GWA.setText("GWA: --");
-        DefaultTableModel model = (DefaultTableModel) scoretable.getModel();
-        model.setRowCount(0);
-    }                                           
+   private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+    // Clear search bar
+    Searchbar.setText("");
 
-    private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        SearchbarID.setText("");
-        GWA.setText("GWA: --");
-        DefaultTableModel model = (DefaultTableModel) scoretable.getModel();
-        model.setRowCount(0);
-        JOptionPane.showMessageDialog(this, "Logged out successfully", "Logout", JOptionPane.INFORMATION_MESSAGE);
+    // Reset GWA label
+    GWA.setText("GWA. --");
+
+    // Clear table data
+    javax.swing.table.DefaultTableModel model =
+            (javax.swing.table.DefaultTableModel) scoretable.getModel();
+
+    for (int row = 0; row < model.getRowCount(); row++) {
+        for (int col = 0; col < model.getColumnCount(); col++) {
+            model.setValueAt(null, row, col);
+        }
     }
-    
-    private void SearchbuttonActionPerformed(java.awt.event.ActionEvent evt) {
-        String studentID = SearchbarID.getText().trim();
-        
-        if (studentID.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a Student ID", "Input Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        
-        searchStudentMarks(studentID);
+}
+                                       
+
+    private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+    int choice = javax.swing.JOptionPane.showConfirmDialog(
+            this,
+            "Are you sure you want to logout?",
+            "Logout",
+            javax.swing.JOptionPane.YES_NO_OPTION
+    );
+
+    if (choice == javax.swing.JOptionPane.YES_OPTION) {
+        this.dispose(); // close current window
     }
-    
-    private void loadMarksheetData() {
-        // Try multiple possible paths
-        String[] possiblePaths = {
-            "marksheet.txt",
-            "ERS-group/marksheet.txt",
-            "../marksheet.txt",
-            "../../marksheet.txt",
-            System.getProperty("user.dir") + File.separator + "marksheet.txt",
-            System.getProperty("user.dir") + File.separator + "ERS-group" + File.separator + "marksheet.txt"
-        };
-        
-        File marksheetFile = null;
-        for (String path : possiblePaths) {
-            File f = new File(path);
-            if (f.exists()) {
-                marksheetFile = f;
-                System.out.println("Found marksheet at: " + f.getAbsolutePath());
-                break;
-            }
-        }
-        
-        if (marksheetFile == null) {
-            System.out.println("Marksheet file not found in any of the expected locations");
-            System.out.println("Current working directory: " + System.getProperty("user.dir"));
-            return;
-        }
-        
-        try (Scanner scanner = new Scanner(marksheetFile)) {
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine().trim();
-                if (line.isEmpty()) continue;
-                
-                String[] parts = line.split(",");
-                if (parts.length >= 13) {
-                    String studentID = parts[0].trim();
-                    String studentName = parts[1].trim();
-                    String schoolYear = parts[2].trim();
-                    String semester = parts[3].trim();
-                    
-                    String[] subjects = new String[5];
-                    double[] marks = new double[5];
-                    
-                    // Parse 5 courses and their marks
-                    for (int i = 0; i < 5; i++) {
-                        int baseIdx = 4 + (i * 3);
-                        if (baseIdx < parts.length) {
-                            subjects[i] = parts[baseIdx].trim();
-                            try {
-                                marks[i] = Double.parseDouble(parts[baseIdx + 1].trim());
-                            } catch (NumberFormatException e) {
-                                marks[i] = 0;
-                            }
-                        }
-                    }
-                    
-                    marksheets.add(new Marksheet(studentID, studentName, schoolYear, semester, subjects, marks));
+}
+                                          
+
+    /**
+     * @param args the command line arguments
+     */
+    public static void main(String args[]) {
+        /* Set the Nimbus look and feel */
+        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
+        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
+         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
+         */
+        try {
+            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+                if ("Nimbus".equals(info.getName())) {
+                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+                    break;
                 }
             }
-            System.out.println("Loaded " + marksheets.size() + " marksheet records");
-        } catch (Exception e) {
-            System.out.println("Error loading marksheet: " + e.getMessage());
-            e.printStackTrace();
+        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
+            logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-    }
-    
-    private void searchStudentMarks(String studentID) {
-        DefaultTableModel model = (DefaultTableModel) scoretable.getModel();
-        model.setRowCount(0);
-        
-        List<Marksheet> studentMarks = new ArrayList<>();
-        for (Marksheet m : marksheets) {
-            if (m.getStudentID().equals(studentID)) {
-                studentMarks.add(m);
-            }
-        }
-        
-        if (studentMarks.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No records found for Student ID: " + studentID, "Not Found", JOptionPane.INFORMATION_MESSAGE);
-            GWA.setText("GWA: --");
-            return;
-        }
-        
-        double totalGWA = 0;
-        int rowNum = 0;
-        
-        for (Marksheet m : studentMarks) {
-            String[] subjects = m.getSubjects();
-            double[] marks = m.getMarks();
-            double average = calculateAverage(marks);
-            totalGWA += average;
-            
-            Object[] row = new Object[14];
-            row[0] = rowNum + 1;
-            row[1] = m.getStudentID();
-            row[2] = m.getSemester();
-            row[3] = subjects[0];
-            row[4] = marks[0];
-            row[5] = subjects[1];
-            row[6] = marks[1];
-            row[7] = subjects[2];
-            row[8] = marks[2];
-            row[9] = subjects[3];
-            row[10] = marks[3];
-            row[11] = subjects[4];
-            row[12] = marks[4];
-            row[13] = String.format("%.2f", average);
-            
-            model.addRow(row);
-            rowNum++;
-        }
-        
-        double finalGWA = studentMarks.size() > 0 ? totalGWA / studentMarks.size() : 0;
-        GWA.setText(String.format("GWA: %.2f", finalGWA));
-    }
-    
-    private double calculateAverage(double[] marks) {
-        double sum = 0;
-        for (double mark : marks) {
-            sum += mark;
-        }
-        return marks.length > 0 ? sum / marks.length : 0;
-    }                                            
+        //</editor-fold>
 
+        /* Create and display the form */
+        java.awt.EventQueue.invokeLater(() -> new Marksheettab().setVisible(true));
+    }
 
     // Variables declaration - do not modify                     
     private javax.swing.JPanel Background;

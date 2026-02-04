@@ -194,31 +194,32 @@ class StudentFileLoader extends BaseFileLoader {
         readFile(filePath, line -> {
             String[] parts = line.split(",");
             // Format: ID, Name, Age, DOB, YearLevel, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
-            if (parts.length < 15) return;
+            if (parts.length < 16) return;
             
             String id = parts[0].trim();
             String name = parts[1].trim();
             int age = Integer.parseInt(parts[2].trim());
             String dob = parts[3].trim();
             String yearLevel = parts[4].trim();
-            String studentType = parts[5].trim();
+            String section = parts[5].trim();
+            String studentType = parts[6].trim();
             ArrayList<String> subjects = new ArrayList<>();
-            if (!parts[6].trim().isEmpty()) {
-                String[] subjectList = parts[6].split(";");
+            if (!parts[7].trim().isEmpty()) {
+                String[] subjectList = parts[7].split(";");
                 for (String subject : subjectList) {
                     subjects.add(subject.trim());
                 }
             }
-            double gwa = Double.parseDouble(parts[7].trim());
-            String email = parts[8].trim();
-            String phoneNumber = parts[9].trim();
-            String gender = parts[10].trim();
-            String address = parts[11].trim();
-            String fathersName = parts[12].trim();
-            String mothersName = parts[13].trim();
-            String guardiansPhoneNumber = parts[14].trim();
+            double gwa = Double.parseDouble(parts[8].trim());
+            String email = parts[9].trim();
+            String phoneNumber = parts[10].trim();
+            String gender = parts[11].trim();
+            String address = parts[12].trim();
+            String fathersName = parts[13].trim();
+            String mothersName = parts[14].trim();
+            String guardiansPhoneNumber = parts[15].trim();
             
-            Student student = new Student(id, name, age, dob, yearLevel, studentType, 
+            Student student = new Student(id, name, age, dob, yearLevel, section, studentType, 
                     subjects, gwa, email, phoneNumber, gender, address, 
                     fathersName, mothersName, guardiansPhoneNumber);
             allStudents.add(student);

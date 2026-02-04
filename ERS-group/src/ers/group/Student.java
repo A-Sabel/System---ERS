@@ -10,6 +10,7 @@ public class Student {
     private int age;
     private final String dob;
     private String yearLevel;
+    private String section;
     private String studentType;
     private ArrayList<String> subjectsEnrolled;
     private double gwa;
@@ -27,7 +28,7 @@ public class Student {
 
     // constructors
     public Student(String studentID, String studentName, int age,
-                    String dob, String yearLevel, String studentType,
+                    String dob, String yearLevel, String section, String studentType,
                     ArrayList<String> subjectsEnrolled, double gwa,
                     String email, String phoneNumber, String gender,
                     String address, String fathersName, String mothersName,
@@ -37,6 +38,7 @@ public class Student {
         this.age = age;
         this.dob = dob;
         this.yearLevel = yearLevel;
+        this.section = section;
         this.studentType = studentType;
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
@@ -70,6 +72,10 @@ public class Student {
         return yearLevel;
     }
 
+    public String getSection() {
+        return section;
+    }
+
     public String getStudentType() {
         return studentType;
     }
@@ -93,6 +99,10 @@ public class Student {
 
     public void setYearLevel(String yearLevel) {
         this.yearLevel = yearLevel;
+    }
+
+    public void setSection(String section) {
+        this.section = section;
     }
 
     public void setStudentType(String studentType) {
@@ -170,6 +180,7 @@ public class Student {
         System.out.println("Age: " + age);
         System.out.println("Date of Birth: " + dob);
         System.out.println("Year Level: " + yearLevel);
+        System.out.println("Section: " + section);
         System.out.println("Student Type: " + studentType);
         System.out.println("Subjects Enrolled: " + subjectsEnrolled);
         System.out.println("GWA: " + gwa);

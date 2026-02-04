@@ -417,7 +417,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Student ID", "Student Name", "Date of Birth", "Gender", "Email", "Phone Number", "Father's Name", "Mother's Name", "Guardian's Phone No.", "Address"
+                "Student ID", "Student Name", "Age", "Date of Birth", "Year Level", "Student Status", "GWA", "Email", "Phone No.", "Address"
             }
         ));
         

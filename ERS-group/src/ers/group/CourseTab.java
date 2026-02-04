@@ -736,13 +736,10 @@ public class CourseTab extends JPanel {
             try {
                 // Create enrollment
                 String enrollmentID = Enrollment.generateEnrollmentID();
-                
                 // Assign section
                 String sectionID = Schedule.assignSection(course.getCourseSubjectID(), studentID, MAX_SECTION_CAPACITY);
-                
                 // Assign schedule to section if not already assigned
                 Schedule.assignScheduleToSection(sectionID, course.getCourseSubjectID(), course.isLabRoom());
-                
                 // Create enrollment record
                 Enrollment newEnrollment = new Enrollment(
                     enrollmentID, 
@@ -823,15 +820,9 @@ public class CourseTab extends JPanel {
         // Show result
         if (successCount > 0) {
             enrollmentSummary.append("Successfully enrolled in " + successCount + " course(s)!");
-            
-            // Reload enrollment data to update in-memory list
             loadEnrollmentData();
-            
-            // Refresh the student table to show updated enrollment counts
             loadStudentData();
             loadStudentTableData();
-            
-            // Refresh the dropdowns to show updated [✓] status
             CT_LoadCoursesActionPerformed(null);
             
             javax.swing.JOptionPane.showMessageDialog(this, 
@@ -962,11 +953,11 @@ public class CourseTab extends JPanel {
         String cleanName = courseName;
         
         // Remove status prefix ([✓], [✗], [ ])
-        if (cleanName.startsWith("[/] ")) {
+        if (cleanName.startsWith("[✓] ")) {
             cleanName = cleanName.substring(4);
-        } else if (cleanName.startsWith("[X] ")) {
+        } else if (cleanName.startsWith("[✗] ")) {
             cleanName = cleanName.substring(4);
-        } else if (cleanName.startsWith("[A] ")) {
+        } else if (cleanName.startsWith("[ ] ")) {
             cleanName = cleanName.substring(4);
         }
         

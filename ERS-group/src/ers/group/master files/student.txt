@@ -4,3 +4,4 @@ STU-003,Paolo Reyes,18,2006-01-10,1st Year,A,Irregular,,2.1,paolo.reyes@email.co
 STU-004,Ana Diaz,21,2003-11-05,2nd Year,A,Regular,,1.82,ana.diaz@email.com,09171234570,Female,321 Elm St,Francisco Diaz,Lucia Diaz,09175555558
 STU-005,Liam Cruz,22,2002-05-30,1st Year,B,Irregular,,1.9,liam.cruz@email.com,09171234571,Male,654 Maple Dr,Miguel Cruz,Sophia Cruz,09175555559
 STU-006,Bando Fern,20,2006-02-04,1st Year,,Regular,,0.0,,,Male,,,,
+STU-007,Ella Andres,22,2003-06-03,1st Year,,Regular,,0.0,ella.andres@gmail.com,09234567891,Female,,,,

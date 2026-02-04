@@ -92,6 +92,36 @@ public class StudentCourseTab extends javax.swing.JFrame {
         loadStudentTableData();
     }
     
+    /**
+     * Helper method to find the student file path.
+     * Returns the resolved path if found, or the first possible path if not found.
+     */
+    private String getStudentFilePath() {
+        if (studentFilePath != null) {
+            return studentFilePath;
+        }
+        
+        // Try to find the file using the same logic as loadStudentData
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/student.txt",
+            "src/ers/group/master files/student.txt",
+            "master files/student.txt",
+            "student.txt",
+            "ERS-group/student.txt",
+            "../student.txt"
+        };
+        
+        for (String path : possiblePaths) {
+            java.io.File f = new java.io.File(path);
+            if (f.exists()) {
+                return path;
+            }
+        }
+        
+        // If not found, return the most likely path (first option)
+        return possiblePaths[0];
+    }
+    
     private void loadStudentData() {
         try {
             // Try multiple possible paths
@@ -1154,8 +1184,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 .addContainerGap())
         );
 
-        MainTabPanel.addTab("Course", CourseTab);
-
         ScoreTab = new javax.swing.JPanel();
         ScoreTab.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -1172,10 +1200,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Score",new ScoreTab());
 
-        MarkSheetTab.setBackground(new java.awt.Color(31, 58, 95));
-        MarkSheetTab.setLayout(new java.awt.BorderLayout());
-
-        MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
+        MainTabPanel.addTab("Mark Sheet", new Marksheettab());
 
         ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
         
@@ -1648,7 +1673,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Save to file
             try {
-                studentFileSaver.save(STUDENT_FILE, students);
+                studentFileSaver.save(getStudentFilePath(), students);
                 javax.swing.JOptionPane.showMessageDialog(this, 
                     "Student deleted and saved successfully!", 
                     "Success", 
@@ -1737,7 +1762,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             students.add(newStudent);
             
             // Save to file
-            studentFileSaver.save(STUDENT_FILE, students);
+            studentFileSaver.save(getStudentFilePath(), students);
             
             // Refresh table
             loadStudentTableData();
@@ -1752,6 +1777,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
             clearStudentForm();
                 
         } catch (Exception e) {
+            logger.severe("Error in Add New: " + e.getMessage());
+            e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Error adding student: " + e.getMessage(), 
                 "Error", 
@@ -1864,7 +1891,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Save to file
-            studentFileSaver.save(STUDENT_FILE, students);
+            studentFileSaver.save(getStudentFilePath(), students);
             
             // Refresh table
             loadStudentTableData();
@@ -1878,6 +1905,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
                 
         } catch (Exception e) {
+            logger.severe("Error in Update: " + e.getMessage());
+            e.printStackTrace();
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Error updating student: " + e.getMessage(), 
                 "Error", 
@@ -2201,7 +2230,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             );
             
             students.add(newStudent);
-            studentFileSaver.save(studentFilePath, students);
+            
+            // Save to file
+            studentFileSaver.save(getStudentFilePath(), students);
             loadStudentTableData();
             
             // Store student in session for auto-population in Course Tab
@@ -2216,6 +2247,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
             MainTabPanel.setSelectedIndex(1);
             
         } catch (Exception e) {
+            logger.severe("Error in Save & Enroll: " + e.getMessage());
+            e.printStackTrace(); // Print full stack trace to console for debugging
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Error saving student: " + e.getMessage(), 
                 "Error",

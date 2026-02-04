@@ -4,8 +4,6 @@ package ers.group;
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
 
-import javax.swing.JFrame;
-
 /**
  *
  * @author fedoc
@@ -575,7 +573,7 @@ public class Marksheettab extends javax.swing.JFrame {
 }
                                         
 
-   private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
     // Clear search bar
     Searchbar.setText("");
 
@@ -592,7 +590,6 @@ public class Marksheettab extends javax.swing.JFrame {
         }
     }
 }
-                                       
 
     private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {
     int choice = javax.swing.JOptionPane.showConfirmDialog(

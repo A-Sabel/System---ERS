@@ -1,3 +1,5 @@
+// student course tab TAMA SHA
+
 package ers.group;
 
 import java.util.ArrayList;
@@ -150,7 +152,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_Logout = new javax.swing.JButton();
         ScoreTab = new javax.swing.JPanel();
         MarkSheetTab = new javax.swing.JPanel();
-        ScheduleTab = new javax.swing.JPanel();
+        ScheduleTab = new Scheduletab();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -572,20 +574,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Mark Sheet", MarkSheetTab);
 
-        ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
-
-        javax.swing.GroupLayout ScheduleTabLayout = new javax.swing.GroupLayout(ScheduleTab);
-        ScheduleTab.setLayout(ScheduleTabLayout);
-        ScheduleTabLayout.setHorizontalGroup(
-            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1520, Short.MAX_VALUE)
-        );
-        ScheduleTabLayout.setVerticalGroup(
-            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 571, Short.MAX_VALUE)
-        );
-
         MainTabPanel.addTab("Schedule", ScheduleTab);
+
+        
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);

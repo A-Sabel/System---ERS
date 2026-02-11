@@ -1,3 +1,10 @@
+//totoo na sha
+
+
+//CORRECT ONE schedule tab
+
+// another one
+
 package ers.group;
 
 
@@ -35,14 +42,19 @@ public class Scheduletab extends javax.swing.JPanel {
         loadScheduleData();
         loadStudentCourseMappings();
 
+        // Get current date
+        java.time.LocalDate currentDate = java.time.LocalDate.now();
+        int currentYear = currentDate.getYear();
+        int currentMonth = currentDate.getMonthValue() - 1; // 0-based index
 
         // Fix Year spinner
         yearSpinner.setModel(new javax.swing.SpinnerNumberModel(
-            2026, // default
+            currentYear, // default
             2000, // min
             2100, // max
             1     // step
         ));
+        yearSpinner.setEditor(new javax.swing.JSpinner.NumberEditor(yearSpinner, "#"));
 
 
         // Set correct months
@@ -50,6 +62,7 @@ public class Scheduletab extends javax.swing.JPanel {
             "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
         }));
+        monthComboBox.setSelectedIndex(currentMonth);
 
 
         // Initial label update
@@ -611,6 +624,9 @@ public class Scheduletab extends javax.swing.JPanel {
         refreshButton = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         Scheduletable = new javax.swing.JTable();
+        buttonPanel = new javax.swing.JPanel();
+        printbutton = new javax.swing.JButton();
+        logoutbutton = new javax.swing.JButton();
 
 
         mainPanel.setBackground(new java.awt.Color(31, 58, 95));
@@ -802,7 +818,7 @@ public class Scheduletab extends javax.swing.JPanel {
         gwaLabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); // NOI18N
         gwaLabel.setForeground(new java.awt.Color(255, 255, 255));
         gwaLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        gwaLabel.setText("GWA. 3.53");
+        gwaLabel.setText("GWA. --");
 
 
         javax.swing.GroupLayout scheduleTablePanelLayout = new javax.swing.GroupLayout(scheduleTablePanel);
@@ -852,6 +868,41 @@ public class Scheduletab extends javax.swing.JPanel {
         monthComboBox.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
         monthComboBox.addActionListener(this::monthComboBoxActionPerformed);
 
+        buttonPanel.setBackground(new java.awt.Color(0, 30, 58));
+        buttonPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        printbutton.setBackground(new java.awt.Color(73, 118, 159));
+        printbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        printbutton.setText("Print");
+        printbutton.setForeground(new java.awt.Color(0, 0, 0));
+        printbutton.addActionListener(this::printbuttonActionPerformed);
+
+        logoutbutton.setBackground(new java.awt.Color(73, 118, 159));
+        logoutbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        logoutbutton.setText("Logout");
+        logoutbutton.setForeground(new java.awt.Color(0, 0, 0));
+        logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
+
+        javax.swing.GroupLayout buttonPanelLayout = new javax.swing.GroupLayout(buttonPanel);
+        buttonPanel.setLayout(buttonPanelLayout);
+        buttonPanelLayout.setHorizontalGroup(
+            buttonPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(buttonPanelLayout.createSequentialGroup()
+                .addGap(31, 31, 31)
+                .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(logoutbutton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        buttonPanelLayout.setVerticalGroup(
+            buttonPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, buttonPanelLayout.createSequentialGroup()
+                .addContainerGap(28, Short.MAX_VALUE)
+                .addGroup(buttonPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(logoutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(23, 23, 23))
+        );
 
         monthYearDisplayLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         monthYearDisplayLabel.setForeground(new java.awt.Color(255, 255, 255));
@@ -904,7 +955,9 @@ public class Scheduletab extends javax.swing.JPanel {
                         .addGap(0, 627, Short.MAX_VALUE))
                     .addGroup(monthYearPanelLayout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jScrollPane2)))
+                        .addGroup(monthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jScrollPane2)
+                            .addComponent(buttonPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         monthYearPanelLayout.setVerticalGroup(
@@ -917,8 +970,10 @@ public class Scheduletab extends javax.swing.JPanel {
                     .addComponent(monthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(refreshButton))
                 .addGap(18, 18, 18)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 452, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(78, Short.MAX_VALUE))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(buttonPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
 
 
@@ -993,6 +1048,12 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private void refreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
         studentSearchField.setText("");
         semesterSearchField.setText("");
+        
+        // Reload data from files to ensure sync with other tabs
+        loadStudentData();
+        loadScheduleData();
+        loadStudentCourseMappings();
+        
         loadStudentTableData();
         gwaLabel.setText("GWA. --");
         displayEmptySchedule();
@@ -1127,7 +1188,43 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private void searchSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
         // TODO: Implement semester search
     }
-                                   
+
+    private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            // This prints the table directly to the default printer without showing a print dialog.
+            boolean complete = Scheduletable.print(javax.swing.JTable.PrintMode.FIT_WIDTH,
+                new java.text.MessageFormat("Student Schedule"),
+                new java.text.MessageFormat("Page {0}"),
+                false, // Do not show print dialog
+                null,  // No specific print attributes
+                false); // Run in non-interactive mode
+
+            if (complete) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Printing job has been sent to the default printer.", "Printing Complete", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                // This part might not be reached in non-interactive mode unless there's an issue.
+                javax.swing.JOptionPane.showMessageDialog(this, "Printing was cancelled or failed.", "Printing Status", javax.swing.JOptionPane.WARNING_MESSAGE);
+            }
+        } catch (java.awt.print.PrinterException e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error printing: " + e.getMessage(), "Print Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+        int choice = javax.swing.JOptionPane.showConfirmDialog(
+                this,
+                "Are you sure you want to logout?",
+                "Logout",
+                javax.swing.JOptionPane.YES_NO_OPTION
+        );
+
+        if (choice == javax.swing.JOptionPane.YES_OPTION) {
+            java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
+            if (window != null) {
+                window.dispose(); // close parent window
+            }
+        }
+    }
 
 
     /**
@@ -1195,6 +1292,8 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JPanel score;
     private javax.swing.JPanel student;
+    private javax.swing.JPanel buttonPanel;
+    private javax.swing.JButton logoutbutton;
+    private javax.swing.JButton printbutton;
     // End of variables declaration                  
 }
-

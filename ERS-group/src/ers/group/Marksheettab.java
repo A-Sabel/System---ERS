@@ -6,6 +6,11 @@
 package ers.group;
 
 import java.util.*;
+import java.text.SimpleDateFormat;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -382,20 +387,71 @@ public class Marksheettab extends javax.swing.JPanel {
     private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
         try {
             if (Searchbar.getText().trim().isEmpty()) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Please search for a student first!", "Print", javax.swing.JOptionPane.WARNING_MESSAGE);
+                javax.swing.JOptionPane.showMessageDialog(this, "Please search for a student first!", "Export", javax.swing.JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            
-            // Simple table print without custom graphics
-            boolean complete = scoretable.print(javax.swing.JTable.PrintMode.NORMAL, new java.text.MessageFormat("Student Marksheet - " + Searchbar.getText()), new java.text.MessageFormat("Page {0}"));
-            if (complete) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Print job completed successfully!", "Print", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+
+            // Build a simple HTML representation of the table and GWA
+            String studentId = Searchbar.getText().trim();
+            String gwaText = GWA.getText();
+
+            StringBuilder html = new StringBuilder();
+            html.append("<html><head><meta charset=\"utf-8\"></head><body>");
+            html.append("<h2>Student Marksheet</h2>");
+            html.append("<p><strong>Student ID:</strong> ").append(escapeHtml(studentId)).append("</p>");
+            html.append("<p><strong>").append(escapeHtml(gwaText)).append("</strong></p>");
+
+            html.append("<table border=\"1\" cellpadding=\"6\" cellspacing=\"0\">\n");
+            // header
+            javax.swing.table.TableModel model = scoretable.getModel();
+            html.append("<tr>");
+            for (int c = 0; c < model.getColumnCount(); c++) {
+                html.append("<th>").append(escapeHtml(String.valueOf(model.getColumnName(c)))).append("</th>");
             }
-        } catch (java.awt.print.PrinterException e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error printing: " + e.getMessage(), "Print Error", javax.swing.JOptionPane.ERROR_MESSAGE);
-            logger.severe("Print error: " + e.getMessage());
+            html.append("</tr>\n");
+
+            // rows
+            for (int r = 0; r < model.getRowCount(); r++) {
+                // skip entirely-empty rows
+                boolean emptyRow = true;
+                for (int c = 0; c < model.getColumnCount(); c++) {
+                    Object val = model.getValueAt(r, c);
+                    if (val != null && !String.valueOf(val).trim().isEmpty()) { emptyRow = false; break; }
+                }
+                if (emptyRow) continue;
+
+                html.append("<tr>");
+                for (int c = 0; c < model.getColumnCount(); c++) {
+                    Object val = model.getValueAt(r, c);
+                    html.append("<td>").append(escapeHtml(val == null ? "" : String.valueOf(val))).append("</td>");
+                }
+                html.append("</tr>\n");
+            }
+
+            html.append("</table>");
+            html.append("</body></html>");
+
+            // Determine Documents folder and filename
+            String userDocs = System.getProperty("user.home") + System.getProperty("file.separator") + "Documents";
+            String timestamp = new SimpleDateFormat("yyyyMMdd_Hmmss").format(new Date());
+            String fileName = "Marksheet_" + studentId + "_" + timestamp + ".doc";
+            Path outPath = Paths.get(userDocs, fileName);
+
+            Files.createDirectories(outPath.getParent());
+            Files.write(outPath, html.toString().getBytes(StandardCharsets.UTF_8));
+
+            javax.swing.JOptionPane.showMessageDialog(this, "Exported to " + outPath.toString(), "Export Successful", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error exporting: " + e.getMessage(), "Export Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            logger.severe("Export error: " + e.getMessage());
         }
     }                                           
+
+    // Simple HTML-escape helper
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
 
     private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
         clearTable();

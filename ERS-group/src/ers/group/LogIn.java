@@ -1,5 +1,8 @@
 package ers.group;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 /**
  *
@@ -188,7 +191,6 @@ public class LogIn extends javax.swing.JFrame {
         String username = Username.getText();
         String password = new String(Password.getPassword());
 
-
         if (username.isEmpty() || password.isEmpty()) {
             javax.swing.JOptionPane.showMessageDialog(
                 this,
@@ -196,7 +198,31 @@ public class LogIn extends javax.swing.JFrame {
                 "Sign In Error",
                 javax.swing.JOptionPane.ERROR_MESSAGE
             );
-        } else {
+            return;
+        }
+
+        boolean found = false;
+
+        try (BufferedReader br = new BufferedReader(new FileReader("login.txt"))) { // change path if needed
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(",");
+
+                // file format: username,email,password
+                if (data.length >= 3) {
+                    if (data[0].trim().equals(username) && data[2].trim().equals(password)) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (found) {
             javax.swing.JOptionPane.showMessageDialog(
                 this,
                 "Sign in successful!",
@@ -204,11 +230,19 @@ public class LogIn extends javax.swing.JFrame {
                 javax.swing.JOptionPane.INFORMATION_MESSAGE
             );
 
-            new StudentCourseTab().setVisible(true); // OPEN MAIN SYSTEM
-            this.dispose(); // CLOSE LOGIN WINDOW
-        }
-    }                                      
+            // open main system
+            new StudentCourseTab().setVisible(true);
+            this.dispose();
 
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(
+                this,
+                "Username or password is incorrect.",
+                "Login Failed",
+                javax.swing.JOptionPane.ERROR_MESSAGE
+            );
+        }
+    }
 
     public static void main(String args[]) {
         try {

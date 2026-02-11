@@ -1,5 +1,7 @@
 package ers.group;
-
+import java.io.*;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -7,15 +9,15 @@ package ers.group;
  */
 public class SignUp extends javax.swing.JDialog {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(SignUp.class.getName());
-
+    private JFrame loginFrame;
 
     public SignUp(java.awt.Frame parent, boolean modal) {
         super(parent, modal);
+        this.loginFrame = (JFrame) parent;
         initComponents();
     }                        
+
     private void initComponents() {
-
-
         MainPanel = new javax.swing.JPanel();
         Username = new javax.swing.JTextField();
         Email = new javax.swing.JTextField();
@@ -127,25 +129,37 @@ public class SignUp extends javax.swing.JDialog {
         String username = Username.getText();
         String password = new String(Password.getPassword());
 
-
         if (email.isEmpty() || username.isEmpty() || password.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
+            JOptionPane.showMessageDialog(this,
                 "Please fill in all fields.",
                 "Sign Up Error",
-                javax.swing.JOptionPane.ERROR_MESSAGE
-            );
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(
-                this,
-                "Account created successfully!",
-                "Success",
-                javax.swing.JOptionPane.INFORMATION_MESSAGE
-            );
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
+        try {
+            // create a File object pointing to login.txt inside master files
+            FileWriter fw = new FileWriter("login.txt", true); // append mode
+            BufferedWriter bw = new BufferedWriter(fw);
 
-            // Optional: close the dialog after successful sign up
+            bw.write(email + "," + username + "," + password);
+            bw.newLine();
+            bw.close();
+
+            JOptionPane.showMessageDialog(this,
+                "Admin account created successfully!");
+
+            // open main system
+            new StudentCourseTab().setVisible(true);
             this.dispose();
+
+            // close the login window
+            if (loginFrame != null) {
+                loginFrame.dispose();
+            }
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }                                      
 

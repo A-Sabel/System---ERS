@@ -2299,7 +2299,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new StudentCourseTab().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new LogIn().setVisible(true));
     }
 
     // Variables declaration - do not modify                     

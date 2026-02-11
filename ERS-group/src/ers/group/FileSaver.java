@@ -1,13 +1,15 @@
 package ers.group;
 
+
 public interface FileSaver {
     void save(String filePath, java.util.List<?> data) throws java.io.IOException;
 }
 
+
 abstract class BaseFileSaver<T> implements FileSaver {
-    
+   
     protected abstract String formatLine(T item);
-    
+   
     @Override
     public void save(String filePath, java.util.List<?> data) throws java.io.IOException {
         try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(filePath))) {
@@ -22,7 +24,7 @@ abstract class BaseFileSaver<T> implements FileSaver {
             }
         }
     }
-    
+   
     protected void update(String filePath, java.util.List<T> data, java.util.function.Predicate<T> predicate, T updatedItem) throws java.io.IOException {
         for (int i = 0; i < data.size(); i++) {
             if (predicate.test(data.get(i))) {
@@ -32,12 +34,13 @@ abstract class BaseFileSaver<T> implements FileSaver {
         }
         save(filePath, data);
     }
-    
+   
     protected void delete(String filePath, java.util.List<T> data, java.util.function.Predicate<T> predicate) throws java.io.IOException {
         data.removeIf(predicate);
         save(filePath, data);
     }
 }
+
 
 class StudentFileSaver extends BaseFileSaver<Student> {
     @Override
@@ -64,6 +67,7 @@ class StudentFileSaver extends BaseFileSaver<Student> {
     }
 }
 
+
 class ScheduleFileSaver extends BaseFileSaver<Schedule> {
     @Override
     protected String formatLine(Schedule s) {
@@ -78,6 +82,7 @@ class ScheduleFileSaver extends BaseFileSaver<Schedule> {
         );
     }
 }
+
 
 class SectionFileSaver extends BaseFileSaver<Section> {
     @Override
@@ -94,6 +99,7 @@ class SectionFileSaver extends BaseFileSaver<Section> {
         );
     }
 }
+
 
 class CourseSubjectFileSaver extends BaseFileSaver<CourseSubject> {
     @Override
@@ -112,6 +118,7 @@ class CourseSubjectFileSaver extends BaseFileSaver<CourseSubject> {
     }
 }
 
+
 class TeachersFileSaver extends BaseFileSaver<Teachers> {
     @Override
     protected String formatLine(Teachers teacher) {
@@ -126,6 +133,7 @@ class TeachersFileSaver extends BaseFileSaver<Teachers> {
     }
 }
 
+
 class RoomsFileSaver extends BaseFileSaver<Rooms> {
     @Override
     protected String formatLine(Rooms room) {
@@ -137,28 +145,35 @@ class RoomsFileSaver extends BaseFileSaver<Rooms> {
     }
 }
 
+
 class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     @Override
     protected String formatLine(Enrollment enrollment) {
+        // Format: enrollmentID,studentID,courseID,yearLevel,semester,status,sectionID
         return String.join(",",
+            enrollment.getEnrollmentID(),
             enrollment.getStudentID(),
-            enrollment.getSectionID(),
-            enrollment.getCourseID()
+            enrollment.getCourseID(),
+            enrollment.getYearLevel(),
+            enrollment.getSemester(),
+            enrollment.getStatus(),
+            enrollment.getSectionID() != null ? enrollment.getSectionID() : ""
         );
     }
 }
+
 
 class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
     @Override
     protected String formatLine(Marksheet m) {
         // Format: ID, StudentID, Semester, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
         StringBuilder sb = new StringBuilder();
-        
+       
         // Generate ID (e.g., MRK-001)
         sb.append("MRK-").append(String.format("%03d", System.currentTimeMillis() % 1000)).append(",");
         sb.append(m.getStudentID()).append(",");
         sb.append(m.getSemester()).append(",");
-        
+       
         // Add 5 course-score pairs
         String[] subjects = m.getSubjects();
         double[] marks = m.getMarks();
@@ -166,7 +181,7 @@ class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
             sb.append(subjects[i] != null ? subjects[i] : "").append(",");
             sb.append(marks[i]).append(",");
         }
-        
+       
         // Calculate and add average
         double average = 0.0;
         int count = 0;
@@ -178,7 +193,10 @@ class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
         }
         average = count > 0 ? average / count : 0.0;
         sb.append(String.format("%.2f", average));
-        
+       
         return sb.toString();
     }
 }
+
+
+

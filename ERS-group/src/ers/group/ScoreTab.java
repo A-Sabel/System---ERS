@@ -28,7 +28,7 @@ public class ScoreTab extends JPanel {
     private JButton saveBtn, clearBtn, updateBtn;
 
     // Ensure this path is correct for your local machine
-    private final String marksheetPath = "C:\\Users\\Katri\\OneDrive\\Networking\\System---ERS\\ERS-group\\src\\ers\\group\\master files\\marksheet.txt";
+    private final String marksheetPath = "C:\\Users\\Katri\\OneDrive\\Networking\\System---ERS\\ERS-group\\src\\ers\\group\\master files\\SECURE_marksheet";
 
     private ScoreTabLogic logic;
 
@@ -356,49 +356,49 @@ public class ScoreTab extends JPanel {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void searchRecord() {
-        String id = searchIdField.getText().trim();
-        String sem = searchSemField.getSelectedItem().toString();
+private void searchRecord() {
+    String id = searchIdField.getText().trim();
+    String sem = searchSemField.getSelectedItem().toString();
 
-        if (id.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Please enter a Student ID to search.");
+    if (id.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please enter a Student ID to search.");
+        return;
+    }
+
+    try {
+        ScoreTabRecord record = logic.search(id, sem);
+        
+        if (record == null) {
+            JOptionPane.showMessageDialog(this, "No record found for ID: " + id + " and " + sem);
             return;
         }
 
-        try {
-            ScoreTabRecord record = logic.search(id, sem);
-            
-            if (record == null) {
-                JOptionPane.showMessageDialog(this, "No record found for ID: " + id + " and " + sem);
-                return;
-            }
-
-            // 1. Fill the input fields on the left so the user can edit/update
-            studentIdField.setText(record.id);
-            semesterField.setSelectedItem(record.semester);
-            for (int i = 0; i < 5; i++) {
-                courseDropdowns[i].setSelectedItem(courseMap.getOrDefault(record.courses[i], record.courses[i]));
-                courseScores[i].setText(record.grades[i]);
-            }
-
-            // 2. Update the Table to show ONLY the searched record
-            model.setRowCount(0); // Clear current table rows
-            Object[] row = new Object[14];
-            row[0] = "REC"; // Or record index if your logic provides it
-            row[1] = record.id;
-            row[2] = record.semester;
-            for (int i = 0; i < 5; i++) {
-                row[3 + i * 2] = courseMap.getOrDefault(record.courses[i], record.courses[i]);
-                row[4 + i * 2] = record.grades[i];
-            }
-            row[13] = record.gpa;
-            model.addRow(row);
-
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Search Error: " + e.getMessage());
-            e.printStackTrace();
+        // 1. Fill the input fields on the left so the user can edit/update
+        studentIdField.setText(record.id);
+        semesterField.setSelectedItem(record.semester);
+        for (int i = 0; i < 5; i++) {
+            courseDropdowns[i].setSelectedItem(courseMap.getOrDefault(record.courses[i], record.courses[i]));
+            courseScores[i].setText(record.grades[i]);
         }
+
+        // 2. Update the Table to show ONLY the searched record
+        model.setRowCount(0); // Clear current table rows
+        Object[] row = new Object[14];
+        row[0] = "REC"; // Or record index if your logic provides it
+        row[1] = record.id;
+        row[2] = record.semester;
+        for (int i = 0; i < 5; i++) {
+            row[3 + i * 2] = courseMap.getOrDefault(record.courses[i], record.courses[i]);
+            row[4 + i * 2] = record.grades[i];
+        }
+        row[13] = record.gpa;
+        model.addRow(row);
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Search Error: " + e.getMessage());
+        e.printStackTrace();
     }
+}
     private void clearFields() {
         studentIdField.setText("");
         semesterField.setSelectedIndex(0);

@@ -39,19 +39,11 @@ public class ScoreTabLogic {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] d = line.split(",");
-                if (d.length < 13) continue;
+                if (d.length < 14) continue; // Updated to 14 because of recordId
+
+                // Index 0 = recordId (MRK-XXX), Index 1 = Student ID, Index 2 = Semester
                 if (d[1].equals(id) && d[2].equals(semester)) {
-                    ScoreTabRecord r = new ScoreTabRecord();
-                    r.id = d[1];
-                    r.name = d[0];
-                    r.semester = d[2];
-                    for (int i = 0; i < 5; i++) {
-                        r.courses[i] = d[3 + i * 2];
-                        r.grades[i] = d[4 + i * 2];
-                        r.passed[i] = Double.parseDouble(d[4 + i * 2]) >= 3.0; // pass if grade >= 3.0
-                    }
-                    r.gpa = calculateGPA(r.grades);
-                    return r;
+                    return parseRecord(d);
                 }
             }
         }
@@ -71,12 +63,11 @@ public class ScoreTabLogic {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] d = line.split(",");
-                if (d.length < 13) {
-                    pw.println(line);
-                    continue;
-                }
-
-                if (d[1].equals(updated.id) && d[2].equals(updated.semester)) {
+                
+                // We update based on Student ID AND Semester
+                if (d.length >= 14 && d[1].equals(updated.id) && d[2].equals(updated.semester)) {
+                    // Retain the original MRK number even during update
+                    updated.recordId = d[0]; 
                     pw.println(updated.toFileString());
                     updatedFlag = true;
                 } else {
@@ -86,8 +77,9 @@ public class ScoreTabLogic {
         }
 
         if (updatedFlag) {
-            file.delete();
-            temp.renameTo(file);
+            if (file.delete()) {
+                temp.renameTo(file);
+            }
         } else {
             temp.delete();
         }
@@ -104,22 +96,25 @@ public class ScoreTabLogic {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] d = line.split(",");
-                if (d.length < 13) continue;
-
-                ScoreTabRecord r = new ScoreTabRecord();
-                r.id = d[1];
-                r.name = d[0];
-                r.semester = d[2];
-                for (int i = 0; i < 5; i++) {
-                    r.courses[i] = d[3 + i * 2];
-                    r.grades[i] = d[4 + i * 2];
-                    r.passed[i] = Double.parseDouble(d[4 + i * 2]) >= 3.0;
+                if (d.length >= 14) {
+                    list.add(parseRecord(d));
                 }
-                r.gpa = calculateGPA(r.grades);
-                list.add(r);
             }
         }
-
         return list;
+    }
+
+    // Helper method to convert a CSV line into a Record Object
+    private ScoreTabRecord parseRecord(String[] d) {
+        ScoreTabRecord r = new ScoreTabRecord();
+        r.recordId = d[0]; // MRK-XXX
+        r.id = d[1];       // Student ID
+        r.semester = d[2]; // Semester
+        for (int i = 0; i < 5; i++) {
+            r.courses[i] = d[3 + i * 2];
+            r.grades[i] = d[4 + i * 2];
+        }
+        r.gpa = calculateGPA(r.grades);
+        return r;
     }
 }

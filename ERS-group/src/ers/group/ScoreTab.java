@@ -263,15 +263,38 @@ public class ScoreTab extends JPanel {
     }
 
     private JButton makeButton(String text) {
-        JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI",Font.BOLD,15));
-        btn.setBackground(new Color(120,180,255));
-        btn.setForeground(Color.BLACK);
-        btn.setFocusPainted(false);
-        btn.setOpaque(true);
-        btn.setBorder(BorderFactory.createLineBorder(Color.BLACK,2));
-        btn.setPreferredSize(new Dimension(120,40));
-        return btn;
+        JButton btn = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                Color topColor = new Color(130, 180, 220);
+                Color bottomColor = new Color(90, 140, 190);
+
+                GradientPaint gp = new GradientPaint(0, 0, topColor, 0, getHeight(), bottomColor);
+                g2.setPaint(gp);
+                
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+
+                g2.setColor(new Color(40, 40, 40));
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, 10, 10);
+
+                g2.dispose();
+                super.paintComponent(g);
+        }
+    };
+
+    btn.setFont(new Font("Segoe UI", Font.BOLD, 20)); 
+    btn.setForeground(Color.BLACK);
+    btn.setContentAreaFilled(false); 
+    btn.setFocusPainted(false);
+    btn.setBorderPainted(false);
+    btn.setOpaque(false);
+    btn.setPreferredSize(new Dimension(130, 45)); 
+    
+    return btn;
     }
 
     private JTextField makeField(int width) {

@@ -1,3 +1,5 @@
+//scoretab
+
 package ers.group;
 
 import java.awt.*;
@@ -15,6 +17,7 @@ public class ScoreTab extends JPanel {
 
     private JTextField studentIdField;
     private JComboBox<String> semesterField;
+    private JComboBox<String> yearLevelField;
 
     @SuppressWarnings("unchecked")
     private JComboBox<String>[] courseDropdowns = new JComboBox[5];
@@ -22,13 +25,15 @@ public class ScoreTab extends JPanel {
 
     private JTextField searchIdField;
     private JComboBox<String> searchSemField;
+    private JComboBox<String> searchYearField;
     private JTable table;
     private DefaultTableModel model;
 
     private JButton saveBtn, clearBtn, updateBtn;
 
     private final Map<String, String> courseMap = new LinkedHashMap<>();
-    private final String[] semesters = {"1st Semester", "2nd Semester", "3rd Semester", "4th Semester"};
+    private final String[] semesters = {"1st Semester", "2nd Semester"};
+    private final String[] yearLevels = {"1st Year", "2nd Year"};
 
     private final String[] courseOptions = {
             "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems",
@@ -143,6 +148,7 @@ public class ScoreTab extends JPanel {
         Color fieldBg = new Color(146, 190, 219);
 
         studentIdField = addFieldAbove(left, "Student ID", labelFont, fieldBg);
+        yearLevelField = addComboAbove(left, "Year Level", yearLevels, labelFont, fieldBg);
         semesterField = addComboAbove(left, "Semester", semesters, labelFont, fieldBg);
 
         for (int i = 0; i < 5; i++) {
@@ -228,6 +234,8 @@ public class ScoreTab extends JPanel {
         searchIdField = makeField(120);
         searchSemField = new JComboBox<>(semesters);
         searchSemField.setPreferredSize(new Dimension(120, 32));
+        searchYearField = new JComboBox<>(yearLevels);
+        searchYearField.setPreferredSize(new Dimension(100, 32));
         JButton searchBtn = new StyledButton("Search");
         searchBtn.setPreferredSize(new Dimension(110, 38));
         searchBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
@@ -236,14 +244,20 @@ public class ScoreTab extends JPanel {
         search.add(searchIdField);
         search.add(label("Sem:"));
         search.add(searchSemField);
+        search.add(label("Year:"));
+        search.add(searchYearField);
         search.add(searchBtn);
         return search;
     }
 
     // ================= TABLE CUSTOMIZATION FOR PHOTO MATCH =================
     private JScrollPane createTablePanel() {
-        String[] cols = {"ID", "Student ID", "Semester", "Course 1", "Score 1", "Course 2", "Score 2", 
-                        "Course 3", "Score 3", "Course 4", "Score 4", "Course 5", "Score 5", "GPA"};
+        String[] cols = {
+  "ID", "Student ID", "Semester", "Year Level",
+  "Course 1", "Score 1", "Course 2", "Score 2",
+  "Course 3", "Score 3", "Course 4", "Score 4",
+  "Course 5", "Score 5", "GPA"
+};
 
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int row, int col) { return false; }
@@ -254,7 +268,7 @@ public class ScoreTab extends JPanel {
         table.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         
         // CHANGE 1: Enable Auto-Resize so it fits the frame width
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS); 
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF); 
         
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
@@ -286,15 +300,27 @@ public class ScoreTab extends JPanel {
 
         // CHANGE 2: Set "Preferred" vs "Minimum" widths to ensure readability
         // IDs and Scores can be narrow, Courses need to be wider
-        int[] minWidths = {50, 70, 90, 110, 45, 110, 45, 110, 45, 110, 45, 110, 45, 40};
-        for(int i = 0; i < minWidths.length; i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(minWidths[i]);
-            if (i % 2 == 0 && i > 3) { // Score columns and GPA
-                table.getColumnModel().getColumn(i).setMinWidth(40);
+        int[] colWidths = {
+            60,  // ID
+            100, // Student ID
+            110, // Semester
+            90,  // Year Level
+            150, 60, // Course 1, Score 1
+            150, 60, // Course 2, Score 2
+            150, 60, // Course 3, Score 3
+            150, 60, // Course 4, Score 4
+            150, 60, // Course 5, Score 5
+            80       // GPA
+        };
+        for(int i = 0; i < colWidths.length; i++) {
+            if (i < table.getColumnCount()) {
+                table.getColumnModel().getColumn(i).setPreferredWidth(colWidths[i]);
             }
         }
 
-        JScrollPane scroll = new JScrollPane(table);
+        JScrollPane scroll = new JScrollPane(table,
+            JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+            JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scroll.getViewport().setBackground(new Color(200, 203, 209)); 
         scroll.setBorder(BorderFactory.createLineBorder(new Color(0,0,0), 2));
         
@@ -334,27 +360,42 @@ public class ScoreTab extends JPanel {
     }
 
     private void loadAllRecordsToTable() {
-        model.setRowCount(0);
-        try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                if (d.length < 13) continue;
-                Object[] row = new Object[14];
-                row[0] = d[0]; row[1] = d[1]; row[2] = d[2];
-                for (int i = 0; i < 5; i++) {
-                    row[3 + i * 2] = courseMap.getOrDefault(d[3 + i * 2], d[3 + i * 2]);
-                    row[4 + i * 2] = d[4 + i * 2];
-                }
-                row[13] = (d.length > 13) ? d[13] : "";
-                model.addRow(row);
+    model.setRowCount(0);
+
+    try (BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
+        String line;
+
+        while ((line = br.readLine()) != null) {
+            String[] d = line.split(",");
+            if (d.length < 15) continue;
+
+            Object[] row = new Object[15];
+
+            row[0] = d[0]; // MRK
+            row[1] = d[1]; // Student ID
+            row[2] = d[2]; // Semester
+            row[3] = d[3]; // Year Level
+
+            // Courses & scores start at index 4
+            for (int i = 0; i < 5; i++) {
+                row[4 + i * 2] = courseMap.getOrDefault(d[4 + i * 2], d[4 + i * 2]);
+                row[5 + i * 2] = d[5 + i * 2];
             }
-        } catch (Exception e) { e.printStackTrace(); }
+
+            row[14] = d[14]; // GPA
+
+            model.addRow(row);
+        }
+    } catch (Exception e) {
+        e.printStackTrace();
     }
+}
+
 
     private void searchRecord() {
         String id = searchIdField.getText().trim();
         String sem = searchSemField.getSelectedItem().toString();
+        String year = searchYearField.getSelectedItem().toString();
         model.setRowCount(0);
 
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
@@ -362,17 +403,21 @@ public class ScoreTab extends JPanel {
             boolean found = false;
             while((line = br.readLine())!=null){
                 String[] d = line.split(",");
-                if(d.length<13) continue;
-                if(d[1].equals(id) && d[2].equals(sem)){
+                if(d.length < 15) continue;
+                if(d[1].equals(id) && d[2].equals(sem) && d[3].equals(year)){
                     Object[] row = new Object[14];
                     row[0] = d[0];
                     row[1] = d[1];
                     row[2] = d[2];
+                    
+                    int offset = 1;
+                    yearLevelField.setSelectedItem(d[3]);
+                    
                     for(int i=0;i<5;i++){
-                        row[3 + i*2] = courseMap.getOrDefault(d[3 + i*2], d[3 + i*2]);
-                        row[4 + i*2] = d[4 + i*2];
-                        courseDropdowns[i].setSelectedItem(courseMap.getOrDefault(d[3 + i*2], d[3 + i*2]));
-                        courseScores[i].setText(d[4 + i*2]);
+                        row[3 + i*2] = courseMap.getOrDefault(d[3 + offset + i*2], d[3 + offset + i*2]);
+                        row[4 + i*2] = d[4 + offset + i*2];
+                        courseDropdowns[i].setSelectedItem(courseMap.getOrDefault(d[3 + offset + i*2], d[3 + offset + i*2]));
+                        courseScores[i].setText(d[4 + offset + i*2]);
                     }
                     semesterField.setSelectedItem(d[2]);
                     studentIdField.setText(d[1]);
@@ -407,8 +452,9 @@ public class ScoreTab extends JPanel {
         try(PrintWriter pw = new PrintWriter(new FileWriter(getMarksheetPath(),true))){
             String nextMRK = getNextMRK();
             String sem = semesterField.getSelectedItem().toString();
+            String year = yearLevelField.getSelectedItem().toString();
             StringBuilder sb = new StringBuilder();
-            sb.append(nextMRK).append(",").append(id).append(",").append(sem);
+            sb.append(nextMRK).append(",").append(id).append(",").append(sem).append(",").append(year);
 
             for(int i=0;i<5;i++){
                 sb.append(",").append(getCourseCode(courseDropdowns[i].getSelectedItem().toString()));
@@ -439,15 +485,18 @@ public class ScoreTab extends JPanel {
                 String line;
                 while((line=br.readLine())!=null){
                     String[] d = line.split(",");
-                    if(d.length<13){
+                    if(d.length < 15){
                         pw.println(line);
                         continue;
                     }
                     if(d[1].equals(studentIdField.getText().trim()) &&
-                       d[2].equals(semesterField.getSelectedItem().toString())) {
+                       d[2].equals(semesterField.getSelectedItem().toString()) &&
+                       d[3].equals(yearLevelField.getSelectedItem().toString())) {
 
                         StringBuilder sb = new StringBuilder();
                         sb.append(d[0]).append(",").append(d[1]).append(",").append(d[2]);
+                        sb.append(",").append(yearLevelField.getSelectedItem().toString());
+                        
                         for(int i=0;i<5;i++){
                             sb.append(",").append(getCourseCode(courseDropdowns[i].getSelectedItem().toString()));
                             sb.append(",").append(courseScores[i].getText().trim());
@@ -517,7 +566,7 @@ public class ScoreTab extends JPanel {
                 if(parts.length >= 14 && parts[1].equals(studentID)) {
                     // Last field is the semester GPA
                     try {
-                        double semesterGPA = Double.parseDouble(parts[13]);
+                        double semesterGPA = Double.parseDouble(parts[parts.length - 1]);
                         totalGPA += semesterGPA;
                         semesterCount++;
                     } catch(NumberFormatException ignored) {}

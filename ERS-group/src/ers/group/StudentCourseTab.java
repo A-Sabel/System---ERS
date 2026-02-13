@@ -1,9 +1,16 @@
+// student course tab
+
 package ers.group;
 
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
 import javax.swing.table.DefaultTableModel;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+import java.awt.Color;
+import java.awt.Component;
 
 /**
  *
@@ -43,13 +50,31 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private String studentFilePath; // Store the actual file path found during loading
     private CourseSubjectFileLoader courseLoader; // For loading suggested courses
     private CourseTab courseTab; // Reference to CourseTab for refreshing
-    private Scheduletab scheduleTab; // Reference to Scheduletab for refreshing
     private boolean isInitialized = false; // Flag to prevent premature tab change events
 
     
     // Schedule Data
     private ArrayList<Schedule> schedules;
     private Map<String, ArrayList<String>> studentCourses;
+    
+    // Schedule Tab Components - Commented out as now using Scheduletab instance
+    /*private javax.swing.JPanel SCH_SearchPanel;
+    private javax.swing.JPanel SCH_FiltersPanel;
+    private javax.swing.JLabel SCH_SemesterIDLabel;
+    private javax.swing.JTextField SCH_StudentSearchField;
+    private javax.swing.JButton SCH_SearchStudentButton;
+    private javax.swing.JTextField SCH_SemesterSearchField;
+    private javax.swing.JLabel SCH_StudentIDLabel;
+    private javax.swing.JButton SCH_SearchSemesterButton;
+    private javax.swing.JPanel SCH_GWAPanel;
+    private javax.swing.JLabel SCH_GWALabel;
+    private javax.swing.JPanel SCH_MonthYearPanel;
+    private javax.swing.JComboBox<String> SCH_MonthComboBox;
+    private javax.swing.JSpinner SCH_YearSpinner;
+    private javax.swing.JLabel SCH_MonthYearDisplayLabel;
+    private javax.swing.JButton SCH_RefreshButton;
+    private javax.swing.JScrollPane SCH_TableScrollPane;
+    private javax.swing.JTable SCH_Table;*/
     
     // File paths
     private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
@@ -78,8 +103,25 @@ public class StudentCourseTab extends javax.swing.JFrame {
             return studentFilePath;
         }
         
-        // Use FilePathResolver to find the file
-        return FilePathResolver.resolveStudentFilePath();
+        // Try to find the file using the same logic as loadStudentData
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/student.txt",
+            "src/ers/group/master files/student.txt",
+            "master files/student.txt",
+            "student.txt",
+            "ERS-group/student.txt",
+            "../student.txt"
+        };
+        
+        for (String path : possiblePaths) {
+            java.io.File f = new java.io.File(path);
+            if (f.exists()) {
+                return path;
+            }
+        }
+        
+        // If not found, return the most likely path (first option)
+        return possiblePaths[0];
     }
     
     private void loadStudentData() {
@@ -296,6 +338,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         ST_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
         ST_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        ST_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 480));
 
         ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
         ST_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
@@ -479,45 +522,75 @@ public class StudentCourseTab extends javax.swing.JFrame {
         javax.swing.GroupLayout ST_LeftPanelLayout = new javax.swing.GroupLayout(ST_LeftPanel);
         ST_LeftPanel.setLayout(ST_LeftPanelLayout);
         ST_LeftPanelLayout.setHorizontalGroup(
-            ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(ST_LeftPanelLayout.createSequentialGroup()
-                .addGap(15, 15, 15) // Border padding
-                .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(ST_STUDENT_ID, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_STUDENT_NAME, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_EMAIL, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_BIRTHDAY, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_GENDER, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_PHONE_NUM, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_ADDRESS, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_FATHERS_NAME, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_MOTHERS_NAME, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_GUARDIANS_PHONE_NUM, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_ACADEMIC_INFO, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(ST_YEAR_LEVEL, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_CURRENT_SEMESTER, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_STUDENT_TYPE, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_SECTION, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
-                    .addComponent(ST_GWA_LABEL, javax.swing.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE))
-                .addGap(10, 10, 10) // Gap between label and field
+            ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+            .addGroup(javax.swing.GroupLayout.Alignment.LEADING, ST_LeftPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ST_StudentID, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_StudentName, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_Email, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_DateOfBirth, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_Gender, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_PhoneNumber, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_Address, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_FathersName, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_MothersName, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_GuardiansPhoneNumber, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_YearLevel, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_CurrentSemester, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_StudentType, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_Section, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
-                    .addComponent(ST_GWA, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
+                    .addGroup(ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_STUDENT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(ST_StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_PHONE_NUM, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(ST_PhoneNumber, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_FATHERS_NAME, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(18, 18, 18)
+                        .addComponent(ST_FathersName, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_MOTHERS_NAME)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(ST_MothersName, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(ST_BIRTHDAY, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ST_STUDENT_NAME, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(18, 18, 18)
+                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(ST_StudentName)
+                            .addComponent(ST_DateOfBirth, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)))
+                    .addGroup(ST_LeftPanelLayout.createSequentialGroup()
+                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(ST_EMAIL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(ST_GENDER, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(ST_Gender, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(ST_Email, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(ST_LeftPanelLayout.createSequentialGroup()
+                                .addComponent(ST_ADDRESS, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(ST_GUARDIANS_PHONE_NUM, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(ST_GuardiansPhoneNumber, javax.swing.GroupLayout.DEFAULT_SIZE, 307, Short.MAX_VALUE)
+                            .addComponent(ST_Address)))
+                    .addComponent(ST_ACADEMIC_INFO, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_YEAR_LEVEL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_YearLevel, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_CURRENT_SEMESTER, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_CurrentSemester, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_STUDENT_TYPE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_StudentType, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_SECTION, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_Section, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ST_LeftPanelLayout.createSequentialGroup()
+                        .addComponent(ST_GWA_LABEL, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ST_GWA, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(ST_SuggestedCoursesPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(15, 15, 15)) // Right border padding
+                .addContainerGap())
         );
         ST_LeftPanelLayout.setVerticalGroup(
             ST_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -595,9 +668,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 .addComponent(ST_SuggestedCoursesPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        // Fixed preferred width for professional label alignment
-        ST_LeftPanel.setPreferredSize(new java.awt.Dimension(450, 950));
 
         ST_RightPanel.setBackground(new java.awt.Color(0, 30, 58));
         ST_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
@@ -740,43 +810,32 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 .addContainerGap(23, Short.MAX_VALUE))
         );
 
-        // Create ST_LeftScrollPane BEFORE layout setup to prevent null reference
-        ST_LeftScrollPane = new javax.swing.JScrollPane();
-        ST_LeftScrollPane.setViewportView(ST_LeftPanel);
-        ST_LeftScrollPane.setVerticalScrollBarPolicy(javax.swing.JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        ST_LeftScrollPane.setHorizontalScrollBarPolicy(javax.swing.JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        ST_LeftScrollPane.setBorder(null);
-        ST_LeftScrollPane.getVerticalScrollBar().setUnitIncrement(16); // Smoother scrolling
-        ST_LeftScrollPane.setPreferredSize(new java.awt.Dimension(480, 559)); // Balanced width for 1350px screen
-
         javax.swing.GroupLayout StudentTabLayout = new javax.swing.GroupLayout(StudentTab);
         StudentTab.setLayout(StudentTabLayout);
         StudentTabLayout.setHorizontalGroup(
             StudentTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(StudentTabLayout.createSequentialGroup()
                 .addContainerGap()
-                // Reduced preferred width to 480 to leave more room for the table
-                .addComponent(ST_LeftScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 480, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(ST_LeftPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 507, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(StudentTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    // Right panel and buttons now take the remaining 840+ pixels
-                    .addComponent(ST_RightPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE)
-                    .addComponent(ST_BottomPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 840, Short.MAX_VALUE))
-                .addContainerGap())
+                .addGroup(StudentTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(ST_RightPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 990, Short.MAX_VALUE)
+                    .addComponent(ST_BottomPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(335, 335, 335))
         );
         StudentTabLayout.setVerticalGroup(
             StudentTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(StudentTabLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(StudentTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(ST_LeftScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+                    .addComponent(ST_LeftPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 559, Short.MAX_VALUE)
                     .addGroup(StudentTabLayout.createSequentialGroup()
-                        .addComponent(ST_RightPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+                        .addComponent(ST_RightPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 460, Short.MAX_VALUE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(ST_BottomPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
-        
+
         MainTabPanel.addTab("Student", StudentTab);
 
         courseTab = new CourseTab();
@@ -809,9 +868,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     courseTab.autoPopulateStudent(sessionStudentID);
                     SessionManager.clearSession(); // Clear after use
                 }
-            }
-            else if (selectedTab == 4) { // Schedule tab (Index 4: Student, Course, Score, Mark Sheet, Schedule)
-                scheduleTab.refreshScheduleData(); // Sync with latest enrollment and schedule changes
             }
         });
 
@@ -1148,9 +1204,220 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         MainTabPanel.addTab("Mark Sheet", new Marksheettab());
 
-        scheduleTab = new Scheduletab();
-        MainTabPanel.addTab("Schedule", scheduleTab);
+        MainTabPanel.addTab("Schedule", new Scheduletab());
         
+        /*ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
+        
+        SCH_SearchPanel = new javax.swing.JPanel();
+        SCH_FiltersPanel = new javax.swing.JPanel();
+        SCH_SemesterIDLabel = new javax.swing.JLabel();
+        SCH_StudentSearchField = new javax.swing.JTextField();
+        SCH_SearchStudentButton = new javax.swing.JButton();
+        SCH_SemesterSearchField = new javax.swing.JTextField();
+        SCH_StudentIDLabel = new javax.swing.JLabel();
+        SCH_SearchSemesterButton = new javax.swing.JButton();
+        SCH_GWAPanel = new javax.swing.JPanel();
+        SCH_GWALabel = new javax.swing.JLabel();
+        SCH_MonthYearPanel = new javax.swing.JPanel();
+        SCH_MonthComboBox = new javax.swing.JComboBox<>();
+        SCH_YearSpinner = new javax.swing.JSpinner();
+        SCH_MonthYearDisplayLabel = new javax.swing.JLabel();
+        SCH_RefreshButton = new javax.swing.JButton();
+        SCH_TableScrollPane = new javax.swing.JScrollPane();
+        SCH_Table = new javax.swing.JTable();
+
+        SCH_SearchPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_SearchPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        SCH_FiltersPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_FiltersPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
+
+        SCH_SemesterIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SemesterIDLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_SemesterIDLabel.setText("Semester's ID");
+
+        SCH_StudentSearchField.setBackground(new java.awt.Color(146, 190, 219));
+
+        SCH_SearchStudentButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_SearchStudentButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SearchStudentButton.setText("Search");
+        SCH_SearchStudentButton.addActionListener(this::SCH_SearchStudentButtonActionPerformed);
+
+        SCH_SemesterSearchField.setBackground(new java.awt.Color(146, 190, 219));
+
+        SCH_StudentIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_StudentIDLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_StudentIDLabel.setText("Student ID");
+
+        SCH_SearchSemesterButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_SearchSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
+        SCH_SearchSemesterButton.setText("Search");
+
+        javax.swing.GroupLayout SCH_FiltersPanelLayout = new javax.swing.GroupLayout(SCH_FiltersPanel);
+        SCH_FiltersPanel.setLayout(SCH_FiltersPanelLayout);
+        SCH_FiltersPanelLayout.setHorizontalGroup(
+            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                .addGap(23, 23, 23)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SCH_StudentIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SemesterIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                            .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(SCH_SearchSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, SCH_FiltersPanelLayout.createSequentialGroup()
+                            .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGap(31, 31, 31)
+                            .addComponent(SCH_SearchStudentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addContainerGap(20, Short.MAX_VALUE))
+        );
+        SCH_FiltersPanelLayout.setVerticalGroup(
+            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(SCH_StudentIDLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SearchStudentButton))
+                .addGap(18, 18, 18)
+                .addComponent(SCH_SemesterIDLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_SearchSemesterButton))
+                .addContainerGap(25, Short.MAX_VALUE))
+        );
+
+        SCH_GWAPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_GWAPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
+
+        SCH_GWALabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); 
+        SCH_GWALabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_GWALabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        SCH_GWALabel.setText("GWA. --");
+
+        javax.swing.GroupLayout SCH_GWAPanelLayout = new javax.swing.GroupLayout(SCH_GWAPanel);
+        SCH_GWAPanel.setLayout(SCH_GWAPanelLayout);
+        SCH_GWAPanelLayout.setHorizontalGroup(
+            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        SCH_GWAPanelLayout.setVerticalGroup(
+            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout SCH_SearchPanelLayout = new javax.swing.GroupLayout(SCH_SearchPanel);
+        SCH_SearchPanel.setLayout(SCH_SearchPanelLayout);
+        SCH_SearchPanelLayout.setHorizontalGroup(
+            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );
+        SCH_SearchPanelLayout.setVerticalGroup(
+            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
+                .addGap(22, 22, 22)
+                .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
+        );
+
+        SCH_MonthYearPanel.setBackground(new java.awt.Color(0, 30, 58));
+        SCH_MonthYearPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+
+        SCH_MonthComboBox.addActionListener(this::SCH_MonthComboBoxActionPerformed);
+
+        SCH_MonthYearDisplayLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
+        SCH_MonthYearDisplayLabel.setForeground(new java.awt.Color(255, 255, 255));
+        SCH_MonthYearDisplayLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+        SCH_MonthYearDisplayLabel.setText("January 2026");
+
+        SCH_RefreshButton.setBackground(new java.awt.Color(189, 216, 233));
+        SCH_RefreshButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
+        SCH_RefreshButton.setText("Refresh");
+        SCH_RefreshButton.addActionListener(this::SCH_RefreshButtonActionPerformed);
+
+        SCH_Table.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {},
+            new String [] {
+                "Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
+            }
+        ));
+        SCH_TableScrollPane.setViewportView(SCH_Table);
+
+        javax.swing.GroupLayout SCH_MonthYearPanelLayout = new javax.swing.GroupLayout(SCH_MonthYearPanel);
+        SCH_MonthYearPanel.setLayout(SCH_MonthYearPanelLayout);
+        SCH_MonthYearPanelLayout.setHorizontalGroup(
+            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                        .addGap(18, 18, 18)
+                        .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(36, 36, 36)
+                        .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(SCH_RefreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(SCH_TableScrollPane)))
+                .addContainerGap())
+        );
+        SCH_MonthYearPanelLayout.setVerticalGroup(
+            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(SCH_RefreshButton))
+                .addGap(18, 18, 18)
+                .addComponent(SCH_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+
+        javax.swing.GroupLayout ScheduleTabLayout = new javax.swing.GroupLayout(ScheduleTab);
+        ScheduleTab.setLayout(ScheduleTabLayout);
+        ScheduleTabLayout.setHorizontalGroup(
+            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(ScheduleTabLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addContainerGap())
+        );
+        ScheduleTabLayout.setVerticalGroup(
+            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ScheduleTabLayout.createSequentialGroup()
+                .addGap(15, 15, 15)
+                .addGroup(ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
+        );*/
+
+        //MainTabPanel.addTab("Schedule", ScheduleTab); // Removed: Now using Scheduletab instance
+
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
         MainPanelLayout.setHorizontalGroup(
@@ -1788,8 +2055,22 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void loadCourseData() {
         try {
-            String filePath = FilePathResolver.resolveCourseSubjectFilePath();
-            logger.info("Using course data file: " + new java.io.File(filePath).getAbsolutePath());
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/courseSubject.txt",
+                "src/ers/group/master files/courseSubject.txt",
+                "master files/courseSubject.txt",
+                "courseSubject.txt"
+            };
+            
+            String filePath = null;
+            for (String path : possiblePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    filePath = path;
+                    logger.info("Found course data at: " + f.getAbsolutePath());
+                    break;
+                }
+            }
             
             if (filePath != null) {
                 courseLoader.load(filePath);
@@ -2020,7 +2301,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         //</editor-fold>
 
         /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new StudentCourseTab().setVisible(true));
+        java.awt.EventQueue.invokeLater(() -> new LogIn().setVisible(true));
     }
 
     // Variables declaration - do not modify                     
@@ -2078,7 +2359,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> ST_Gender;
     private javax.swing.JTextField ST_GuardiansPhoneNumber;
     private javax.swing.JPanel ST_LeftPanel;
-    private javax.swing.JScrollPane ST_LeftScrollPane;
     private javax.swing.JButton ST_Logout;
     private javax.swing.JLabel ST_MOTHERS_NAME;
     private javax.swing.JTextField ST_MothersName;

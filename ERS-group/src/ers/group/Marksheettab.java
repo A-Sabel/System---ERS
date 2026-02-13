@@ -1,5 +1,7 @@
 package ers.group;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -125,34 +127,31 @@ public class Marksheettab extends javax.swing.JPanel {
     private void loadMarksheetTableData() {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0); // Clear existing rows
-        for (Marksheet m : marksheets) {
-            String[] subjects = m.getSubjects();
-            double[] marks = m.getMarks();
-            // Calculate average
-            double average = 0.0;
-            int count = 0;
-            for (double mark : marks) {
-                if (mark > 0) {
-                    average += mark;
-                    count++;
+        
+        if (marksheetFilePath == null) return;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] d = line.split(",");
+                if (d.length < 15) continue;
+
+                Object[] row = new Object[15];
+                row[0] = d[0]; // MRK ID
+                row[1] = d[1]; // Student ID
+                row[2] = d[3]; // Year Level (Index 3)
+                row[3] = d[2]; // Semester (Index 2)
+
+                // Courses & Scores (Indices 4-13)
+                for (int i = 0; i < 5; i++) {
+                    row[4 + (i * 2)] = getCourseName(d[4 + (i * 2)]); // Course Name
+                    row[5 + (i * 2)] = d[5 + (i * 2)]; // Score
                 }
+                row[14] = d[14]; // GPA (Index 14)
+                model.addRow(row);
             }
-            average = count > 0 ? average / count : 0.0;
-            Object[] row = new Object[15];
-            row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
-            row[1] = m.getStudentID();
-            // Add year level
-            Student student = studentMap.get(m.getStudentID());
-            row[2] = (student != null) ? student.getYearLevel() : "";
-            row[3] = m.getSemester();
-            // Add course-score pairs with course names
-            for (int i = 0; i < 5; i++) {
-                String courseID = subjects[i] != null ? subjects[i] : "";
-                row[4 + (i * 2)] = getCourseName(courseID);
-                row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
-            }
-            row[14] = String.format("%.2f", average);
-            model.addRow(row);
+        } catch (Exception e) {
+            logger.severe("Error loading marksheet table data: " + e.getMessage());
         }
     }
 
@@ -163,125 +162,109 @@ public class Marksheettab extends javax.swing.JPanel {
             GWA.setText("GWA: --");
             return;
         }
+        
+        if (marksheetFilePath == null) return;
+
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0);
         boolean found = false;
-        // First, try to match by student ID
-        for (Marksheet m : marksheets) {
-            if (m.getStudentID().equalsIgnoreCase(searchText)) {
-                String[] subjects = m.getSubjects();
-                double[] marks = m.getMarks();
-                double average = 0.0;
-                int count = 0;
-                for (double mark : marks) {
-                    if (mark > 0) {
-                        average += mark;
-                        count++;
-                    }
+        
+        // 1. Try Match by Student ID
+        try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] d = line.split(",");
+                if (d.length < 15) continue;
+
+                if (d[1].equalsIgnoreCase(searchText)) {
+                    addFileRowToModel(model, d);
+                    GWA.setText("GWA: " + d[14]);
+                    found = true;
+                    break; // Stop after finding the student ID match
                 }
-                average = count > 0 ? average / count : 0.0;
-                Object[] row = new Object[15];
-                row[0] = "MRK-001";
-                row[1] = m.getStudentID();
-                Student student = studentMap.get(m.getStudentID());
-                row[2] = (student != null) ? student.getYearLevel() : "";
-                row[3] = m.getSemester();
-                for (int i = 0; i < 5; i++) {
-                    String courseID = subjects[i] != null ? subjects[i] : "";
-                    row[4 + (i * 2)] = getCourseName(courseID);
-                    row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
-                }
-                row[14] = String.format("%.2f", average);
-                model.addRow(row);
-                GWA.setText(String.format("GWA: %.2f", average));
-                found = true;
-                break;
             }
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        if (found) return;
+
         // If not found by ID, try by year level (case-insensitive, partial match allowed)
-        if (!found) {
-            int yearLevelCount = 0;
-            double totalGwa = 0.0;
-        for (Marksheet m : marksheets) {
-            Student student = studentMap.get(m.getStudentID());
-            String yearLevel = (student != null) ? student.getYearLevel() : "";
-            if (yearLevel != null && !yearLevel.isEmpty() && yearLevel.toLowerCase().contains(searchText.toLowerCase())) {
-                String[] subjects = m.getSubjects();
-                double[] marks = m.getMarks();
-                double average = 0.0;
-                int count = 0;
-                for (double mark : marks) {
-                    if (mark > 0) {
-                        average += mark;
-                        count++;
-                    }
+        int yearLevelCount = 0;
+        double totalGwa = 0.0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] d = line.split(",");
+                if (d.length < 15) continue;
+
+                // Index 3 is Year Level
+                if (d[3].toLowerCase().contains(searchText.toLowerCase())) {
+                    addFileRowToModel(model, d);
+                    try {
+                        totalGwa += Double.parseDouble(d[14]);
+                        yearLevelCount++;
+                    } catch (NumberFormatException ignored) {}
+                    found = true;
                 }
-                average = count > 0 ? average / count : 0.0;
-                Object[] row = new Object[15];
-                row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
-                row[1] = m.getStudentID();
-                row[2] = yearLevel;
-                row[3] = m.getSemester();
-                for (int i = 0; i < 5; i++) {
-                    String courseID = subjects[i] != null ? subjects[i] : "";
-                    row[4 + (i * 2)] = getCourseName(courseID);
-                    row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
-                }
-                row[14] = String.format("%.2f", average);
-                model.addRow(row);
-                totalGwa += average;
-                yearLevelCount++;
-                found = true;
             }
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+
         if (found && yearLevelCount > 0) {
             GWA.setText("GWA: " + String.format("%.2f", totalGwa / yearLevelCount));
+            return;
         }
-    }
+
     // If not found by ID or year level, try by semester (case-insensitive, partial match allowed)
-    if (!found) {
         int semesterCount = 0;
-        double totalGwa = 0.0;
-        for (Marksheet m : marksheets) {
-            if (m.getSemester() != null && m.getSemester().toLowerCase().contains(searchText.toLowerCase())) {
-                String[] subjects = m.getSubjects();
-                double[] marks = m.getMarks();
-                double average = 0.0;
-                int count = 0;
-                for (double mark : marks) {
-                    if (mark > 0) {
-                        average += mark;
-                        count++;
-                    }
+        totalGwa = 0.0;
+        
+        try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] d = line.split(",");
+                if (d.length < 15) continue;
+
+                // Index 2 is Semester
+                if (d[2].toLowerCase().contains(searchText.toLowerCase())) {
+                    addFileRowToModel(model, d);
+                    try {
+                        totalGwa += Double.parseDouble(d[14]);
+                        semesterCount++;
+                    } catch (NumberFormatException ignored) {}
+                    found = true;
                 }
-                average = count > 0 ? average / count : 0.0;
-                Object[] row = new Object[15];
-                row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
-                row[1] = m.getStudentID();
-                Student student = studentMap.get(m.getStudentID());
-                row[2] = (student != null) ? student.getYearLevel() : "";
-                row[3] = m.getSemester();
-                for (int i = 0; i < 5; i++) {
-                    String courseID = subjects[i] != null ? subjects[i] : "";
-                    row[4 + (i * 2)] = getCourseName(courseID);
-                    row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
-                }
-                row[14] = String.format("%.2f", average);
-                model.addRow(row);
-                totalGwa += average;
-                semesterCount++;
-                found = true;
             }
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+
         if (found && semesterCount > 0) {
             GWA.setText("GWA: " + String.format("%.2f", totalGwa / semesterCount));
+        } else if (!found) {
+            JOptionPane.showMessageDialog(this, "Student, Year Level, or Semester not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
+            GWA.setText("GWA: --");
         }
     }
+    
+    // Helper to add a row from file data array
+    private void addFileRowToModel(javax.swing.table.DefaultTableModel model, String[] d) {
+        Object[] row = new Object[15];
+        row[0] = d[0]; // MRK ID
+        row[1] = d[1]; // Student ID
+        row[2] = d[3]; // Year Level
+        row[3] = d[2]; // Semester
+        for (int i = 0; i < 5; i++) {
+            row[4 + (i * 2)] = getCourseName(d[4 + (i * 2)]);
+            row[5 + (i * 2)] = d[5 + (i * 2)];
+        }
+        row[14] = d[14]; // GPA
+        model.addRow(row);
+    }
+
+    /* Original code removed for clarity
     if (!found) {
         JOptionPane.showMessageDialog(this, "Student, Year Level, or Semester not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
         GWA.setText("GWA: --");
     }
-}
+    */
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
@@ -607,6 +590,3 @@ public class Marksheettab extends javax.swing.JPanel {
     private javax.swing.JTable scoretable;
     // End of variables declaration                  
 }
-
-
-

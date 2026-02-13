@@ -196,72 +196,6 @@ class SectionFileLoader extends BaseFileLoader {
 }
 
 
-class StudentFileLoader extends BaseFileLoader {
-    private final List<Student> allStudents = new ArrayList<>();
-   
-    @Override
-    public void load(String filePath) {
-        readFile(filePath, line -> {
-            String[] parts = line.split(",", -1); // -1 to preserve trailing empty strings
-            // Format: ID, Name, Age, DOB, YearLevel, Section, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
-            if (parts.length < 16) return;
-           
-            try {
-                String id = parts[0].trim();
-                String name = parts[1].trim();
-                int age = Integer.parseInt(parts[2].trim());
-                String dob = parts[3].trim();
-                String yearLevel = parts[4].trim();
-                String section = parts[5].trim();
-                String studentType = parts[6].trim();
-                ArrayList<String> subjects = new ArrayList<>();
-                if (!parts[7].trim().isEmpty()) {
-                    String[] subjectList = parts[7].split(";");
-                    for (String subject : subjectList) {
-                        subjects.add(subject.trim());
-                    }
-                }
-               
-                // Handle empty GWA
-                double gwa = 0.0;
-                if (!parts[8].trim().isEmpty()) {
-                    gwa = Double.parseDouble(parts[8].trim());
-                }
-               
-                String email = parts[9].trim();
-                String phoneNumber = parts[10].trim();
-                String gender = parts[11].trim();
-                String address = parts[12].trim();
-                String fathersName = parts[13].trim();
-                String mothersName = parts[14].trim();
-                String guardiansPhoneNumber = parts[15].trim();
-               
-                Student student = new Student(id, name, age, dob, yearLevel, section,
-                        studentType, subjects, gwa, email, phoneNumber, gender, address,
-                        fathersName, mothersName, guardiansPhoneNumber);
-                allStudents.add(student);
-            } catch (Exception e) {
-                // Log parsing error but continue with other records
-                System.err.println("Error parsing student record: " + line);
-                e.printStackTrace();
-            }
-        });
-    }
-   
-    public Collection<Student> getAllStudents() {
-        return allStudents;
-    }
-   
-    public Map<String, Student> getStudentMap() {
-        Map<String, Student> studentMap = new LinkedHashMap<>();
-        for (Student student : allStudents) {
-            studentMap.put(student.getStudentID(), student);
-        }
-        return studentMap;
-    }
-}
-
-
 class ScheduleFileLoader extends BaseFileLoader {
     private final List<Schedule> allSchedules = new ArrayList<>();
    
@@ -303,37 +237,37 @@ class EnrollmentFileLoader extends BaseFileLoader {
    
     @Override
     public void load(String filePath) {
-        int maxId = 0;
+        allEnrollments.clear();
         readFile(filePath, line -> {
             String[] parts = line.split(",");
-            // Format: enrollmentID,studentID,courseID,yearLevel,semester,status
+            // New format: studentID,courseList,yearLevel,semester,status,sectionList
             if (parts.length < 6) return;
-            String enrollmentID = parts[0].trim();
-            String studentID = parts[1].trim();
-            String courseID = parts[2].trim();
-            String yearLevel = parts[3].trim();
-            String semester = parts[4].trim();
-            String status = parts[5].trim();
-           
-            Enrollment enrollment = new Enrollment(enrollmentID, studentID, courseID, yearLevel, semester, status);
-           
-            // Extract section from enrollment if exists (for backward compatibility)
-            if (parts.length >= 7 && !parts[6].trim().isEmpty()) {
-                enrollment.setSectionID(parts[6].trim());
-            }
-           
-            allEnrollments.add(enrollment);
-           
-            // Track max ID for counter
-            try {
-                if (enrollmentID.startsWith("ENR-")) {
-                    int idNum = Integer.parseInt(enrollmentID.substring(4));
-                    if (idNum > maxId) {
-                        Enrollment.setEnrollmentCounter(idNum);
-                    }
+            String studentID = parts[0].trim();
+            String courseList = parts[1].trim();
+            String yearLevel = parts[2].trim();
+            String semester = parts[3].trim();
+            String status = parts[4].trim();
+            String sectionList = parts.length > 5 ? parts[5].trim() : "";
+            
+            // Parse courses and sections (using basic Java only, no APIs)
+            String[] courses = courseList.split(";");
+            String[] sections = sectionList.split(";");
+            
+            // Create individual enrollments for each course (for compatibility with existing system)
+            for (int i = 0; i < courses.length; i++) {
+                String courseID = courses[i].trim();
+                if (courseID.isEmpty()) continue;
+                
+                String enrollmentID = "ENR-" + studentID + "-" + courseID;
+                
+                Enrollment enrollment = new Enrollment(enrollmentID, studentID, courseID, yearLevel, semester, status);
+                
+                // Set section if available
+                if (i < sections.length && !sections[i].trim().isEmpty()) {
+                    enrollment.setSectionID(sections[i].trim());
                 }
-            } catch (Exception e) {
-                // Ignore parsing errors
+                
+                allEnrollments.add(enrollment);
             }
         });
     }
@@ -349,6 +283,76 @@ class EnrollmentFileLoader extends BaseFileLoader {
             enrollmentMap.put(key, enrollment);
         }
         return enrollmentMap;
+    }
+}
+
+
+class StudentFileLoader extends BaseFileLoader {
+    private final List<Student> allStudents = new ArrayList<>();
+   
+    @Override
+    public void load(String filePath) {
+        readFile(filePath, line -> {
+            String[] parts = line.split(",", -1); // -1 to preserve trailing empty strings
+            // Format: ID, Name, Age, DOB, YearLevel, Section, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
+            if (parts.length < 16) return;
+           
+            try {
+                String id = parts[0].trim();
+                String name = parts[1].trim();
+                int age = Integer.parseInt(parts[2].trim());
+                String dob = parts[3].trim();
+                String yearLevel = parts[4].trim();
+                String section = parts[5].trim();
+                String studentType = parts[6].trim();
+                ArrayList<String> subjects = new ArrayList<>();
+                if (!parts[7].trim().isEmpty()) {
+                    String[] subjectList = parts[7].split(";");
+                    for (String subject : subjectList) {
+                        subjects.add(subject.trim());
+                    }
+                }
+               
+                // Handle empty GWA field
+                double gwa = 0.0;
+                if (!parts[8].trim().isEmpty()) {
+                    try {
+                        gwa = Double.parseDouble(parts[8].trim());
+                    } catch (NumberFormatException e) {
+                        gwa = 0.0;
+                    }
+                }
+               
+                String email = parts[9].trim();
+                String phoneNumber = parts[10].trim();
+                String gender = parts[11].trim();
+                String address = parts[12].trim();
+                String fathersName = parts[13].trim();
+                String mothersName = parts[14].trim();
+                String guardiansPhoneNumber = parts[15].trim();
+               
+                Student student = new Student(id, name, age, dob, yearLevel, section,
+                        studentType, subjects, gwa, email, phoneNumber, gender, address,
+                        fathersName, mothersName, guardiansPhoneNumber);
+                allStudents.add(student);
+            } catch (Exception e) {
+                // Log parsing error but continue with other records
+                System.err.println("Error parsing student record: " + line);
+                e.printStackTrace();
+            }
+        });
+    }
+   
+    public Collection<Student> getAllStudents() {
+        return allStudents;
+    }
+   
+    public Map<String, Student> getStudentMap() {
+        Map<String, Student> studentMap = new LinkedHashMap<>();
+        for (Student student : allStudents) {
+            studentMap.put(student.getStudentID(), student);
+        }
+        return studentMap;
     }
 }
 
@@ -399,4 +403,3 @@ class MarksheetFileLoader extends BaseFileLoader {
         return marksheetMap;
     }
 }
-

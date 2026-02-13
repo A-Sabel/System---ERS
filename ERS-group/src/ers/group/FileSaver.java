@@ -147,18 +147,118 @@ class RoomsFileSaver extends BaseFileSaver<Rooms> {
 
 
 class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
+    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(EnrollmentFileSaver.class.getName());
+    
     @Override
     protected String formatLine(Enrollment enrollment) {
-        // Format: enrollmentID,studentID,courseID,yearLevel,semester,status,sectionID
-        return String.join(",",
-            enrollment.getEnrollmentID(),
-            enrollment.getStudentID(),
-            enrollment.getCourseID(),
-            enrollment.getYearLevel(),
-            enrollment.getSemester(),
-            enrollment.getStatus(),
-            enrollment.getSectionID() != null ? enrollment.getSectionID() : ""
-        );
+        // This method shouldn't be used with new format - use saveEnrollmentsByStudent instead
+        return enrollment.getStudentID() + "," + enrollment.getCourseID() + "," + enrollment.getYearLevel() + "," + enrollment.getSemester() + "," + enrollment.getStatus() + "," + (enrollment.getSectionID() != null ? enrollment.getSectionID() : "");
+    }
+    
+    @Override
+    public void save(String filePath, java.util.List<?> data) throws java.io.IOException {
+        // Cast and validate before saving
+        @SuppressWarnings("unchecked")
+        java.util.List<Enrollment> enrollments = (java.util.List<Enrollment>) data;
+        saveEnrollmentsByStudent(filePath, enrollments);
+    }
+    
+    /**
+     * Validates that a student's enrolled courses span at least 3 different days.
+     * @param studentID The student ID to validate
+     * @param courseIDs List of course IDs the student is enrolled in
+     * @return The set of unique days scheduled, or empty set if none found
+     */
+    private java.util.Set<String> getScheduledDays(String studentID, java.util.List<String> courseIDs) {
+        // Load schedules from Schedule.txt
+        java.util.Set<String> scheduledDays = new java.util.HashSet<>();
+        String scheduleFilePath = FilePathResolver.resolveScheduleFilePath();
+        
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(scheduleFilePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length < 4) continue;
+                
+                String courseID = parts[1].trim();
+                String day = parts[3].trim();
+                
+                // Check if this schedule matches any of the student's courses
+                for (String enrolledCourse : courseIDs) {
+                    if (courseID.startsWith(enrolledCourse)) {
+                        scheduledDays.add(day);
+                        break;
+                    }
+                }
+            }
+        } catch (java.io.IOException e) {
+            // If can't read schedule file, return empty set
+            logger.warning("Could not read schedule file for validation: " + e.getMessage());
+        }
+        
+        return scheduledDays;
+    }
+    
+    public void saveEnrollmentsByStudent(String filePath, java.util.List<Enrollment> enrollments) throws java.io.IOException {
+        // Group enrollments by student for new efficient format
+        java.util.Map<String, java.util.List<Enrollment>> studentEnrollments = new java.util.LinkedHashMap<>();
+        
+        for (Enrollment e : enrollments) {
+            String studentID = e.getStudentID();
+            if (!studentEnrollments.containsKey(studentID)) {
+                studentEnrollments.put(studentID, new java.util.ArrayList<Enrollment>());
+            }
+            studentEnrollments.get(studentID).add(e);
+        }
+        
+        // Validate each student's schedule spans at least 3 days (log warning but don't block)
+        for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : studentEnrollments.entrySet()) {
+            String studentID = entry.getKey();
+            java.util.List<Enrollment> studentCourses = entry.getValue();
+            
+            java.util.List<String> courseIDs = new java.util.ArrayList<>();
+            for (Enrollment e : studentCourses) {
+                courseIDs.add(e.getCourseID());
+            }
+            
+            java.util.Set<String> scheduledDays = getScheduledDays(studentID, courseIDs);
+            if (scheduledDays.size() < 3) {
+                logger.warning(
+                    "SCHEDULE POLICY VIOLATION: Student " + studentID + 
+                    " has courses scheduled on only " + scheduledDays.size() + " day(s): " + 
+                    String.join(", ", scheduledDays) + 
+                    ". Minimum 3 days required per university policy."
+                );
+            }
+        }
+        
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
+            for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : studentEnrollments.entrySet()) {
+                String studentID = entry.getKey();
+                java.util.List<Enrollment> studentCourses = entry.getValue();
+                
+                if (studentCourses.isEmpty()) continue;
+                
+                // Build course list and section list
+                java.util.List<String> courses = new java.util.ArrayList<>();
+                java.util.List<String> sections = new java.util.ArrayList<>();
+                
+                String yearLevel = studentCourses.get(0).getYearLevel();
+                String semester = studentCourses.get(0).getSemester();
+                String status = studentCourses.get(0).getStatus();
+                
+                for (Enrollment e : studentCourses) {
+                    courses.add(e.getCourseID());
+                    sections.add(e.getSectionID() != null ? e.getSectionID() : "");
+                }
+                
+                // Format: studentID,courseList,yearLevel,semester,status,sectionList
+                String courseList = String.join(";", courses);
+                String sectionList = String.join(";", sections);
+                
+                writer.println(studentID + "," + courseList + "," + yearLevel + "," + semester + "," + status + "," + sectionList);
+            }
+        }
     }
 }
 

@@ -16,7 +16,6 @@ import javax.swing.JOptionPane;
  * @author fedoc
  */
 public class Marksheettab extends javax.swing.JPanel {
-   
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Marksheettab.class.getName());
     private List<Marksheet> marksheets;
     private MarksheetFileLoader marksheetFileLoader;
@@ -24,6 +23,8 @@ public class Marksheettab extends javax.swing.JPanel {
     private String marksheetFilePath;
     private CourseSubjectFileLoader courseFileLoader;
     private java.util.Map<String, String> courseNameMap;
+    private StudentFileLoader studentFileLoader;
+    private java.util.Map<String, Student> studentMap;
 
 
     /**
@@ -36,8 +37,34 @@ public class Marksheettab extends javax.swing.JPanel {
         marksheetFileSaver = new MarksheetFileSaver();
         courseFileLoader = new CourseSubjectFileLoader();
         courseNameMap = new java.util.HashMap<>();
+        studentFileLoader = new StudentFileLoader();
+        studentMap = new java.util.HashMap<>();
+        loadStudentData();
         loadCourseData();
         loadMarksheetData();
+    }
+
+    private void loadStudentData() {
+        try {
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/student.txt",
+                "src/ers/group/master files/student.txt",
+                "master files/student.txt",
+                "student.txt"
+            };
+            for (String path : possiblePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    studentFileLoader.load(path);
+                    studentMap = studentFileLoader.getStudentMap();
+                    logger.info("Loaded " + studentMap.size() + " students");
+                    return;
+                }
+            }
+            logger.warning("Student file not found in any expected location");
+        } catch (Exception e) {
+            logger.severe("Error loading student data: " + e.getMessage());
+        }
     }
    
     private void loadCourseData() {
@@ -105,11 +132,9 @@ public class Marksheettab extends javax.swing.JPanel {
     private void loadMarksheetTableData() {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0); // Clear existing rows
-       
         for (Marksheet m : marksheets) {
             String[] subjects = m.getSubjects();
             double[] marks = m.getMarks();
-           
             // Calculate average
             double average = 0.0;
             int count = 0;
@@ -120,44 +145,39 @@ public class Marksheettab extends javax.swing.JPanel {
                 }
             }
             average = count > 0 ? average / count : 0.0;
-           
-            Object[] row = new Object[14];
+            Object[] row = new Object[15];
             row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
             row[1] = m.getStudentID();
-            row[2] = m.getSemester();
-           
+            // Add year level
+            Student student = studentMap.get(m.getStudentID());
+            row[2] = (student != null) ? student.getYearLevel() : "";
+            row[3] = m.getSemester();
             // Add course-score pairs with course names
             for (int i = 0; i < 5; i++) {
                 String courseID = subjects[i] != null ? subjects[i] : "";
-                row[3 + (i * 2)] = getCourseName(courseID);
-                row[4 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                row[4 + (i * 2)] = getCourseName(courseID);
+                row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
             }
-            row[13] = String.format("%.2f", average);
-           
+            row[14] = String.format("%.2f", average);
             model.addRow(row);
         }
     }
    
     private void SearchbuttonActionPerformed(java.awt.event.ActionEvent evt) {
-        String searchID = SearchbarID.getText().trim();
-       
-        if (searchID.isEmpty()) {
+        String searchText = SearchbarID.getText().trim();
+        if (searchText.isEmpty()) {
             loadMarksheetTableData();
             GWA.setText("GWA: --");
             return;
         }
-       
-        // Find marksheet by student ID
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+        model.setRowCount(0);
+        boolean found = false;
+        // First, try to match by student ID
         for (Marksheet m : marksheets) {
-            if (m.getStudentID().equalsIgnoreCase(searchID)) {
-                // Update table to show only this marksheet
-                javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
-                model.setRowCount(0);
-               
+            if (m.getStudentID().equalsIgnoreCase(searchText)) {
                 String[] subjects = m.getSubjects();
                 double[] marks = m.getMarks();
-               
-                // Calculate average
                 double average = 0.0;
                 int count = 0;
                 for (double mark : marks) {
@@ -167,26 +187,107 @@ public class Marksheettab extends javax.swing.JPanel {
                     }
                 }
                 average = count > 0 ? average / count : 0.0;
-               
-                Object[] row = new Object[14];
+                Object[] row = new Object[15];
                 row[0] = "MRK-001";
                 row[1] = m.getStudentID();
-                row[2] = m.getSemester();
-               
+                Student student = studentMap.get(m.getStudentID());
+                row[2] = (student != null) ? student.getYearLevel() : "";
+                row[3] = m.getSemester();
                 for (int i = 0; i < 5; i++) {
                     String courseID = subjects[i] != null ? subjects[i] : "";
-                    row[3 + (i * 2)] = getCourseName(courseID);
-                    row[4 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                    row[4 + (i * 2)] = getCourseName(courseID);
+                    row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
                 }
-                row[13] = String.format("%.2f", average);
-               
+                row[14] = String.format("%.2f", average);
                 model.addRow(row);
                 GWA.setText(String.format("GWA: %.2f", average));
-                return;
+                found = true;
+                break;
             }
         }
-       
-        JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
+        // If not found by ID, try by year level (case-insensitive, partial match allowed)
+        if (!found) {
+            int yearLevelCount = 0;
+            double totalGwa = 0.0;
+            for (Marksheet m : marksheets) {
+                Student student = studentMap.get(m.getStudentID());
+                String yearLevel = (student != null) ? student.getYearLevel() : "";
+                if (yearLevel != null && !yearLevel.isEmpty() && yearLevel.toLowerCase().contains(searchText.toLowerCase())) {
+                    String[] subjects = m.getSubjects();
+                    double[] marks = m.getMarks();
+                    double average = 0.0;
+                    int count = 0;
+                    for (double mark : marks) {
+                        if (mark > 0) {
+                            average += mark;
+                            count++;
+                        }
+                    }
+                    average = count > 0 ? average / count : 0.0;
+                    Object[] row = new Object[15];
+                    row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
+                    row[1] = m.getStudentID();
+                    row[2] = yearLevel;
+                    row[3] = m.getSemester();
+                    for (int i = 0; i < 5; i++) {
+                        String courseID = subjects[i] != null ? subjects[i] : "";
+                        row[4 + (i * 2)] = getCourseName(courseID);
+                        row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                    }
+                    row[14] = String.format("%.2f", average);
+                    model.addRow(row);
+                    totalGwa += average;
+                    yearLevelCount++;
+                    found = true;
+                }
+            }
+            if (found && yearLevelCount > 0) {
+                GWA.setText("GWA: " + String.format("%.2f", totalGwa / yearLevelCount));
+            }
+        }
+        // If not found by ID or year level, try by semester (case-insensitive, partial match allowed)
+        if (!found) {
+            int semesterCount = 0;
+            double totalGwa = 0.0;
+            for (Marksheet m : marksheets) {
+                if (m.getSemester() != null && m.getSemester().toLowerCase().contains(searchText.toLowerCase())) {
+                    String[] subjects = m.getSubjects();
+                    double[] marks = m.getMarks();
+                    double average = 0.0;
+                    int count = 0;
+                    for (double mark : marks) {
+                        if (mark > 0) {
+                            average += mark;
+                            count++;
+                        }
+                    }
+                    average = count > 0 ? average / count : 0.0;
+                    Object[] row = new Object[15];
+                    row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
+                    row[1] = m.getStudentID();
+                    Student student = studentMap.get(m.getStudentID());
+                    row[2] = (student != null) ? student.getYearLevel() : "";
+                    row[3] = m.getSemester();
+                    for (int i = 0; i < 5; i++) {
+                        String courseID = subjects[i] != null ? subjects[i] : "";
+                        row[4 + (i * 2)] = getCourseName(courseID);
+                        row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                    }
+                    row[14] = String.format("%.2f", average);
+                    model.addRow(row);
+                    totalGwa += average;
+                    semesterCount++;
+                    found = true;
+                }
+            }
+            if (found && semesterCount > 0) {
+                GWA.setText("GWA: " + String.format("%.2f", totalGwa / semesterCount));
+            }
+        }
+        if (!found) {
+            JOptionPane.showMessageDialog(this, "Student, Year Level, or Semester not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
+            GWA.setText("GWA: --");
+        }
     }
 
 
@@ -323,13 +424,13 @@ public class Marksheettab extends javax.swing.JPanel {
 
         scoretable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "Student ID", "Semester", "Course 1", "Score 1", "Course 2", "Score 2", "Course 3", "Score 3", "Course 4", "Score 4", "Course 5", "Score 5", "Average"
+                "ID", "Student ID", "Year Level", "Semester", "Course 1", "Score 1", "Course 2", "Score 2", "Course 3", "Score 3", "Course 4", "Score 4", "Course 5", "Score 5", "Average"
             }
         ));
         scoretable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
@@ -442,48 +543,28 @@ public class Marksheettab extends javax.swing.JPanel {
         );
     }// </editor-fold>                        
 
-
     private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
     try {
-        java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
-
-        // Look for Microsoft Print to PDF
-        javax.print.PrintService[] services =
-                javax.print.PrintServiceLookup.lookupPrintServices(null, null);
-
-        javax.print.PrintService pdfPrinter = null;
-
-        for (javax.print.PrintService service : services) {
-            if (service.getName().equalsIgnoreCase("Microsoft Print to PDF")) {
-                pdfPrinter = service;
-                break;
-            }
-        }
-
-        if (pdfPrinter == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Microsoft Print to PDF printer not found!",
-                    "Printer Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        job.setPrintService(pdfPrinter);
-
-        job.setPrintable(scoretable.getPrintable(
+        boolean complete = scoretable.print(
                 javax.swing.JTable.PrintMode.FIT_WIDTH,
                 new java.text.MessageFormat("Marksheet"),
                 new java.text.MessageFormat("Page {0}")
-        ));
+        );
 
-        job.print();
+        if (complete) {
+            JOptionPane.showMessageDialog(this, "Printing completed!");
+        } else {
+            JOptionPane.showMessageDialog(this, "Printing cancelled.");
+        }
 
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this,
-                "Error printing: " + e.getMessage(),
+                "Print failed: " + e.getMessage(),
                 "Print Error",
                 JOptionPane.ERROR_MESSAGE);
     }
+
+
 }
                                          
    private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {

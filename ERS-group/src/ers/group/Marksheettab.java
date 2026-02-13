@@ -11,6 +11,29 @@ import javax.swing.JOptionPane;
  * @author fedoc
  */
 public class Marksheettab extends javax.swing.JPanel {
+        // Load student data from file and populate studentMap
+        private void loadStudentData() {
+            try {
+                String[] possiblePaths = {
+                    "ERS-group/src/ers/group/master files/student.txt",
+                    "src/ers/group/master files/student.txt",
+                    "master files/student.txt",
+                    "student.txt"
+                };
+                for (String path : possiblePaths) {
+                    File f = new File(path);
+                    if (f.exists()) {
+                        studentFileLoader.load(path);
+                        studentMap = studentFileLoader.getStudentMap();
+                        logger.info("Loaded " + studentMap.size() + " students");
+                        return;
+                    }
+                }
+                logger.warning("Student file not found in any expected location");
+            } catch (Exception e) {
+                logger.severe("Error loading student data: " + e.getMessage());
+            }
+        }
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Marksheettab.class.getName());
     private List<Marksheet> marksheets;
     private MarksheetFileLoader marksheetFileLoader;
@@ -39,32 +62,6 @@ public class Marksheettab extends javax.swing.JPanel {
         loadMarksheetData();
     }
 
-<<<<<<< HEAD
-    private void loadStudentData() {
-        try {
-            String[] possiblePaths = {
-                "ERS-group/src/ers/group/master files/student.txt",
-                "src/ers/group/master files/student.txt",
-                "master files/student.txt",
-                "student.txt"
-            };
-            for (String path : possiblePaths) {
-                java.io.File f = new java.io.File(path);
-                if (f.exists()) {
-                    studentFileLoader.load(path);
-                    studentMap = studentFileLoader.getStudentMap();
-                    logger.info("Loaded " + studentMap.size() + " students");
-                    return;
-                }
-            }
-            logger.warning("Student file not found in any expected location");
-        } catch (Exception e) {
-            logger.severe("Error loading student data: " + e.getMessage());
-        }
-    }
-   
-=======
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
     private void loadCourseData() {
         try {
             String[] possiblePaths = {
@@ -141,7 +138,6 @@ public class Marksheettab extends javax.swing.JPanel {
                 }
             }
             average = count > 0 ? average / count : 0.0;
-<<<<<<< HEAD
             Object[] row = new Object[15];
             row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
             row[1] = m.getStudentID();
@@ -150,39 +146,23 @@ public class Marksheettab extends javax.swing.JPanel {
             row[2] = (student != null) ? student.getYearLevel() : "";
             row[3] = m.getSemester();
             // Add course-score pairs with course names
-=======
-            Object[] row = new Object[14];
-            row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
-            row[1] = m.getStudentID();
-            row[2] = m.getSemester();
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
             for (int i = 0; i < 5; i++) {
                 String courseID = subjects[i] != null ? subjects[i] : "";
                 row[4 + (i * 2)] = getCourseName(courseID);
                 row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
             }
-<<<<<<< HEAD
             row[14] = String.format("%.2f", average);
-=======
-            row[13] = String.format("%.2f", average);
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
             model.addRow(row);
         }
     }
 
     private void SearchbuttonActionPerformed(java.awt.event.ActionEvent evt) {
-<<<<<<< HEAD
         String searchText = SearchbarID.getText().trim();
         if (searchText.isEmpty()) {
-=======
-        String searchID = SearchbarID.getText().trim();
-        if (searchID.isEmpty()) {
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
             loadMarksheetTableData();
             GWA.setText("GWA: --");
             return;
         }
-<<<<<<< HEAD
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0);
         boolean found = false;
@@ -191,17 +171,6 @@ public class Marksheettab extends javax.swing.JPanel {
             if (m.getStudentID().equalsIgnoreCase(searchText)) {
                 String[] subjects = m.getSubjects();
                 double[] marks = m.getMarks();
-=======
-        // Find marksheet by student ID
-        for (Marksheet m : marksheets) {
-            if (m.getStudentID().equalsIgnoreCase(searchID)) {
-                // Update table to show only this marksheet
-                javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
-                model.setRowCount(0);
-                String[] subjects = m.getSubjects();
-                double[] marks = m.getMarks();
-                // Calculate average
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
                 double average = 0.0;
                 int count = 0;
                 for (double mark : marks) {
@@ -211,123 +180,108 @@ public class Marksheettab extends javax.swing.JPanel {
                     }
                 }
                 average = count > 0 ? average / count : 0.0;
-<<<<<<< HEAD
                 Object[] row = new Object[15];
                 row[0] = "MRK-001";
                 row[1] = m.getStudentID();
                 Student student = studentMap.get(m.getStudentID());
                 row[2] = (student != null) ? student.getYearLevel() : "";
                 row[3] = m.getSemester();
-=======
-                Object[] row = new Object[14];
-                row[0] = "MRK-001";
-                row[1] = m.getStudentID();
-                row[2] = m.getSemester();
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
                 for (int i = 0; i < 5; i++) {
                     String courseID = subjects[i] != null ? subjects[i] : "";
                     row[4 + (i * 2)] = getCourseName(courseID);
                     row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
                 }
-<<<<<<< HEAD
                 row[14] = String.format("%.2f", average);
-=======
-                row[13] = String.format("%.2f", average);
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
                 model.addRow(row);
                 GWA.setText(String.format("GWA: %.2f", average));
                 found = true;
                 break;
             }
         }
-<<<<<<< HEAD
         // If not found by ID, try by year level (case-insensitive, partial match allowed)
         if (!found) {
             int yearLevelCount = 0;
             double totalGwa = 0.0;
-            for (Marksheet m : marksheets) {
-                Student student = studentMap.get(m.getStudentID());
-                String yearLevel = (student != null) ? student.getYearLevel() : "";
-                if (yearLevel != null && !yearLevel.isEmpty() && yearLevel.toLowerCase().contains(searchText.toLowerCase())) {
-                    String[] subjects = m.getSubjects();
-                    double[] marks = m.getMarks();
-                    double average = 0.0;
-                    int count = 0;
-                    for (double mark : marks) {
-                        if (mark > 0) {
-                            average += mark;
-                            count++;
-                        }
+        for (Marksheet m : marksheets) {
+            Student student = studentMap.get(m.getStudentID());
+            String yearLevel = (student != null) ? student.getYearLevel() : "";
+            if (yearLevel != null && !yearLevel.isEmpty() && yearLevel.toLowerCase().contains(searchText.toLowerCase())) {
+                String[] subjects = m.getSubjects();
+                double[] marks = m.getMarks();
+                double average = 0.0;
+                int count = 0;
+                for (double mark : marks) {
+                    if (mark > 0) {
+                        average += mark;
+                        count++;
                     }
-                    average = count > 0 ? average / count : 0.0;
-                    Object[] row = new Object[15];
-                    row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
-                    row[1] = m.getStudentID();
-                    row[2] = yearLevel;
-                    row[3] = m.getSemester();
-                    for (int i = 0; i < 5; i++) {
-                        String courseID = subjects[i] != null ? subjects[i] : "";
-                        row[4 + (i * 2)] = getCourseName(courseID);
-                        row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
-                    }
-                    row[14] = String.format("%.2f", average);
-                    model.addRow(row);
-                    totalGwa += average;
-                    yearLevelCount++;
-                    found = true;
                 }
-            }
-            if (found && yearLevelCount > 0) {
-                GWA.setText("GWA: " + String.format("%.2f", totalGwa / yearLevelCount));
-            }
-        }
-        // If not found by ID or year level, try by semester (case-insensitive, partial match allowed)
-        if (!found) {
-            int semesterCount = 0;
-            double totalGwa = 0.0;
-            for (Marksheet m : marksheets) {
-                if (m.getSemester() != null && m.getSemester().toLowerCase().contains(searchText.toLowerCase())) {
-                    String[] subjects = m.getSubjects();
-                    double[] marks = m.getMarks();
-                    double average = 0.0;
-                    int count = 0;
-                    for (double mark : marks) {
-                        if (mark > 0) {
-                            average += mark;
-                            count++;
-                        }
-                    }
-                    average = count > 0 ? average / count : 0.0;
-                    Object[] row = new Object[15];
-                    row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
-                    row[1] = m.getStudentID();
-                    Student student = studentMap.get(m.getStudentID());
-                    row[2] = (student != null) ? student.getYearLevel() : "";
-                    row[3] = m.getSemester();
-                    for (int i = 0; i < 5; i++) {
-                        String courseID = subjects[i] != null ? subjects[i] : "";
-                        row[4 + (i * 2)] = getCourseName(courseID);
-                        row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
-                    }
-                    row[14] = String.format("%.2f", average);
-                    model.addRow(row);
-                    totalGwa += average;
-                    semesterCount++;
-                    found = true;
+                average = count > 0 ? average / count : 0.0;
+                Object[] row = new Object[15];
+                row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
+                row[1] = m.getStudentID();
+                row[2] = yearLevel;
+                row[3] = m.getSemester();
+                for (int i = 0; i < 5; i++) {
+                    String courseID = subjects[i] != null ? subjects[i] : "";
+                    row[4 + (i * 2)] = getCourseName(courseID);
+                    row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
                 }
-            }
-            if (found && semesterCount > 0) {
-                GWA.setText("GWA: " + String.format("%.2f", totalGwa / semesterCount));
+                row[14] = String.format("%.2f", average);
+                model.addRow(row);
+                totalGwa += average;
+                yearLevelCount++;
+                found = true;
             }
         }
-        if (!found) {
-            JOptionPane.showMessageDialog(this, "Student, Year Level, or Semester not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
-            GWA.setText("GWA: --");
+        if (found && yearLevelCount > 0) {
+            GWA.setText("GWA: " + String.format("%.2f", totalGwa / yearLevelCount));
         }
-=======
-        JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
     }
+    // If not found by ID or year level, try by semester (case-insensitive, partial match allowed)
+    if (!found) {
+        int semesterCount = 0;
+        double totalGwa = 0.0;
+        for (Marksheet m : marksheets) {
+            if (m.getSemester() != null && m.getSemester().toLowerCase().contains(searchText.toLowerCase())) {
+                String[] subjects = m.getSubjects();
+                double[] marks = m.getMarks();
+                double average = 0.0;
+                int count = 0;
+                for (double mark : marks) {
+                    if (mark > 0) {
+                        average += mark;
+                        count++;
+                    }
+                }
+                average = count > 0 ? average / count : 0.0;
+                Object[] row = new Object[15];
+                row[0] = "MRK-" + (marksheets.indexOf(m) + 1);
+                row[1] = m.getStudentID();
+                Student student = studentMap.get(m.getStudentID());
+                row[2] = (student != null) ? student.getYearLevel() : "";
+                row[3] = m.getSemester();
+                for (int i = 0; i < 5; i++) {
+                    String courseID = subjects[i] != null ? subjects[i] : "";
+                    row[4 + (i * 2)] = getCourseName(courseID);
+                    row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                }
+                row[14] = String.format("%.2f", average);
+                model.addRow(row);
+                totalGwa += average;
+                semesterCount++;
+                found = true;
+            }
+        }
+        if (found && semesterCount > 0) {
+            GWA.setText("GWA: " + String.format("%.2f", totalGwa / semesterCount));
+        }
+    }
+    if (!found) {
+        JOptionPane.showMessageDialog(this, "Student, Year Level, or Semester not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
+        GWA.setText("GWA: --");
+    }
+}
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
@@ -553,7 +507,6 @@ public class Marksheettab extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(Background, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
-<<<<<<< HEAD
     }// </editor-fold>                        
 
     private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
@@ -570,37 +523,6 @@ public class Marksheettab extends javax.swing.JPanel {
             JOptionPane.showMessageDialog(this, "Printing cancelled.");
         }
 
-=======
-    }                 
-
-    private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
-    try {
-        java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
-        // Look for Microsoft Print to PDF
-        javax.print.PrintService[] services =
-                javax.print.PrintServiceLookup.lookupPrintServices(null, null);
-        javax.print.PrintService pdfPrinter = null;
-        for (javax.print.PrintService service : services) {
-            if (service.getName().equalsIgnoreCase("Microsoft Print to PDF")) {
-                pdfPrinter = service;
-                break;
-            }
-        }
-        if (pdfPrinter == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Microsoft Print to PDF printer not found!",
-                    "Printer Error",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-        job.setPrintService(pdfPrinter);
-        job.setPrintable(scoretable.getPrintable(
-                javax.swing.JTable.PrintMode.FIT_WIDTH,
-                new java.text.MessageFormat("Marksheet"),
-                new java.text.MessageFormat("Page {0}")
-        ));
-        job.print();
->>>>>>> 9ea7fdeedd3d3040f8084ea31a37d9adbf31c1a0
     } catch (Exception e) {
         JOptionPane.showMessageDialog(this,
                 "Print failed: " + e.getMessage(),

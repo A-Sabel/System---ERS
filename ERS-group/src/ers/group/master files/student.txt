@@ -4,3 +4,8 @@ STU-003,Felicia Andres,19,2006-04-12,1st Year,,Regular,CS101;CS102;CS103;CS104;C
 STU-004,Maria Dela Cruz,19,2006-04-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
 STU-005,Adrian Benil,19,2006-12-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Male,,,,
 STU-006,Faye Nicolas,20,2006-02-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-007,Andrea,0,2026-02-13,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-008,Katrice,0,2026-02-13,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-009,Francheska,0,2026-02-13,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-010,Elicxia,0,2026-02-13,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-011,Cyrene,0,2026-02-13,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,

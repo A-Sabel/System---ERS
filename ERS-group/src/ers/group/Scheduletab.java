@@ -17,8 +17,8 @@ public class Scheduletab extends javax.swing.JPanel {
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private ArrayList<Schedule> schedules;
-    private final Map<String, ArrayList<String>> studentCourses;  // Maps studentID to list of courseIDs
-    private EnrollmentFileLoader enrollmentLoader; // Add enrollmentLoader field
+    private final Map<String, ArrayList<String>> studentCourses;
+    private EnrollmentFileLoader enrollmentLoader;
 
 
     /**
@@ -453,12 +453,10 @@ public class Scheduletab extends javax.swing.JPanel {
         java.awt.Color getColor() {
             return color;
         }
-       
+
         @Override
         public String toString() {
             if (courseID.isEmpty()) return "";
-            // Use HTML for proper text wrapping and formatting
-            // If courseID already contains <br> (from conflicts), use it directly
             if (courseID.contains("<br>")) {
                 return "<html><center>" + courseID + "<br>" + room + "<br>" + teacher + "</center></html>";
             } else {
@@ -466,129 +464,98 @@ public class Scheduletab extends javax.swing.JPanel {
             }
         }
     }
-   
+
     // Custom cell renderer for colored schedule cells with continuous block effect
     class ScheduleCellRenderer extends javax.swing.table.DefaultTableCellRenderer {
         @Override
         public java.awt.Component getTableCellRendererComponent(
             javax.swing.JTable table, Object value, boolean isSelected,
             boolean hasFocus, int row, int column) {
-           
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-           
+
+            setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+            setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
+
             if (value instanceof CourseSlot) {
                 CourseSlot slot = (CourseSlot) value;
                 if (!slot.courseID.isEmpty()) {
                     setBackground(slot.color);
-                    setForeground(java.awt.Color.WHITE); // High contrast white text for better PDF printing
-                    setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13)); // Slightly larger for clarity
-                    setHorizontalAlignment(javax.swing.JLabel.CENTER);
-                    setVerticalAlignment(javax.swing.JLabel.CENTER); // Center vertically
-                   
-                    // Logic to hide grid lines between same-course cells
-                    boolean sameAbove = false;
-                    boolean sameBelow = false;
-                    
-                    if (row > 0) {
-                        Object above = table.getValueAt(row - 1, column);
-                        if (above instanceof CourseSlot) sameAbove = ((CourseSlot)above).courseID.equals(slot.courseID);
+                    setForeground(java.awt.Color.WHITE);
+                    setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 12));
+                    // Calculate the start and end of this specific class block
+                    int blockStart = row;
+                    int blockEnd = row;
+                    while (blockStart > 0 && isSameCourse(table, blockStart - 1, column, slot.courseID)) {
+                        blockStart--;
                     }
-                    if (row < table.getRowCount() - 1) {
-                        Object below = table.getValueAt(row + 1, column);
-                        if (below instanceof CourseSlot) sameBelow = ((CourseSlot)below).courseID.equals(slot.courseID);
+                    while (blockEnd < table.getRowCount() - 1 && isSameCourse(table, blockEnd + 1, column, slot.courseID)) {
+                        blockEnd++;
                     }
-
-                    // Improved Centering Logic - find the middle of the block
-                    int blockLength = 1;
-                    int myPositionInBlock = 0;
-
-                    // Look up to find start of block
-                    int r = row - 1;
-                    while (r >= 0 && table.getValueAt(r, column) instanceof CourseSlot && 
-                           ((CourseSlot)table.getValueAt(r, column)).courseID.equals(slot.courseID)) {
-                        blockLength++;
-                        myPositionInBlock++;
-                        r--;
-                    }
-                    // Look down to find end of block
-                    r = row + 1;
-                    while (r < table.getRowCount() && table.getValueAt(r, column) instanceof CourseSlot && 
-                           ((CourseSlot)table.getValueAt(r, column)).courseID.equals(slot.courseID)) {
-                        blockLength++;
-                        r++;
-                    }
-
-                    // Only show text if this specific cell is in the middle of the block
-                    if (myPositionInBlock == blockLength / 2) {
-                        setText(slot.toString());
+                    int totalRows = (blockEnd - blockStart) + 1;
+                    int middleIndex = blockStart + (totalRows - 1) / 2; 
+                    if (row == middleIndex) {
+                        setText(slot.toString()); 
+                        this.setVerticalAlignment(javax.swing.SwingConstants.CENTER);
+                        this.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
                     } else {
                         setText("");
                     }
-                   
-                    // Remove horizontal lines between connected cells to make it look like one block
-                    int top = sameAbove ? 0 : 1;
-                    int bottom = sameBelow ? 0 : 1;
-                    setBorder(javax.swing.BorderFactory.createMatteBorder(top, 1, bottom, 1, new java.awt.Color(255,255,255,100)));
-                    
+                    // Remove horizontal lines inside the block
+                    int topBorder = (row == blockStart) ? 1 : 0;
+                    int bottomBorder = (row == blockEnd) ? 1 : 0;
+                    setBorder(javax.swing.BorderFactory.createMatteBorder(topBorder, 1, bottomBorder, 1, java.awt.Color.WHITE));
                 } else {
-                    // Style for empty cells with zebra striping
-                    if (row % 2 == 0) {
-                        setBackground(new java.awt.Color(255, 255, 255));
-                    } else {
-                        setBackground(new java.awt.Color(245, 245, 250));
-                    }
-                    setForeground(new java.awt.Color(100, 100, 100));
-                    setText("");
-                    setBorder(javax.swing.BorderFactory.createMatteBorder(
-                        0, 0, 1, 1, new java.awt.Color(230, 230, 230)
-                    ));
+                    setEmptyCellStyle(row);
                 }
             } else {
-                // Null cells with zebra striping
-                if (row % 2 == 0) {
-                    setBackground(new java.awt.Color(255, 255, 255));
-                } else {
-                    setBackground(new java.awt.Color(245, 245, 250));
-                }
-                setForeground(new java.awt.Color(100, 100, 100));
-                setText("");
-                setBorder(javax.swing.BorderFactory.createMatteBorder(
-                    0, 0, 1, 1, new java.awt.Color(230, 230, 230)
-                ));
+                setEmptyCellStyle(row);
             }
-           
             return this;
         }
+
+        // Helper to prevent repetitive logic
+        private boolean isSameCourse(javax.swing.JTable table, int r, int c, String id) {
+            Object val = table.getValueAt(r, c);
+            return (val instanceof CourseSlot && ((CourseSlot)val).courseID.equals(id));
+        }
+        
+        // Helper for consistent empty cell styling
+        private void setEmptyCellStyle(int row) {
+            if (row % 2 == 0) {
+                setBackground(new java.awt.Color(255, 255, 255));
+            } else {
+                setBackground(new java.awt.Color(245, 245, 250));
+            }
+            setForeground(new java.awt.Color(100, 100, 100));
+            setText("");
+            setBorder(javax.swing.BorderFactory.createMatteBorder(
+                0, 0, 1, 1, new java.awt.Color(230, 230, 230)
+            ));
+        }
     }
-   
+
     private String parseTimeTo24Hour(String time) {
-        // Convert "8:00 AM" or "1:00 PM" to "08:00" or "13:00"
         time = time.trim().toUpperCase();
-       
         if (time.matches("\\d{1,2}:\\d{2}\\s*(AM|PM)")) {
             String[] parts = time.split(":");
             int hour = Integer.parseInt(parts[0].trim());
             String minute = parts[1].split(" ")[0].trim();
-           
             if (time.contains("PM") && hour != 12) {
                 hour += 12;
             } else if (time.contains("AM") && hour == 12) {
                 hour = 0;
             }
-           
             return String.format("%02d:%s", hour, minute);
         }
-       
         // If already in HH:MM format
         if (time.matches("\\d{1,2}:\\d{2}")) {
             String[] parts = time.split(":");
             int hour = Integer.parseInt(parts[0]);
             return String.format("%02d:%s", hour, parts[1]);
         }
-       
         return time;
     }
-   
+
     private int timeToMinutes(String time) {
         String[] parts = time.split(":");
         if (parts.length == 2) {
@@ -608,6 +575,36 @@ public class Scheduletab extends javax.swing.JPanel {
     int year = (int) yearSpinner.getValue();
     monthYearDisplayLabel.setText(month + " " + year);
 }
+    
+    /**
+     * Validates that a student's schedule spans at least 3 different days.
+     * Displays a warning if the policy is violated.
+     * @param studentID The student ID to validate
+     * @return true if schedule spans 3+ days, false otherwise
+     */
+    private boolean validateStudentScheduleSpread(String studentID) {
+        ArrayList<String> courses = studentCourses.getOrDefault(studentID, new ArrayList<>());
+        java.util.Set<String> scheduledDays = new java.util.HashSet<>();
+        
+        for (String courseID : courses) {
+            for (Schedule schedule : schedules) {
+                if (schedule.getCourseID().startsWith(courseID)) {
+                    scheduledDays.add(schedule.getDay());
+                }
+            }
+        }
+        
+        if (scheduledDays.size() < 3) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Warning: This student's schedule only spans " + scheduledDays.size() + 
+                " day(s).\nMinimum 3 days required per university policy.\n\nScheduled days: " + 
+                String.join(", ", scheduledDays),
+                "Schedule Policy Violation",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
     
     /**
      * Public method to refresh schedule data when tab is switched.
@@ -1206,6 +1203,9 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                
                 // Display student's schedule
                 displayStudentSchedule(searchID);
+                
+                // Validate schedule spans at least 3 days
+                validateStudentScheduleSpread(searchID);
                
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
@@ -1304,6 +1304,9 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         
         // Display the schedule for that section
         displayStudentSchedule(displayStudentID);
+        
+        // Validate schedule spans at least 3 days
+        validateStudentScheduleSpread(displayStudentID);
         
         // Confirm with user before printing
         int confirm = javax.swing.JOptionPane.showConfirmDialog(this,

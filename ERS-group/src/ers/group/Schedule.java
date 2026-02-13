@@ -478,117 +478,171 @@ public class Schedule {
         int teacherConflicts = 0;
         int studentConflicts = 0;
         String failureReason = null;
+
+        final double MAX_HOURS_PER_DAY = 7.0;
         
+        // Track hours scheduled per day to enforce limit
+        Map<String, Double> hoursPerDay = new HashMap<>();
+        for (String day : DAYS) {
+            hoursPerDay.put(day, 0.0);
+        }
+        // Calculate hours already scheduled for this student on each day
+        if (studentID != null && !studentID.isEmpty()) {
+            // Get sections this student is enrolled in
+            Set<String> studentSections = new HashSet<>();
+            try {
+                String enrollmentFilePath = FilePathResolver.resolveEnrollmentFilePath();
+                File enrollmentFile = new File(enrollmentFilePath);
+                if (enrollmentFile.exists()) {
+                    EnrollmentFileLoader enrollmentLoader = new EnrollmentFileLoader();
+                    enrollmentLoader.load(enrollmentFilePath);
+                    
+                    for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
+                        if (enrollment.getStudentID().equals(studentID) && "ENROLLED".equals(enrollment.getStatus())) {
+                            String secID = enrollment.getSectionID();
+                            if (secID != null && !secID.isEmpty()) {
+                                studentSections.add(secID);
+                            }
+                        }
+                    }
+                }
+                // Add cached sections
+                Set<String> cachedSections = getStudentSectionsFromCache(studentID);
+                if (cachedSections != null) {
+                    studentSections.addAll(cachedSections);
+                }
+                // Sum up hours for each day from student's existing schedules
+                for (Schedule existing : existingSchedules) {
+                    String scheduledSection = existing.getCourseID();
+                    // Check if this schedule is for one of the student's sections
+                    boolean isStudentSection = false;
+                    for (String enrolledSection : studentSections) {
+                        if (scheduledSection.equals(enrolledSection) || 
+                            scheduledSection.startsWith(enrolledSection + "-") ||
+                            (enrolledSection != null && enrolledSection.startsWith(scheduledSection))) {
+                            isStudentSection = true;
+                            break;
+                        }
+                    }
+                    if (isStudentSection) {
+                        String scheduleDay = existing.getDay();
+                        double existingHours = calculateDurationHours(existing.getStartTime(), existing.getEndTime());
+                        hoursPerDay.put(scheduleDay, hoursPerDay.get(scheduleDay) + existingHours);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Warning: Could not load student's existing schedules: " + e.getMessage());
+            }
+        }
         System.out.println("Calculating UNIVERSITY-STYLE splices for " + totalUnits + " units (" + remainingHours + " hours total)");
-        
-        // UNIVERSITY LOGIC: Try to fill Monday first across ALL rooms/teachers before moving to other days
+        System.out.println("Policy: Maximum " + MAX_HOURS_PER_DAY + " hours per day to ensure 3+ day distribution");
+        // Log student's existing daily hours
+        if (studentID != null) {
+            System.out.println("Student " + studentID + " existing hours per day:");
+            for (String day : DAYS) {
+                double hours = hoursPerDay.get(day);
+                if (hours > 0) {
+                    System.out.println("  " + day + ": " + hours + " hours already scheduled");
+                }
+            }
+        }
+
         for (String day : DAYS) {
             if (remainingHours <= 0) break;
-            
-            System.out.println("Trying to schedule on " + day + " (" + remainingHours + "h remaining)");
-            
+            double dayHoursUsed = hoursPerDay.get(day);
+            double dayHoursAvailable = MAX_HOURS_PER_DAY - dayHoursUsed;
+            if (dayHoursAvailable <= 0) {
+                System.out.println("Skipping " + day + " (max " + MAX_HOURS_PER_DAY + "h limit reached)");
+                continue; // Skip this day if limit reached
+            }
+            System.out.println("Trying to schedule on " + day + " (" + remainingHours + "h remaining, " + dayHoursAvailable + "h available today)");
             // For each time slot on this day, try to find ANY available room and teacher
             for (String startTime : START_TIME_SLOTS) {
                 if (remainingHours <= 0) break;
-                
-                // Determine optimal splice duration (prefer 1-3 hour blocks)
-                double dayDuration = Math.min(remainingHours, 3.0); // Max 3 hours per day
+                dayHoursUsed = hoursPerDay.get(day);
+                dayHoursAvailable = MAX_HOURS_PER_DAY - dayHoursUsed;
+                if (dayHoursAvailable <= 0) break; // No more capacity today
+                // Determine optimal splice duration (limited by remaining hours, daily limit, and max 3h blocks)
+                double dayDuration = Math.min(Math.min(remainingHours, dayHoursAvailable), 3.0);
                 if (dayDuration < 1.0 && remainingHours >= 1.0) {
                     dayDuration = 1.0; // Minimum 1 hour per splice
                 }
-                
                 String endTime = calculateEndTime(startTime, dayDuration);
-                
                 // VALIDATE TIME SLOT: Ensure it doesn't exceed school hours
                 if (!isTimeSlotValid(startTime, endTime)) {
                     continue; // Skip invalid time slots
                 }
-                
                 // Find ANY room and ANY teacher available at THIS specific time
                 String availableRoom = findAvailableRoom(day, startTime, endTime, isLab, existingSchedules);
                 String availableTeacher = findAvailableTeacher(courseID, day, startTime, endTime, existingSchedules);
-                
-                // CRITICAL: Check if THIS STUDENT is already busy at this time
-                // This prevents student(studentID != null) && s from being double-booked in different classes
+                // Check if STUDENT is already busy at this time
                 boolean studentIsBusy = isStudentBusyAtTime(studentID, day, startTime, endTime, existingSchedules);
-                
                 // Track conflicts for reporting
                 if (availableRoom == null) roomConflicts++;
                 if (availableTeacher == null) teacherConflicts++;
                 if (studentIsBusy) studentConflicts++;
-                
                 if (availableRoom != null && availableTeacher != null && !studentIsBusy) {
-                    // SUCCESS! Monday 8:00 AM is now possible for multiple sections!
+                    // Schedule the splice and update daily hour tracking
                     assignedSplices.add(new ScheduleSplice(day, startTime, endTime, dayDuration));
                     remainingHours -= dayDuration;
+                    hoursPerDay.put(day, hoursPerDay.get(day) + dayDuration);
                     System.out.println("  / Scheduled " + dayDuration + "h splice: " + day + " " + startTime + "-" + endTime + 
-                                     " (Room: " + availableRoom + ", " + remainingHours + "h remaining)");
-                    break; // Move to next day after successful scheduling
+                                    " (Room: " + availableRoom + ", " + remainingHours + "h remaining, " + 
+                                    hoursPerDay.get(day) + "/" + MAX_HOURS_PER_DAY + "h used today)");
+                    break;
                 }
             }
         }
-        
         // If we still have remaining hours, try smaller splices
         if (remainingHours > 0) {
             System.out.println("Attempting to fit remaining " + remainingHours + " hours with smaller splices...");
-            
             for (String day : DAYS) {
                 if (remainingHours <= 0) break;
-                
-                // Try 1-hour increments for remaining time
-                double dayDuration = Math.min(remainingHours, 1.0);
-                
+                double dayHoursUsed = hoursPerDay.get(day);
+                double dayHoursAvailable = MAX_HOURS_PER_DAY - dayHoursUsed;
+                if (dayHoursAvailable <= 0) {
+                    System.out.println("  Skipping " + day + " in fallback (daily limit reached)");
+                    continue;
+                }
+                // Try 1-hour increments for remaining time, limited by daily availability
+                double dayDuration = Math.min(Math.min(remainingHours, dayHoursAvailable), 1.0);
                 for (String startTime : START_TIME_SLOTS) {
                     String endTime = calculateEndTime(startTime, dayDuration);
-                    
                     // VALIDATE TIME SLOT: Ensure it doesn't exceed school hours
                     if (!isTimeSlotValid(startTime, endTime)) {
                         continue; // Skip invalid time slots
                     }
-                    
                     String availableRoom = findAvailableRoom(day, startTime, endTime, isLab, existingSchedules);
                     String availableTeacher = findAvailableTeacher(courseID, day, startTime, endTime, existingSchedules);
-                    
-                    // CRITICAL: Check if THIS STUDENT is already busy at this time
+                    // Check if STUDENT is already busy at this time
                     boolean studentIsBusy = isStudentBusyAtTime(studentID, day, startTime, endTime, existingSchedules);
-                    
                     // Track conflicts for reporting
                     if (availableRoom == null) roomConflicts++;
                     if (availableTeacher == null) teacherConflicts++;
                     if (studentIsBusy) studentConflicts++;
-                    
                     if (availableRoom != null && availableTeacher != null && !studentIsBusy) {
-                        // Check if this day already has a splice to avoid over-scheduling
-                        boolean dayAlreadyUsed = false;
-                        for (int i = 0; i < assignedSplices.size(); i++) {
-                            ScheduleSplice splice = assignedSplices.get(i);
-                            if (splice.day.equals(day)) {
-                                dayAlreadyUsed = true;
-                                break;
-                            }
-                        }
-                        
-                        if (!dayAlreadyUsed) {
+                        // Check if adding this splice would exceed daily limit
+                        double currentDayHours = hoursPerDay.get(day);
+                        if (currentDayHours + dayDuration <= MAX_HOURS_PER_DAY) {
                             assignedSplices.add(new ScheduleSplice(day, startTime, endTime, dayDuration));
                             remainingHours -= dayDuration;
+                            hoursPerDay.put(day, currentDayHours + dayDuration);
                             System.out.println("  / Added small splice: " + day + " " + startTime + "-" + endTime + 
-                                             " (" + remainingHours + "h remaining)");
+                                            " (" + remainingHours + "h remaining, " + hoursPerDay.get(day) + "/" + MAX_HOURS_PER_DAY + "h today)");
                             break;
                         }
                     }
                 }
             }
         }
-        
         if (remainingHours > 0) {
             System.err.println("Warning: Could not schedule all " + totalUnits + " units. " + 
-                             remainingHours + " hours remain unscheduled.");
-            
+                            remainingHours + " hours remain unscheduled.");
             // Build detailed failure reason
             StringBuilder reason = new StringBuilder();
             if (roomConflicts > 0) {
                 reason.append("No available ").append(isLab ? "lab" : "standard").append(" rooms (")
-                      .append(roomConflicts).append(" conflicts). ");
+                    .append(roomConflicts).append(" conflicts). ");
             }
             if (teacherConflicts > 0) {
                 reason.append("No available qualified teachers (").append(teacherConflicts).append(" conflicts). ");
@@ -601,10 +655,8 @@ public class Schedule {
             }
             failureReason = reason.toString().trim();
         }
-        
         return new SchedulingResult(assignedSplices, failureReason, roomConflicts, teacherConflicts, studentConflicts);
     }
-    
     /**
      * Validates if a time slot is within acceptable school hours and logically valid.
      * @param start Start time in "h:mm a" format
@@ -639,6 +691,24 @@ public class Schedule {
         } catch (Exception e) {
             System.err.println("Error calculating end time: " + e.getMessage());
             return startTime; // Fallback
+        }
+    }
+    
+    /**
+     * Calculate the duration in hours between start time and end time.
+     * @param startTime Start time (e.g., "08:00 AM")
+     * @param endTime End time (e.g., "11:00 AM")
+     * @return Duration in hours (fractional for minutes)
+     */
+    private static double calculateDurationHours(String startTime, String endTime) {
+        try {
+            LocalTime start = LocalTime.parse(startTime, TIME_FORMATTER);
+            LocalTime end = LocalTime.parse(endTime, TIME_FORMATTER);
+            long minutes = java.time.Duration.between(start, end).toMinutes();
+            return minutes / 60.0;
+        } catch (Exception e) {
+            System.err.println("Error calculating duration: " + e.getMessage());
+            return 0.0; // Fallback
         }
     }
     

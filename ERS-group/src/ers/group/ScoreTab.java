@@ -1,10 +1,10 @@
 package ers.group;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.*;
 import java.util.*;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class ScoreTab extends JPanel {
 
@@ -19,8 +19,6 @@ public class ScoreTab extends JPanel {
     private DefaultTableModel model;
 
     private JButton saveBtn, clearBtn, updateBtn;
-
-    private final String marksheetPath = "C:\\Users\\Katri\\OneDrive\\Networking\\System---ERS\\ERS-group\\src\\ers\\group\\master files\\marksheet.txt";
 
     private final Map<String, String> courseMap = new LinkedHashMap<>();
     private final String[] semesters = {"1st Semester","2nd Semester","3rd Semester","4th Semester"};
@@ -42,6 +40,10 @@ public class ScoreTab extends JPanel {
             "CS301","CS302","CS303","CS304","CS305",
             "CS401","CS402","CS403","CS404","CS405"
     };
+
+    private String getMarksheetPath() {
+        return FilePathResolver.resolveMarksheetFilePath();
+    }
 
     public ScoreTab() {
         setLayout(new BorderLayout());
@@ -315,7 +317,7 @@ public class ScoreTab extends JPanel {
     // ================= FUNCTIONS =================
     private void loadAllRecordsToTable() {
         model.setRowCount(0);
-        try(BufferedReader br = new BufferedReader(new FileReader(marksheetPath))) {
+        try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
             String line;
             while((line=br.readLine())!=null) {
                 String[] d = line.split(",");
@@ -340,7 +342,7 @@ public class ScoreTab extends JPanel {
         String sem = searchSemField.getSelectedItem().toString();
         model.setRowCount(0);
 
-        try(BufferedReader br = new BufferedReader(new FileReader(marksheetPath))) {
+        try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
             String line;
             boolean found = false;
             while((line = br.readLine())!=null){
@@ -382,7 +384,7 @@ public class ScoreTab extends JPanel {
     }
 
     private void saveRecord() {
-        try(PrintWriter pw = new PrintWriter(new FileWriter(marksheetPath,true))){
+        try(PrintWriter pw = new PrintWriter(new FileWriter(getMarksheetPath(),true))){
             String nextMRK = getNextMRK();
             String id = studentIdField.getText().trim();
             String sem = semesterField.getSelectedItem().toString();
@@ -399,12 +401,16 @@ public class ScoreTab extends JPanel {
             pw.println(sb.toString());
         } catch(Exception e){ e.printStackTrace(); }
         loadAllRecordsToTable();
+        
+        // Update student's overall GWA in student.txt
+        updateStudentGWA(studentIdField.getText().trim());
+        
         JOptionPane.showMessageDialog(this,"Record Saved!");
     }
 
     private void updateRecord() {
         try {
-            File inputFile = new File(marksheetPath);
+            File inputFile = new File(getMarksheetPath());
             File tempFile = new File("temp_marksheet.txt");
             boolean updated = false;
 
@@ -438,7 +444,11 @@ public class ScoreTab extends JPanel {
             }
             inputFile.delete();
             tempFile.renameTo(inputFile);
-            if(updated) JOptionPane.showMessageDialog(this,"Record Updated!");
+            if(updated) {
+                // Update student's overall GWA in student.txt
+                updateStudentGWA(studentIdField.getText().trim());
+                JOptionPane.showMessageDialog(this,"Record Updated!");
+            }
             else JOptionPane.showMessageDialog(this,"Record not found");
             loadAllRecordsToTable();
         } catch(Exception e){ e.printStackTrace();}
@@ -446,7 +456,7 @@ public class ScoreTab extends JPanel {
 
     private String getNextMRK(){
         int max=0;
-        try(BufferedReader br = new BufferedReader(new FileReader(marksheetPath))){
+        try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))){
             String line;
             while((line=br.readLine())!=null){
                 String[] d = line.split(",");
@@ -471,6 +481,77 @@ public class ScoreTab extends JPanel {
         for(Map.Entry<String,String> e: courseMap.entrySet())
             if(e.getValue().equals(name)) return e.getKey();
         return name;
+    }
+
+    /**
+     * Calculate the overall GWA for a student across all their marksheet records
+     */
+    private double calculateOverallGWA(String studentID) {
+        double totalGPA = 0;
+        int semesterCount = 0;
+        
+        try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
+            String line;
+            while((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if(parts.length >= 14 && parts[1].equals(studentID)) {
+                    // Last field is the semester GPA
+                    try {
+                        double semesterGPA = Double.parseDouble(parts[13]);
+                        totalGPA += semesterGPA;
+                        semesterCount++;
+                    } catch(NumberFormatException ignored) {}
+                }
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+        
+        return semesterCount > 0 ? totalGPA / semesterCount : 0.0;
+    }
+
+    /**
+     * Update the student's GWA field in student.txt
+     */
+    private void updateStudentGWA(String studentID) {
+        double overallGWA = calculateOverallGWA(studentID);
+        
+        String studentPath = FilePathResolver.resolveStudentFilePath();
+        
+        try {
+            File inputFile = new File(studentPath);
+            File tempFile = new File("temp_student.txt");
+            boolean updated = false;
+            
+            try(BufferedReader br = new BufferedReader(new FileReader(inputFile));
+                PrintWriter pw = new PrintWriter(new FileWriter(tempFile))) {
+                
+                String line;
+                while((line = br.readLine()) != null) {
+                    String[] parts = line.split(",", -1);
+                    // Student format: ID, Name, Age, DOB, YearLevel, Section, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
+                    if(parts.length >= 16 && parts[0].equals(studentID)) {
+                        // Update the GWA field (index 8)
+                        parts[8] = String.format("%.2f", overallGWA);
+                        pw.println(String.join(",", parts));
+                        updated = true;
+                    } else {
+                        pw.println(line);
+                    }
+                }
+            }
+            
+            if (updated) {
+                inputFile.delete();
+                tempFile.renameTo(inputFile);
+                System.out.println("Updated GWA for student " + studentID + " to " + String.format("%.2f", overallGWA));
+            } else {
+                tempFile.delete();
+                System.err.println("Student " + studentID + " not found in student.txt");
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {

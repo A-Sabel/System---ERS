@@ -149,16 +149,49 @@ class RoomsFileSaver extends BaseFileSaver<Rooms> {
 class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     @Override
     protected String formatLine(Enrollment enrollment) {
-        // Format: enrollmentID,studentID,courseID,yearLevel,semester,status,sectionID
-        return String.join(",",
-            enrollment.getEnrollmentID(),
-            enrollment.getStudentID(),
-            enrollment.getCourseID(),
-            enrollment.getYearLevel(),
-            enrollment.getSemester(),
-            enrollment.getStatus(),
-            enrollment.getSectionID() != null ? enrollment.getSectionID() : ""
-        );
+        // This method shouldn't be used with new format - use saveEnrollmentsByStudent instead
+        return enrollment.getStudentID() + "," + enrollment.getCourseID() + "," + enrollment.getYearLevel() + "," + enrollment.getSemester() + "," + enrollment.getStatus() + "," + (enrollment.getSectionID() != null ? enrollment.getSectionID() : "");
+    }
+    
+    public void saveEnrollmentsByStudent(String filePath, java.util.List<Enrollment> enrollments) throws java.io.IOException {
+        // Group enrollments by student for new efficient format
+        java.util.Map<String, java.util.List<Enrollment>> studentEnrollments = new java.util.LinkedHashMap<>();
+        
+        for (Enrollment e : enrollments) {
+            String studentID = e.getStudentID();
+            if (!studentEnrollments.containsKey(studentID)) {
+                studentEnrollments.put(studentID, new java.util.ArrayList<Enrollment>());
+            }
+            studentEnrollments.get(studentID).add(e);
+        }
+        
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
+            for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : studentEnrollments.entrySet()) {
+                String studentID = entry.getKey();
+                java.util.List<Enrollment> studentCourses = entry.getValue();
+                
+                if (studentCourses.isEmpty()) continue;
+                
+                // Build course list and section list
+                java.util.List<String> courses = new java.util.ArrayList<>();
+                java.util.List<String> sections = new java.util.ArrayList<>();
+                
+                String yearLevel = studentCourses.get(0).getYearLevel();
+                String semester = studentCourses.get(0).getSemester();
+                String status = studentCourses.get(0).getStatus();
+                
+                for (Enrollment e : studentCourses) {
+                    courses.add(e.getCourseID());
+                    sections.add(e.getSectionID() != null ? e.getSectionID() : "");
+                }
+                
+                // Format: studentID,courseList,yearLevel,semester,status,sectionList
+                String courseList = String.join(";", courses);
+                String sectionList = String.join(";", sections);
+                
+                writer.println(studentID + "," + courseList + "," + yearLevel + "," + semester + "," + status + "," + sectionList);
+            }
+        }
     }
 }
 

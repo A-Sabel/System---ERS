@@ -32,7 +32,7 @@ public class ERSGroup {
     private static final String TEACHER_FILE = "ERS-group/src/ers/group/master files/teachers.txt";
     private static final String ROOM_FILE = "ERS-group/src/ers/group/master files/rooms.txt";
     private static final String SCHEDULE_FILE = "ERS-group/src/ers/group/master files/schedule.txt";
-    private static final String ENROLLMENT_FILE = "ERS-group/src/ers/group/master files/studentcourse.txt";
+    private static final String ENROLLMENT_FILE = "ERS-group/src/ers/group/master files/enrollment.txt";
 
 
     public static void main(String[] args) {

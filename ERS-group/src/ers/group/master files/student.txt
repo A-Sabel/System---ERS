@@ -1,7 +1,6 @@
-STU-001,Juan Dela Cruz,19,2005-03-15,1st Year,A,Regular,CS101;CS102;CS103;CS104;CS105,1.75,juan.cruz@email.com,09171234567,Male,123 Main St,Roberto Dela Cruz,Maria Dela Cruz,09175555555
-STU-002,Maria Santos,20,2004-07-22,2nd Year,B,Regular,,1.68,maria.santos@email.com,09171234568,Female,456 Oak Ave,Juan Santos,Rosa Santos,09175555556
-STU-003,Paolo Reyes,18,2006-01-10,1st Year,A,Irregular,,2.1,paolo.reyes@email.com,09171234569,Male,789 Pine Rd,Carlos Reyes,Elena Reyes,09175555557
-STU-004,Ana Diaz,21,2003-11-05,2nd Year,A,Regular,,1.82,ana.diaz@email.com,09171234570,Female,321 Elm St,Francisco Diaz,Lucia Diaz,09175555558
-STU-005,Liam Cruz,22,2002-05-30,1st Year,B,Irregular,,1.9,liam.cruz@email.com,09171234571,Male,654 Maple Dr,Miguel Cruz,Sophia Cruz,09175555559
-STU-006,Bando Fern,20,2006-02-04,1st Year,,Regular,,0.0,,,Male,,,,
-STU-007,Ella Andres,22,2003-06-03,1st Year,,Regular,,0.0,ella.andres@gmail.com,09234567891,Female,,,,
+STU-001,Miguel Reyes,20,2006-02-11,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,miguel.reyes@gmail.com,,Male,,,,
+STU-002,Juan Santos,21,2005-02-11,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Male,,,,
+STU-003,Felicia Andres,19,2006-04-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-004,Maria Dela Cruz,19,2006-04-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,
+STU-005,Adrian Benil,19,2006-12-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Male,,,,
+STU-006,Faye Nicolas,20,2006-02-12,1st Year,,Regular,CS101;CS102;CS103;CS104;CS105,0.0,,,Female,,,,

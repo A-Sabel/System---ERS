@@ -235,6 +235,12 @@ public class CourseTab extends JPanel {
         CT_StudentID.setBackground(new java.awt.Color(146, 190, 219));
         CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         CT_StudentID.addActionListener(this::CT_StudentIDActionPerformed);
+        // Auto-populate courses when Student ID is entered
+        CT_StudentID.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { autoLoadCoursesIfValid(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { autoLoadCoursesIfValid(); }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { autoLoadCoursesIfValid(); }
+        });
 
         CT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         CT_ID.setForeground(new java.awt.Color(255, 255, 255));
@@ -316,6 +322,8 @@ public class CourseTab extends JPanel {
         CT_Semester.setBackground(new java.awt.Color(146, 190, 219));
         CT_Semester.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         CT_Semester.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1st Semester", "2nd Semester" }));
+        // Auto-populate courses when semester is changed
+        CT_Semester.addActionListener(e -> autoLoadCoursesIfValid());
 
         // Load Courses Button
         CT_LoadCourses.setBackground(new java.awt.Color(73, 118, 159));
@@ -684,39 +692,53 @@ public class CourseTab extends JPanel {
         
         // Validate and collect courses
         for (String courseName : selectedCourseNames) {
-            if (courseName == null || courseName.isEmpty()) continue;
+            if (courseName == null || courseName.isEmpty() || courseName.startsWith("-- Select")) {
+                continue;
+            }
             
             // Find course by name
             CourseSubject course = findCourseByName(courseName);
-            if (course != null) {
-                // Check if already enrolled
-                boolean alreadyEnrolled = false;
-                for (Enrollment e : enrollments) {
-                    if (e.getStudentID().equals(studentID) && 
-                        e.getCourseID().equals(course.getCourseSubjectID()) &&
-                        e.getStatus().equals("ENROLLED")) {
-                        alreadyEnrolled = true;
-                        break;
-                    }
+            if (course == null) {
+                validationErrors.append("- ").append(courseName).append(": Course not found\n");
+                continue;
+            }
+            
+            // Check if already enrolled
+            boolean alreadyEnrolled = false;
+            for (Enrollment e : enrollments) {
+                if (e.getStudentID().equals(studentID) && 
+                    e.getCourseID().equals(course.getCourseSubjectID()) &&
+                    e.getStatus().equals("ENROLLED")) {
+                    alreadyEnrolled = true;
+                    break;
                 }
-                
-                if (alreadyEnrolled) {
-                    validationErrors.append("- ").append(courseName).append(": Already enrolled\n");
+            }
+            
+            if (alreadyEnrolled) {
+                validationErrors.append("- ").append(courseName).append(": Already enrolled\n");
+                continue;
+            }
+            
+            // Check prerequisites
+            ArrayList<CourseSubject> prereqs = course.getPrerequisites();
+            if (!prereqs.isEmpty()) {
+                boolean hasAllPrereqs = checkPrerequisites(studentID, prereqs);
+                if (!hasAllPrereqs) {
+                    validationErrors.append("- ").append(courseName).append(": Missing prerequisites\n");
                     continue;
                 }
-                
-                // Check prerequisites
-                ArrayList<CourseSubject> prereqs = course.getPrerequisites();
-                if (!prereqs.isEmpty()) {
-                    boolean hasAllPrereqs = checkPrerequisites(studentID, prereqs);
-                    if (!hasAllPrereqs) {
-                        validationErrors.append("- ").append(courseName).append(": Missing prerequisites\n");
-                        continue;
-                    }
-                }
-                
-                coursesToEnroll.add(course);
             }
+            
+            coursesToEnroll.add(course);
+        }
+        
+        // Check if any courses were selected
+        if (coursesToEnroll.isEmpty() && validationErrors.length() == 0) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Please select at least one course to enroll!", 
+                "No Courses Selected", 
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
         }
         
         if (validationErrors.length() > 0) {
@@ -732,16 +754,26 @@ public class CourseTab extends JPanel {
         
         // Enroll in courses
         int successCount = 0;
+        java.util.ArrayList<String> schedulingConflicts = new java.util.ArrayList<>();
+        
         for (CourseSubject course : coursesToEnroll) {
             try {
                 // Create enrollment
                 String enrollmentID = Enrollment.generateEnrollmentID();
                 
                 // Assign section
-                String sectionID = Schedule.assignSection(course.getCourseSubjectID(), studentID, MAX_SECTION_CAPACITY);
+                String sectionID = Schedule.assignSection(course.getCourseSubjectID(), studentID, MAX_SECTION_CAPACITY, course.isLabRoom(), course.getUnits());
                 
-                // Assign schedule to section if not already assigned
-                Schedule.assignScheduleToSection(sectionID, course.getCourseSubjectID(), course.isLabRoom());
+                logger.info("Assigning section " + sectionID + " for course " + course.getCourseSubjectID());
+                
+                // CRITICAL: Cache this assignment BEFORE creating schedules so conflict detection works
+                Schedule.cacheStudentSectionAssignment(studentID, sectionID);
+                
+                // Assign schedule to section if not already assigned (duration based on units)
+                // Pass studentID to prevent double-booking this student in multiple classes
+                Schedule.assignScheduleToSection(sectionID, course.getCourseSubjectID(), course.isLabRoom(), course.getUnits(), studentID);
+                
+                logger.info("Schedule assigned for " + course.getCourseSubjectID() + " in section " + sectionID);
                 
                 // Create enrollment record
                 Enrollment newEnrollment = new Enrollment(
@@ -754,7 +786,24 @@ public class CourseTab extends JPanel {
                 );
                 newEnrollment.setSectionID(sectionID);
                 
-                enrollments.add(newEnrollment);
+                // Check for duplicates before adding (using basic Java only, no APIs)
+                boolean duplicateExists = false;
+                for (int i = 0; i < enrollments.size(); i++) {
+                    Enrollment e = enrollments.get(i);
+                    if (e.getStudentID().equals(studentID) && 
+                        e.getCourseID().equals(course.getCourseSubjectID()) &&
+                        e.getStatus().equals("ENROLLED")) {
+                        duplicateExists = true;
+                        break;
+                    }
+                }
+                
+                if (!duplicateExists) {
+                    enrollments.add(newEnrollment);
+                    logger.info("Added new enrollment: " + enrollmentID + " for " + studentID + " in " + course.getCourseSubjectID());
+                } else {
+                    logger.warning("Duplicate enrollment detected and prevented: " + studentID + " in " + course.getCourseSubjectID());
+                }
                 
                 enrollmentSummary.append(String.format("%s - %s\n  Section: %s\n  Status: ENROLLED\n\n", 
                     course.getCourseSubjectID(), 
@@ -762,6 +811,19 @@ public class CourseTab extends JPanel {
                     sectionID));
                 
                 successCount++;
+                
+            } catch (Schedule.SchedulingConflictException e) {
+                // Critical scheduling failure - cannot schedule due to resource shortage
+                String conflictMsg = String.format("%s - %s:\n   ⚠ SCHEDULING CONFLICT: %s\n   Requested: %d hours | Scheduled: %.1f hours\n",
+                    course.getCourseSubjectID(),
+                    course.getCourseSubjectName(),
+                    e.getReason(),
+                    e.getUnitsRequested(),
+                    e.getUnitsScheduled());
+                schedulingConflicts.add(conflictMsg);
+                validationErrors.append("- ").append(course.getCourseSubjectName())
+                    .append(": Cannot schedule - ").append(e.getReason()).append("\n");
+                logger.severe("Scheduling conflict for " + course.getCourseSubjectID() + ": " + e.getMessage());
                 
             } catch (Schedule.SectionFullException e) {
                 validationErrors.append("- ").append(course.getCourseSubjectName())
@@ -772,11 +834,36 @@ public class CourseTab extends JPanel {
             }
         }
         
+        // Display critical scheduling conflicts notification
+        if (!schedulingConflicts.isEmpty()) {
+            StringBuilder conflictNotification = new StringBuilder();
+            conflictNotification.append("⚠️ CRITICAL SCHEDULING CONFLICTS DETECTED ⚠️\n\n");
+            conflictNotification.append("The following courses CANNOT be scheduled due to resource shortages:\n\n");
+            
+            for (String conflict : schedulingConflicts) {
+                conflictNotification.append(conflict).append("\n");
+            }
+            
+            conflictNotification.append("\n📋 ACTION REQUIRED:\n");
+            conflictNotification.append("• Add more rooms or teachers\n");
+            conflictNotification.append("• Adjust existing schedules to free up time slots\n");
+            conflictNotification.append("• Contact the academic coordinator\n\n");
+            conflictNotification.append("Successfully enrolled courses: ").append(successCount).append("\n");
+            conflictNotification.append("Failed to schedule: ").append(schedulingConflicts.size());
+            
+            javax.swing.JOptionPane.showMessageDialog(this,
+                conflictNotification.toString(),
+                "⚠️ Scheduling Conflicts - Registrar Alert",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+        }
+        
         // Update student's subjectsEnrolled list
         if (successCount > 0) {
             java.util.ArrayList<String> currentEnrollments = student.getSubjectsEnrolled();
             if (currentEnrollments == null) {
                 currentEnrollments = new java.util.ArrayList<>();
+                // CRITICAL: Set the new list back to the student object
+                student.setSubjectsEnrolled(currentEnrollments);
             }
             
             for (CourseSubject course : coursesToEnroll) {
@@ -795,37 +882,47 @@ public class CourseTab extends JPanel {
             }
         }
         
-        // Save enrollments
-        try {
-            String[] paths = {
-                "ERS-group/src/ers/group/master files/enrollment.txt",
-                "src/ers/group/master files/enrollment.txt",
-                "master files/enrollment.txt",
-                "enrollment.txt"
-            };
-            
-            String savePath = null;
-            for (String path : paths) {
-                java.io.File dir = new java.io.File(path).getParentFile();
-                if (dir != null && (dir.exists() || dir.mkdirs())) {
-                    savePath = path;
-                    break;
+        // Save enrollments (only if we have new enrollments)
+        if (successCount > 0) {
+            try {
+                String[] paths = {
+                    "ERS-group/src/ers/group/master files/enrollment.txt",
+                    "src/ers/group/master files/enrollment.txt",
+                    "master files/enrollment.txt",
+                    "enrollment.txt"
+                };
+                
+                String savePath = FilePathResolver.resolveWritablePath(paths);
+                
+                // Remove any duplicate enrollments before saving (using basic Java only, no APIs)
+                java.util.HashSet<String> seen = new java.util.HashSet<String>();
+                java.util.ArrayList<Enrollment> uniqueEnrollments = new java.util.ArrayList<Enrollment>();
+                
+                for (int i = 0; i < enrollments.size(); i++) {
+                    Enrollment e = enrollments.get(i);
+                    String key = e.getStudentID() + "-" + e.getCourseID() + "-" + e.getStatus();
+                    if (!seen.contains(key)) {
+                        seen.add(key);
+                        uniqueEnrollments.add(e);
+                    }
                 }
+                
+                enrollments = uniqueEnrollments;
+                
+                enrollmentFileSaver.saveEnrollmentsByStudent(savePath, enrollments);
+                logger.info("Saved " + enrollments.size() + " unique enrollment records");
+                
+                // Clear the student-section cache now that enrollments are saved
+                Schedule.clearStudentSectionCache();
+
+            } catch (Exception e) {
+                logger.severe("Error saving enrollments: " + e.getMessage());
             }
-            
-            if (savePath != null) {
-                enrollmentFileSaver.save(savePath, enrollments);
-            }
-        } catch (Exception e) {
-            logger.severe("Error saving enrollments: " + e.getMessage());
         }
         
         // Show result
         if (successCount > 0) {
             enrollmentSummary.append("Successfully enrolled in " + successCount + " course(s)!");
-            
-            // Reload enrollment data to update in-memory list
-            loadEnrollmentData();
             
             // Refresh the student table to show updated enrollment counts
             loadStudentData();
@@ -834,12 +931,18 @@ public class CourseTab extends JPanel {
             // Refresh the dropdowns to show updated [✓] status
             CT_LoadCoursesActionPerformed(null);
             
+            // Only reload enrollment data if we actually saved new enrollments
+            loadEnrollmentData();
+            
             javax.swing.JOptionPane.showMessageDialog(this, 
                 enrollmentSummary.toString(), 
                 "Enrollment Success", 
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
             clearCourseForm();
         } else {
+            // Clear cache even on failure to avoid stale data
+            Schedule.clearStudentSectionCache();
+            
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "No courses were enrolled.\n\n" + validationErrors.toString(), 
                 "Enrollment Failed", 
@@ -959,29 +1062,35 @@ public class CourseTab extends JPanel {
     private CourseSubject findCourseByName(String courseName) {
         // Strip status prefix and capacity indicator from course name
         // e.g., "[✓] Course Name (5/15)" -> "Course Name"
-        String cleanName = courseName;
+        String cleanName = courseName.trim();
         
-        // Remove status prefix ([✓], [✗], [ ])
-        if (cleanName.startsWith("[/] ")) {
-            cleanName = cleanName.substring(4);
-        } else if (cleanName.startsWith("[X] ")) {
-            cleanName = cleanName.substring(4);
-        } else if (cleanName.startsWith("[A] ")) {
-            cleanName = cleanName.substring(4);
+        // Remove any status prefix pattern [X] at the start (where X can be any character)
+        if (cleanName.startsWith("[") && cleanName.contains("]")) {
+            int closeBracket = cleanName.indexOf("]");
+            cleanName = cleanName.substring(closeBracket + 1).trim();
         }
         
         // Strip capacity indicator (e.g., "Course Name [FULL - 15/15]" or "Course Name (5/15)")
         if (cleanName.contains(" [")) {
-            cleanName = cleanName.substring(0, cleanName.indexOf(" ["));
+            cleanName = cleanName.substring(0, cleanName.indexOf(" [")).trim();
         } else if (cleanName.contains(" (")) {
-            cleanName = cleanName.substring(0, cleanName.indexOf(" ("));
+            cleanName = cleanName.substring(0, cleanName.indexOf(" (")).trim();
         }
         
+        // Search for course by exact name match
         for (CourseSubject course : availableCourses.values()) {
-            if (course.getCourseSubjectName().equals(cleanName)) {
+            if (course.getCourseSubjectName().trim().equals(cleanName)) {
                 return course;
             }
         }
+        
+        // If no exact match, try case-insensitive match
+        for (CourseSubject course : availableCourses.values()) {
+            if (course.getCourseSubjectName().trim().equalsIgnoreCase(cleanName)) {
+                return course;
+            }
+        }
+        
         return null;
     }
     
@@ -989,9 +1098,10 @@ public class CourseTab extends JPanel {
         for (CourseSubject prereq : prereqs) {
             boolean hasPassed = false;
             for (Enrollment e : enrollments) {
+                // Only PASSED status satisfies prerequisites, not ENROLLED
                 if (e.getStudentID().equals(studentID) && 
                     e.getCourseID().equals(prereq.getCourseSubjectID()) &&
-                    (e.getStatus().equals("ENROLLED") || e.getStatus().equals("PASSED"))) {
+                    e.getStatus().equals("PASSED")) {
                     hasPassed = true;
                     break;
                 }
@@ -1169,6 +1279,56 @@ public class CourseTab extends JPanel {
         }
     }
 
+    /**
+     * Auto-load courses without showing dialog messages.
+     * Called automatically when Student ID or semester changes.
+     */
+    private void autoLoadCoursesIfValid() {
+        String studentID = CT_StudentID.getText().trim();
+        
+        // If student ID is empty or too short, clear dropdowns and return
+        if (studentID.isEmpty() || studentID.length() < 3) {
+            clearCourseDropdowns();
+            return;
+        }
+        
+        // Find the student
+        Student student = null;
+        for (Student s : students) {
+            if (s.getStudentID().equals(studentID)) {
+                student = s;
+                break;
+            }
+        }
+        
+        // If student not found, clear dropdowns and return silently
+        if (student == null) {
+            clearCourseDropdowns();
+            return;
+        }
+        
+        // Student found - load courses silently
+        loadCoursesForStudent(student, false);
+    }
+    
+    /**
+     * Clear all course dropdowns to default state.
+     */
+    private void clearCourseDropdowns() {
+        String[] empty = new String[] { "-- Select Course --" };
+        CT_Course1.setModel(new javax.swing.DefaultComboBoxModel<>(empty));
+        CT_Course2.setModel(new javax.swing.DefaultComboBoxModel<>(empty));
+        CT_Course3.setModel(new javax.swing.DefaultComboBoxModel<>(empty));
+        CT_Course4.setModel(new javax.swing.DefaultComboBoxModel<>(empty));
+        CT_Course5.setModel(new javax.swing.DefaultComboBoxModel<>(empty));
+        
+        CT_PrereqStatus1.setText("");
+        CT_PrereqStatus2.setText("");
+        CT_PrereqStatus3.setText("");
+        CT_PrereqStatus4.setText("");
+        CT_PrereqStatus5.setText("");
+    }
+    
     private void CT_LoadCoursesActionPerformed(java.awt.event.ActionEvent evt) {
         String studentID = CT_StudentID.getText().trim();
         String semesterStr = (String) CT_Semester.getSelectedItem();
@@ -1197,6 +1357,19 @@ public class CourseTab extends JPanel {
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
+        
+        // Load courses with confirmation dialog
+        loadCoursesForStudent(student, true);
+    }
+    
+    /**
+     * Core method to load courses for a student.
+     * @param student The student object
+     * @param showDialog Whether to show confirmation dialog after loading
+     */
+    private void loadCoursesForStudent(Student student, boolean showDialog) {
+        String studentID = student.getStudentID();
+        String semesterStr = (String) CT_Semester.getSelectedItem();
         
         // Parse semester and year level
         int semester = semesterStr.equals("1st Semester") ? 1 : 2;
@@ -1267,10 +1440,13 @@ public class CourseTab extends JPanel {
         CT_PrereqStatus4.setText("");
         CT_PrereqStatus5.setText("");
         
-        javax.swing.JOptionPane.showMessageDialog(this, 
-            "Loaded " + (courseNames.size() - 1) + " available courses for " + yearLevel + ", Semester " + semester, 
-            "Courses Loaded", 
-            javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        // Only show dialog if requested (manual Load Courses button click)
+        if (showDialog) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "Loaded " + (courseNames.size() - 1) + " available courses for " + yearLevel + ", Semester " + semester, 
+                "Courses Loaded", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+        }
     }
 
     private void updatePrerequisiteStatus(javax.swing.JComboBox<String> courseCombo, javax.swing.JLabel statusLabel) {

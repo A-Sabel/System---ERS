@@ -1,19 +1,11 @@
-//totoo na sha
-
-
-//CORRECT ONE schedule tab
-
-// another one
 
 package ers.group;
-
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.table.DefaultTableModel;
-
 
 /**
  *
@@ -24,8 +16,9 @@ public class Scheduletab extends javax.swing.JPanel {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Scheduletab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
-    private final ArrayList<Schedule> schedules;
+    private ArrayList<Schedule> schedules;
     private final Map<String, ArrayList<String>> studentCourses;  // Maps studentID to list of courseIDs
+    private EnrollmentFileLoader enrollmentLoader; // Add enrollmentLoader field
 
 
     /**
@@ -38,6 +31,7 @@ public class Scheduletab extends javax.swing.JPanel {
         students = new ArrayList<>();
         schedules = new ArrayList<>();
         studentCourses = new HashMap<>();
+        enrollmentLoader = new EnrollmentFileLoader(); // Initialize enrollmentLoader
         loadStudentData();
         loadScheduleData();
         loadStudentCourseMappings();
@@ -181,98 +175,50 @@ public class Scheduletab extends javax.swing.JPanel {
    
     private void loadScheduleData() {
         try {
-            String[] possiblePaths = {
-                "ERS-group/src/ers/group/master files/Schedule.txt",
-                "src/ers/group/master files/Schedule.txt",
-                "ERS-group/src/ers/group/master files/schedule.txt",
-                "src/ers/group/master files/schedule.txt",
-                "Schedule.txt",
-                "schedule.txt",
-                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/Schedule.txt"
-            };
-           
-            String filePath = null;
-            for (String path : possiblePaths) {
-                java.io.File f = new java.io.File(path);
-                if (f.exists()) {
-                    filePath = path;
-                    break;
-                }
-            }
-           
-            if (filePath == null) {
-                logger.warning("Could not find schedule.txt");
-                return;
-            }
-           
-            try (java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath))) {
-                scanner.nextLine(); // skip header
-                while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine();
-                    if (line.trim().isEmpty()) continue;
-                   
-                    String[] parts = line.split(",");
-                    if (parts.length < 7) continue;
-                   
-                    Schedule schedule = new Schedule(
-                        parts[0].trim(),    // scheduleID
-                        parts[1].trim(),    // courseID
-                        parts[2].trim(),    // room
-                        parts[3].trim(),    // day
-                        parts[4].trim(),    // startTime
-                        parts[5].trim(),    // endTime
-                        parts[6].trim()     // teacherName
-                    );
-                    schedules.add(schedule);
-                }
-                logger.info("Loaded " + schedules.size() + " schedules");
-            }
+            // Clear existing schedules before reloading
+            schedules.clear();
+            
+            String filePath = FilePathResolver.resolveScheduleFilePath();
+            logger.info("Loading schedules from: " + new java.io.File(filePath).getAbsolutePath());
+            
+            ScheduleFileLoader scheduleLoader = new ScheduleFileLoader();
+            scheduleLoader.load(filePath);
+            
+            schedules.addAll(scheduleLoader.getAllSchedules());
+            logger.info("Loaded " + schedules.size() + " schedules from Schedule.txt");
         } catch (Exception e) {
             logger.warning("Error loading schedule data: " + e.getMessage());
+            e.printStackTrace();
         }
     }
    
     private void loadStudentCourseMappings() {
         try {
-            String[] possiblePaths = {
-                "ERS-group/src/ers/group/master files/studentcourse.txt",
-                "src/ers/group/master files/studentcourse.txt",
-                "studentcourse.txt",
-                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/studentcourse.txt"
-            };
+            // Clear existing mappings before reloading
+            studentCourses.clear();
+            
+            // Use enrollment.txt as the authoritative source for student-course mappings
+            String filePath = FilePathResolver.resolveEnrollmentFilePath();
+            logger.info("Loading student-course mappings from: " + new java.io.File(filePath).getAbsolutePath());
            
-            String filePath = null;
-            for (String path : possiblePaths) {
-                java.io.File f = new java.io.File(path);
-                if (f.exists()) {
-                    filePath = path;
-                    break;
-                }
-            }
-           
-            if (filePath == null) {
-                logger.warning("Could not find studentcourse.txt");
-                return;
-            }
-           
-            try (java.util.Scanner scanner = new java.util.Scanner(new java.io.File(filePath))) {
-                scanner.nextLine(); // skip header
-                while (scanner.hasNextLine()) {
-                    String line = scanner.nextLine();
-                    if (line.trim().isEmpty()) continue;
-                   
-                    String[] parts = line.split(",");
-                    if (parts.length < 2) continue;
-                   
-                    String studentID = parts[0].trim();
-                    String courseID = parts[1].trim();
-                   
+            enrollmentLoader.load(filePath); // Use the instance variable
+            
+            int enrollmentCount = 0;
+            // Build student-course mapping from enrollments with ENROLLED status
+            for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
+                if ("ENROLLED".equals(enrollment.getStatus()) || "PASSED".equals(enrollment.getStatus())) {
+                    String studentID = enrollment.getStudentID();
+                    String courseID = enrollment.getCourseID();
                     studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(courseID);
+                    enrollmentCount++;
+                    logger.info("Loaded enrollment: " + studentID + " -> " + courseID);
                 }
-                logger.info("Loaded student-course mappings");
             }
+            
+            logger.info("Loaded " + enrollmentCount + " enrollments for " + studentCourses.size() + " students from enrollment.txt");
         } catch (Exception e) {
             logger.warning("Error loading student-course mappings: " + e.getMessage());
+            e.printStackTrace();
         }
     }
    
@@ -286,12 +232,17 @@ public class Scheduletab extends javax.swing.JPanel {
         ArrayList<String> courses = studentCourses.getOrDefault(studentID, new ArrayList<>());
         logger.info("Found " + courses.size() + " courses for student " + studentID + ": " + courses);
         logger.info("Total schedules available: " + schedules.size());
+        
+        // Log all schedule courseIDs for debugging
+        for (Schedule s : schedules) {
+            logger.info("Schedule available: " + s.getCourseID() + " on " + s.getDay() + " at " + s.getStartTime());
+        }
        
-        // Initialize time slots (15-minute intervals for better granularity)
+        // Initialize time slots (30-minute intervals from 08:00 to 18:00 to accommodate variable durations)
         String[] timeSlots = {
             "08:00", "08:30", "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
             "12:00", "12:30", "13:00", "13:30", "14:00", "14:30", "15:00", "15:30",
-            "16:00", "16:30", "17:00"
+            "16:00", "16:30", "17:00", "17:30", "18:00"
         };
         String[] days = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
        
@@ -314,20 +265,47 @@ public class Scheduletab extends javax.swing.JPanel {
             new java.awt.Color(179, 136, 255)   // Lavender Purple
         };
        
-        // Assign colors to courses based on their ID (consistent mapping)
+        // Assign colors to courses based on their BASE ID (consistent mapping)
         Map<String, java.awt.Color> courseColorMap = new HashMap<>();
         for (int i = 0; i < courses.size(); i++) {
-            courseColorMap.put(courses.get(i), colors[i % colors.length]);
-            logger.info("Assigned color to course " + courses.get(i));
+            String baseCourseID = courses.get(i);
+            // Strip any section suffix (e.g., "CS101" from "CS101-SEC1")
+            if (baseCourseID.contains("-")) {
+                baseCourseID = baseCourseID.split("-")[0];
+            }
+            courseColorMap.put(baseCourseID, colors[i % colors.length]);
+            logger.info("Assigned color to base course " + baseCourseID + " (from " + courses.get(i) + ")");
         }
        
         // Fill in the schedule
         for (String courseID : courses) {
             boolean found = false;
-            java.awt.Color courseColor = courseColorMap.get(courseID);
+            
+            logger.info("Looking for schedules for course: " + courseID);
            
             for (Schedule schedule : schedules) {
-                if (schedule.getCourseID().equals(courseID)) {
+                // Only show schedules for courses the student is actually enrolled in with exact section match
+                boolean matches = false;
+                String scheduleID = schedule.getCourseID(); // This could be CS101-SEC1, CS101-SEC2, etc.
+                
+                // FIXED: Only match if this schedule is for the CURRENT course being displayed
+                // Check if schedule is for THIS specific course (not any other course)
+                if (scheduleID.startsWith(courseID + "-")) {
+                    // Verify student is actually enrolled in this specific section
+                    for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
+                        if (enrollment.getStudentID().equals(studentID) && 
+                            enrollment.getCourseID().equals(courseID) &&
+                            ("ENROLLED".equals(enrollment.getStatus()) || "PASSED".equals(enrollment.getStatus())) &&
+                            scheduleID.equals(enrollment.getSectionID())) {
+                            matches = true;
+                            break;
+                        }
+                    }
+                }
+                
+                logger.info("  Checking schedule " + schedule.getCourseID() + " - matches=" + matches);
+                
+                if (matches) {
                     String startTime = schedule.getStartTime().trim();
                     String endTime = schedule.getEndTime().trim();
                     String timeKey = parseTimeTo24Hour(startTime);
@@ -337,10 +315,17 @@ public class Scheduletab extends javax.swing.JPanel {
                     int startMinutes = timeToMinutes(timeKey);
                     int endMinutes = timeToMinutes(endTimeKey);
                    
-                    logger.info("Matched " + courseID + " from " + timeKey + " (" + startMinutes + "m) to " + endTimeKey + " (" + endMinutes + "m) on " + schedule.getDay());
+                    logger.info("Matched " + courseID + " with schedule " + schedule.getCourseID() + " from " + timeKey + " (" + startMinutes + "m) to " + endTimeKey + " (" + endMinutes + "m) on " + schedule.getDay());
                    
-                    CourseSlot slot = new CourseSlot(courseID, schedule.getRoom(), courseColor);
-                   
+                    // Extract base course ID from SCHEDULE for color mapping (e.g., "CS101" from "CS101-SEC1")
+                    String baseIDForColor = scheduleID;
+                    if (baseIDForColor.contains("-")) {
+                        baseIDForColor = baseIDForColor.split("-")[0];
+                    }
+                    java.awt.Color currentCourseColor = courseColorMap.getOrDefault(baseIDForColor, java.awt.Color.GRAY);
+                
+                    CourseSlot slot = new CourseSlot(courseID, schedule.getRoom(), schedule.getTeacherName(), currentCourseColor);
+                
                     // Fill all time slots from start to end
                     for (String slot_time : timeSlots) {
                         int slotMinutes = timeToMinutes(slot_time);
@@ -348,8 +333,18 @@ public class Scheduletab extends javax.swing.JPanel {
                         if (slotMinutes >= startMinutes && slotMinutes < endMinutes) {
                             if (scheduleGrid.containsKey(slot_time)) {
                                 Map<String, CourseSlot> daySlots = scheduleGrid.get(slot_time);
-                                if (daySlots.get(schedule.getDay()) == null) {
+                                CourseSlot existingSlot = daySlots.get(schedule.getDay());
+                                if (existingSlot == null) {
+                                    // No conflict - just add the slot
                                     daySlots.put(schedule.getDay(), slot);
+                                } else {
+                                    // CONFLICT DETECTED - Combine courses with HTML line breaks
+                                    String combinedCourse = existingSlot.getCourse() + "<br>" + courseID;
+                                    String combinedRoom = existingSlot.getRoom() + "<br>" + schedule.getRoom();
+                                    String combinedTeacher = existingSlot.getTeacher() + "<br>" + schedule.getTeacherName();
+                                    CourseSlot combinedSlot = new CourseSlot(combinedCourse, combinedRoom, combinedTeacher, existingSlot.getColor());
+                                    daySlots.put(schedule.getDay(), combinedSlot);
+                                    logger.warning("SCHEDULE CONFLICT: " + existingSlot.getCourse() + " and " + courseID + " both scheduled at " + schedule.getDay() + " " + slot_time);
                                 }
                             }
                         }
@@ -368,12 +363,12 @@ public class Scheduletab extends javax.swing.JPanel {
             if (dayMap != null) {
                 model.addRow(new Object[]{
                     timeSlot,
-                    dayMap.getOrDefault("Monday", new CourseSlot("", "", null)),
-                    dayMap.getOrDefault("Tuesday", new CourseSlot("", "", null)),
-                    dayMap.getOrDefault("Wednesday", new CourseSlot("", "", null)),
-                    dayMap.getOrDefault("Thursday", new CourseSlot("", "", null)),
-                    dayMap.getOrDefault("Friday", new CourseSlot("", "", null)),
-                    dayMap.getOrDefault("Saturday", new CourseSlot("", "", null))
+                    dayMap.getOrDefault("Monday", new CourseSlot("", "", "", null)),
+                    dayMap.getOrDefault("Tuesday", new CourseSlot("", "", "", null)),
+                    dayMap.getOrDefault("Wednesday", new CourseSlot("", "", "", null)),
+                    dayMap.getOrDefault("Thursday", new CourseSlot("", "", "", null)),
+                    dayMap.getOrDefault("Friday", new CourseSlot("", "", "", null)),
+                    dayMap.getOrDefault("Saturday", new CourseSlot("", "", "", null))
                 });
             }
         }
@@ -382,7 +377,7 @@ public class Scheduletab extends javax.swing.JPanel {
        
         // Modernize the table
         Scheduletable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        Scheduletable.setRowHeight(30);
+        Scheduletable.setRowHeight(50); // Increased for better continuous block appearance
         Scheduletable.setShowGrid(false);
         Scheduletable.setIntercellSpacing(new java.awt.Dimension(0, 0));
         Scheduletable.setCellSelectionEnabled(false);
@@ -432,18 +427,43 @@ public class Scheduletab extends javax.swing.JPanel {
     class CourseSlot {
         String courseID;
         String room;
+        String teacher;
         java.awt.Color color;
        
-        CourseSlot(String courseID, String room, java.awt.Color color) {
+        CourseSlot(String courseID, String room, String teacher, java.awt.Color color) {
             this.courseID = courseID;
             this.room = room;
+            this.teacher = teacher;
             this.color = color;
+        }
+        
+        // Getter methods for accessing fields
+        String getCourse() {
+            return courseID;
+        }
+        
+        String getRoom() {
+            return room;
+        }
+        
+        String getTeacher() {
+            return teacher;
+        }
+        
+        java.awt.Color getColor() {
+            return color;
         }
        
         @Override
         public String toString() {
             if (courseID.isEmpty()) return "";
-            return courseID + "\n(" + room + ")";
+            // Use HTML for proper text wrapping and formatting
+            // If courseID already contains <br> (from conflicts), use it directly
+            if (courseID.contains("<br>")) {
+                return "<html><center>" + courseID + "<br>" + room + "<br>" + teacher + "</center></html>";
+            } else {
+                return "<html><center>" + courseID + "<br>" + room + "<br>" + teacher + "</center></html>";
+            }
         }
     }
    
@@ -460,58 +480,62 @@ public class Scheduletab extends javax.swing.JPanel {
                 CourseSlot slot = (CourseSlot) value;
                 if (!slot.courseID.isEmpty()) {
                     setBackground(slot.color);
-                    setForeground(new java.awt.Color(30, 30, 30));
-                    setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+                    setForeground(java.awt.Color.WHITE); // High contrast white text for better PDF printing
+                    setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13)); // Slightly larger for clarity
                     setHorizontalAlignment(javax.swing.JLabel.CENTER);
-                    setVerticalAlignment(javax.swing.JLabel.CENTER);
+                    setVerticalAlignment(javax.swing.JLabel.CENTER); // Center vertically
                    
-                    // Check if same course above/below for continuous block effect
+                    // Logic to hide grid lines between same-course cells
                     boolean sameAbove = false;
                     boolean sameBelow = false;
-                   
+                    
                     if (row > 0) {
-                        Object aboveValue = table.getValueAt(row - 1, column);
-                        if (aboveValue instanceof CourseSlot) {
-                            sameAbove = ((CourseSlot) aboveValue).courseID.equals(slot.courseID);
-                        }
+                        Object above = table.getValueAt(row - 1, column);
+                        if (above instanceof CourseSlot) sameAbove = ((CourseSlot)above).courseID.equals(slot.courseID);
                     }
-                   
                     if (row < table.getRowCount() - 1) {
-                        Object belowValue = table.getValueAt(row + 1, column);
-                        if (belowValue instanceof CourseSlot) {
-                            sameBelow = ((CourseSlot) belowValue).courseID.equals(slot.courseID);
-                        }
+                        Object below = table.getValueAt(row + 1, column);
+                        if (below instanceof CourseSlot) sameBelow = ((CourseSlot)below).courseID.equals(slot.courseID);
                     }
-                   
-                    // Hide duplicate text - only show in top cell of block
-                    if (sameAbove) {
-                        setText("");
-                    } else {
+
+                    // Improved Centering Logic - find the middle of the block
+                    int blockLength = 1;
+                    int myPositionInBlock = 0;
+
+                    // Look up to find start of block
+                    int r = row - 1;
+                    while (r >= 0 && table.getValueAt(r, column) instanceof CourseSlot && 
+                           ((CourseSlot)table.getValueAt(r, column)).courseID.equals(slot.courseID)) {
+                        blockLength++;
+                        myPositionInBlock++;
+                        r--;
+                    }
+                    // Look down to find end of block
+                    r = row + 1;
+                    while (r < table.getRowCount() && table.getValueAt(r, column) instanceof CourseSlot && 
+                           ((CourseSlot)table.getValueAt(r, column)).courseID.equals(slot.courseID)) {
+                        blockLength++;
+                        r++;
+                    }
+
+                    // Only show text if this specific cell is in the middle of the block
+                    if (myPositionInBlock == blockLength / 2) {
                         setText(slot.toString());
+                    } else {
+                        setText("");
                     }
                    
-                    // Light guide borders - faint lines for internal blocks, visible for edges
-                    java.awt.Color lightLine = new java.awt.Color(255, 255, 255, 50);  // Very faint guide
-                    java.awt.Color darkLine = new java.awt.Color(255, 255, 255, 120);  // Visible edge
-                   
-                    int topWidth = sameAbove ? 1 : 2;  // Thinner for internal, thicker for block start
-                    int bottomWidth = sameBelow ? 1 : 2;  // Thinner for internal, thicker for block end              
-                    java.awt.Color topColor = sameAbove ? lightLine : darkLine;
-                   
-                    // Create compound border: MatteBorder for guides + EmptyBorder for text padding
-                    javax.swing.border.Border matteBorder = javax.swing.BorderFactory.createMatteBorder(
-                        topWidth, 1, bottomWidth, 1, topColor
-                    );
-                    javax.swing.border.Border paddingBorder = javax.swing.BorderFactory.createEmptyBorder(
-                        4, 6, 4, 6  // top, left, bottom, right padding for text
-                    );
-                    setBorder(javax.swing.BorderFactory.createCompoundBorder(matteBorder, paddingBorder));
+                    // Remove horizontal lines between connected cells to make it look like one block
+                    int top = sameAbove ? 0 : 1;
+                    int bottom = sameBelow ? 0 : 1;
+                    setBorder(javax.swing.BorderFactory.createMatteBorder(top, 1, bottom, 1, new java.awt.Color(255,255,255,100)));
+                    
                 } else {
-                    // Empty cells with zebra striping effect
+                    // Style for empty cells with zebra striping
                     if (row % 2 == 0) {
                         setBackground(new java.awt.Color(255, 255, 255));
                     } else {
-                        setBackground(new java.awt.Color(248, 249, 252));
+                        setBackground(new java.awt.Color(245, 245, 250));
                     }
                     setForeground(new java.awt.Color(100, 100, 100));
                     setText("");
@@ -524,7 +548,7 @@ public class Scheduletab extends javax.swing.JPanel {
                 if (row % 2 == 0) {
                     setBackground(new java.awt.Color(255, 255, 255));
                 } else {
-                    setBackground(new java.awt.Color(248, 249, 252));
+                    setBackground(new java.awt.Color(245, 245, 250));
                 }
                 setForeground(new java.awt.Color(100, 100, 100));
                 setText("");
@@ -584,6 +608,24 @@ public class Scheduletab extends javax.swing.JPanel {
     int year = (int) yearSpinner.getValue();
     monthYearDisplayLabel.setText(month + " " + year);
 }
+    
+    /**
+     * Public method to refresh schedule data when tab is switched.
+     * Ensures synchronization with enrollment.txt and Schedule.txt changes.
+     */
+    public void refreshScheduleData() {
+        loadStudentData();
+        loadScheduleData();
+        loadStudentCourseMappings();
+        loadStudentTableData();
+        
+        // If a student was already being viewed, refresh their specific view
+        String currentID = studentSearchField.getText().trim();
+        if (!currentID.isEmpty()) {
+            searchStudentButtonActionPerformed(null);
+        }
+        logger.info("Schedule Tab synced with master files.");
+    }
 
 
     private void initComponents() {
@@ -746,7 +788,7 @@ public class Scheduletab extends javax.swing.JPanel {
 
         semesterIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         semesterIDLabel.setForeground(new java.awt.Color(255, 255, 255));
-        semesterIDLabel.setText("Semester's ID");
+        semesterIDLabel.setText("Section ID");
 
 
         studentSearchField.setBackground(new java.awt.Color(146, 190, 219));
@@ -1077,12 +1119,12 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         for (String timeSlot : timeSlots) {
             model.addRow(new Object[]{
                 timeSlot,
-                new CourseSlot("", "", null),
-                new CourseSlot("", "", null),
-                new CourseSlot("", "", null),
-                new CourseSlot("", "", null),
-                new CourseSlot("", "", null),
-                new CourseSlot("", "", null)
+                new CourseSlot("", "", "", null),
+                new CourseSlot("", "", "", null),
+                new CourseSlot("", "", "", null),
+                new CourseSlot("", "", "", null),
+                new CourseSlot("", "", "", null),
+                new CourseSlot("", "", "", null)
             });
         }
        
@@ -1090,7 +1132,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
        
         // Modernize the table
         Scheduletable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-        Scheduletable.setRowHeight(30);
+        Scheduletable.setRowHeight(50); // Consistent height for better appearance
         Scheduletable.setShowGrid(false);
         Scheduletable.setIntercellSpacing(new java.awt.Dimension(0, 0));
         Scheduletable.setCellSelectionEnabled(false);
@@ -1141,6 +1183,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         if (searchID.isEmpty()) {
             loadStudentTableData();
             gwaLabel.setText("GWA. --");
+            semesterSearchField.setText("");
             return;
         }
        
@@ -1149,6 +1192,17 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
             if (student.getStudentID().equals(searchID)) {
                 // Display GWA
                 gwaLabel.setText("GWA. " + student.getGwa());
+               
+                // Auto-populate section field from enrollment
+                String foundSection = null;
+                for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
+                    if (enr.getStudentID().equals(searchID) && 
+                        enr.getSectionID() != null && !enr.getSectionID().isEmpty()) {
+                        foundSection = enr.getSectionID();
+                        break;
+                    }
+                }
+                semesterSearchField.setText(foundSection != null ? foundSection : "");
                
                 // Display student's schedule
                 displayStudentSchedule(searchID);
@@ -1186,27 +1240,301 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     }
    
     private void searchSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // TODO: Implement semester search
+        // Check if section is directly entered in semester search field
+        String sectionID = semesterSearchField.getText().trim();
+        
+        // If section field is empty, try to get it from student search
+        if (sectionID.isEmpty()) {
+            String currentStudentID = studentSearchField.getText().trim();
+            
+            if (currentStudentID.isEmpty()) {
+                javax.swing.JOptionPane.showMessageDialog(this,
+                    "Please enter a Section ID or search for a student first.",
+                    "No Section/Student Selected",
+                    javax.swing.JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            
+            // Find the student's section from enrollment records
+            for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
+                if (enr.getStudentID().equals(currentStudentID) && 
+                    enr.getSectionID() != null && !enr.getSectionID().isEmpty()) {
+                    sectionID = enr.getSectionID();
+                    break;
+                }
+            }
+        }
+        
+        if (sectionID == null || sectionID.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Could not find section.\n" +
+                "Section may not exist or student is not enrolled in any courses.",
+                "Section Not Found",
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        
+        // Find any student from that section to display their schedule
+        String displayStudentID = null;
+        for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
+            if (enr.getSectionID() != null && enr.getSectionID().equals(sectionID)) {
+                displayStudentID = enr.getStudentID();
+                break;
+            }
+        }
+        
+        // Verify section exists
+        if (displayStudentID == null) {
+            // Collect available sections to help user
+            java.util.Set<String> availableSections = new java.util.TreeSet<>();
+            for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
+                if (enr.getSectionID() != null && !enr.getSectionID().isEmpty()) {
+                    availableSections.add(enr.getSectionID());
+                }
+            }
+            
+            String availableList = String.join(", ", availableSections);
+            javax.swing.JOptionPane.showMessageDialog(this,
+                "Section '" + sectionID + "' not found in enrollment records.\n\n" +
+                "Available sections:\n" + availableList,
+                "Section Not Found",
+                javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        // Display the schedule for that section
+        displayStudentSchedule(displayStudentID);
+        
+        // Confirm with user before printing
+        int confirm = javax.swing.JOptionPane.showConfirmDialog(this,
+            "Print Master Schedule for section " + sectionID + "?",
+            "Section Master Schedule",
+            javax.swing.JOptionPane.YES_NO_OPTION);
+        
+        if (confirm == javax.swing.JOptionPane.YES_OPTION) {
+            // Print the master schedule
+            printSectionMasterSchedule(sectionID);
+        }
     }
 
     private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {
-        try {
-            // This prints the table directly to the default printer without showing a print dialog.
-            boolean complete = Scheduletable.print(javax.swing.JTable.PrintMode.FIT_WIDTH,
-                new java.text.MessageFormat("Student Schedule"),
-                new java.text.MessageFormat("Page {0}"),
-                false, // Do not show print dialog
-                null,  // No specific print attributes
-                false); // Run in non-interactive mode
+        String studentID = studentSearchField.getText().trim();
+        if (studentID.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Please search for a student first.");
+            return;
+        }
 
-            if (complete) {
-                javax.swing.JOptionPane.showMessageDialog(this, "Printing job has been sent to the default printer.", "Printing Complete", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                // This part might not be reached in non-interactive mode unless there's an issue.
-                javax.swing.JOptionPane.showMessageDialog(this, "Printing was cancelled or failed.", "Printing Status", javax.swing.JOptionPane.WARNING_MESSAGE);
+        java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+        job.setJobName("Student_Schedule_" + studentID);
+
+        // Force Portrait Preset
+        javax.print.attribute.PrintRequestAttributeSet attr = new javax.print.attribute.HashPrintRequestAttributeSet();
+        attr.add(javax.print.attribute.standard.OrientationRequested.PORTRAIT);
+        attr.add(javax.print.attribute.standard.MediaSizeName.ISO_A4);
+
+        job.setPrintable((graphics, pageFormat, pageIndex) -> {
+            if (pageIndex > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
+
+            java.awt.Graphics2D g2d = (java.awt.Graphics2D) graphics;
+            g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+
+            // Scale calculation to ensure everything fits the width
+            double scale = pageFormat.getImageableWidth() / Math.max(Scheduletable.getWidth(), 600);
+            g2d.scale(scale, scale);
+
+            // DRAW HEADER
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
+            g2d.drawString("OFFICIAL CLASS SCHEDULE", 0, 30);
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
+            g2d.drawString("Student ID: " + studentID, 0, 50);
+            g2d.drawString("Generated on: " + new java.text.SimpleDateFormat("MMM dd, yyyy HH:mm").format(new java.util.Date()), 0, 65);
+
+            // DRAW TABLE (Capture full height)
+            g2d.translate(0, 80);
+            Scheduletable.getTableHeader().setSize(Scheduletable.getWidth(), Scheduletable.getTableHeader().getHeight());
+            Scheduletable.getTableHeader().paint(g2d);
+            g2d.translate(0, Scheduletable.getTableHeader().getHeight());
+            
+            // This ensures every single row is painted even if scrolled
+            Scheduletable.setSize(Scheduletable.getWidth(), Scheduletable.getRowHeight() * Scheduletable.getRowCount());
+            Scheduletable.paint(g2d);
+
+            // DRAW LEGEND (Underneath the table)
+            g2d.translate(0, Scheduletable.getHeight() + 20);
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
+            g2d.drawString("SCHEDULE LEGEND / DETAILS", 0, 0);
+            g2d.drawLine(0, 5, 200, 5);
+            
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
+            int yOffset = 25;
+            
+            // Loop through enrolled courses to build the legend text
+            ArrayList<String> courses = studentCourses.getOrDefault(studentID, new ArrayList<>());
+            for (String cID : courses) {
+                // Find teacher/room info from your schedules list
+                for (Schedule s : schedules) {
+                    if (s.getCourseID().startsWith(cID)) {
+                        String info = String.format("\u2022 %-10s | Room: %-8s | Instructor: %s | %s %s-%s", 
+                                    cID, s.getRoom(), s.getTeacherName(), s.getDay(), s.getStartTime(), s.getEndTime());
+                        g2d.drawString(info, 10, yOffset);
+                        yOffset += 15;
+                        break; 
+                    }
+                }
             }
-        } catch (java.awt.print.PrinterException e) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error printing: " + e.getMessage(), "Print Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+
+            return java.awt.print.Printable.PAGE_EXISTS;
+        });
+
+        if (job.printDialog(attr)) {
+            try {
+                job.print(attr);
+                javax.swing.JOptionPane.showMessageDialog(this, 
+                    "Schedule printed successfully!",
+                    "Print Success",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } catch (java.awt.print.PrinterException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Print Error: " + ex.getMessage(),
+                    "Print Failed", javax.swing.JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+    
+    /**
+     * Prints a master schedule for an entire section including the schedule grid,
+     * legend of subjects, and masterlist of enrolled students.
+     */
+    private void printSectionMasterSchedule(String sectionID) {
+        java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+        job.setJobName("Section_Master_Schedule_" + sectionID);
+        
+        // Force Portrait Preset
+        javax.print.attribute.PrintRequestAttributeSet attr = new javax.print.attribute.HashPrintRequestAttributeSet();
+        attr.add(javax.print.attribute.standard.OrientationRequested.PORTRAIT);
+        attr.add(javax.print.attribute.standard.MediaSizeName.ISO_A4);
+
+        job.setPrintable((graphics, pageFormat, pageIndex) -> {
+            if (pageIndex > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
+
+            java.awt.Graphics2D g2d = (java.awt.Graphics2D) graphics;
+            g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+
+            // Formatting & Header
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 16));
+            g2d.drawString("MASTER SECTION SCHEDULE: " + sectionID, 0, 20);
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 10));
+            g2d.drawString("Generated on: " + new java.text.SimpleDateFormat("MMM dd, yyyy").format(new java.util.Date()), 0, 35);
+            
+            // Draw the Schedule Grid (The Table)
+            g2d.translate(0, 50);
+            double scale = (pageFormat.getImageableWidth() * 0.65) / Scheduletable.getWidth();
+            g2d.scale(scale, scale);
+            
+            Scheduletable.getTableHeader().paint(g2d);
+            g2d.translate(0, Scheduletable.getTableHeader().getHeight());
+            Scheduletable.paint(g2d);
+            
+            // Reset transformations for legend and masterlist
+            g2d.scale(1/scale, 1/scale);
+            double tableHeight = (Scheduletable.getHeight() + Scheduletable.getTableHeader().getHeight()) * scale;
+            g2d.translate(0, tableHeight + 15);
+            
+            // Draw Schedule Legend/Details
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+            g2d.drawString("SCHEDULE LEGEND / DETAILS", 0, 0);
+            g2d.drawLine(0, 3, 200, 3);
+            
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 9));
+            int legendY = 20;
+            
+            // Collect all unique courses for this section
+            java.util.Set<String> sectionCourses = new java.util.LinkedHashSet<>();
+            for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
+                if (enr.getSectionID() != null && enr.getSectionID().equals(sectionID)) {
+                    String studentID = enr.getStudentID();
+                    ArrayList<String> courses = studentCourses.getOrDefault(studentID, new ArrayList<>());
+                    sectionCourses.addAll(courses);
+                }
+            }
+            
+            // Display schedule details for each course
+            for (String courseID : sectionCourses) {
+                for (Schedule schedule : schedules) {
+                    if (schedule.getCourseID().startsWith(courseID)) {
+                        String details = String.format("• %-8s | Room: %-6s | Instructor: %-15s | %s %s-%s",
+                            courseID,
+                            schedule.getRoom(),
+                            schedule.getTeacherName(),
+                            schedule.getDay(),
+                            schedule.getStartTime(),
+                            schedule.getEndTime()
+                        );
+                        g2d.drawString(details, 0, legendY);
+                        legendY += 11;
+                        break;
+                    }
+                }
+            }
+            
+            // Draw Student Masterlist
+            legendY += 10;
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 11));
+            g2d.drawString("ENROLLED STUDENTS MASTERLIST", 0, legendY);
+            g2d.drawLine(0, legendY + 3, 180, legendY + 3);
+            
+            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 9));
+            int studentY = legendY + 15;
+            int studentX = 0;
+            int count = 1;
+            
+            // Fetch students from enrollment for this section
+            java.util.Set<String> uniqueStudents = new java.util.LinkedHashSet<>();
+            for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
+                if (enr.getSectionID() != null && enr.getSectionID().equals(sectionID)) {
+                    uniqueStudents.add(enr.getStudentID());
+                }
+            }
+            
+            for (String studentID : uniqueStudents) {
+                // Find student name
+                String studentName = studentID;
+                for (Student s : students) {
+                    if (s.getStudentID().equals(studentID)) {
+                        studentName = s.getStudentName();
+                        break;
+                    }
+                }
+                
+                String studentInfo = count + ". " + studentID + " - " + studentName;
+                g2d.drawString(studentInfo, studentX, studentY);
+                
+                studentY += 12;
+                count++;
+                
+                // Two-column layout if list is long
+                if (studentY > legendY + 120 && studentX == 0) {
+                    studentY = legendY + 15;
+                    studentX = 280;
+                }
+            }
+            
+            return java.awt.print.Printable.PAGE_EXISTS;
+        });
+
+        if (job.printDialog(attr)) {
+            try {
+                job.print(attr);
+                javax.swing.JOptionPane.showMessageDialog(this,
+                    "Section Master Schedule printed successfully!",
+                    "Print Success",
+                    javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            } catch (java.awt.print.PrinterException ex) {
+                javax.swing.JOptionPane.showMessageDialog(this,
+                    "Print Error: " + ex.getMessage(),
+                    "Print Failed",
+                    javax.swing.JOptionPane.ERROR_MESSAGE);
+                logger.severe("Print failed: " + ex.getMessage());
+            }
         }
     }
 

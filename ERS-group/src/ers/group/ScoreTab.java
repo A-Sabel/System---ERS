@@ -1,17 +1,15 @@
 package ers.group;
 
-import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.RoundRectangle2D;
-import java.util.*;
 import java.io.*;
+import java.util.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 public class ScoreTab extends JPanel {
 
@@ -28,11 +26,6 @@ public class ScoreTab extends JPanel {
     private DefaultTableModel model;
 
     private JButton saveBtn, clearBtn, updateBtn;
-
-    // Ensure this path is correct for your local machine
-    private final String marksheetPath = "C:\\Users\\Katri\\OneDrive\\Networking\\System---ERS\\ERS-group\\src\\ers\\group\\master files\\SECURE_marksheet";
-
-    private ScoreTabLogic logic;
 
     private final Map<String, String> courseMap = new LinkedHashMap<>();
     private final String[] semesters = {"1st Semester", "2nd Semester", "3rd Semester", "4th Semester"};
@@ -60,7 +53,6 @@ public class ScoreTab extends JPanel {
     }
 
     public ScoreTab() {
-        logic = new ScoreTabLogic(marksheetPath);
         setLayout(new BorderLayout());
         setBackground(new Color(31, 58, 95));
 
@@ -343,9 +335,6 @@ public class ScoreTab extends JPanel {
 
     private void loadAllRecordsToTable() {
         model.setRowCount(0);
-        File file = new File(marksheetPath);
-        if (!file.exists()) return;
-        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
             String line;
             while ((line = br.readLine()) != null) {
@@ -363,47 +352,6 @@ public class ScoreTab extends JPanel {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-private void searchRecord() {
-    String id = searchIdField.getText().trim();
-    String sem = searchSemField.getSelectedItem().toString();
-
-    if (id.isEmpty()) {
-        JOptionPane.showMessageDialog(this, "Please enter a Student ID to search.");
-        return;
-    }
-
-    try {
-        ScoreTabRecord record = logic.search(id, sem);
-        
-        if (record == null) {
-            JOptionPane.showMessageDialog(this, "No record found for ID: " + id + " and " + sem);
-            return;
-        }
-
-        // 1. Fill the input fields on the left so the user can edit/update
-        studentIdField.setText(record.id);
-        semesterField.setSelectedItem(record.semester);
-        for (int i = 0; i < 5; i++) {
-            courseDropdowns[i].setSelectedItem(courseMap.getOrDefault(record.courses[i], record.courses[i]));
-            courseScores[i].setText(record.grades[i]);
-        }
-
-        // 2. Update the Table to show ONLY the searched record
-        model.setRowCount(0); // Clear current table rows
-        Object[] row = new Object[14];
-        row[0] = "REC"; // Or record index if your logic provides it
-        row[1] = record.id;
-        row[2] = record.semester;
-        for (int i = 0; i < 5; i++) {
-            row[3 + i * 2] = courseMap.getOrDefault(record.courses[i], record.courses[i]);
-            row[4 + i * 2] = record.grades[i];
-        }
-        row[13] = record.gpa;
-        model.addRow(row);
-
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this, "Search Error: " + e.getMessage());
-        e.printStackTrace();
     private void searchRecord() {
         String id = searchIdField.getText().trim();
         String sem = searchSemField.getSelectedItem().toString();
@@ -436,7 +384,7 @@ private void searchRecord() {
             if(!found) JOptionPane.showMessageDialog(this,"Record not found");
         } catch(Exception e){ e.printStackTrace();}
     }
-}
+    
     private void clearFields() {
         studentIdField.setText("");
         semesterField.setSelectedIndex(0);
@@ -449,7 +397,6 @@ private void searchRecord() {
     }
 
     private void saveRecord() {
-        // 1. Validate Input First
         String id = studentIdField.getText().trim();
         if (id.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Please enter a Student ID.", "Input Error", JOptionPane.ERROR_MESSAGE);
@@ -457,34 +404,8 @@ private void searchRecord() {
             return;
         }
 
-        // Check if scores are valid numbers or empty
-        for (int i = 0; i < 5; i++) {
-            String scoreText = courseScores[i].getText().trim();
-            if (scoreText.isEmpty() || scoreText.equals("0.00")) {
-                int confirm = JOptionPane.showConfirmDialog(this, 
-                    "Course " + (i + 1) + " has a default or empty score. Do you want to continue?", 
-                    "Verify Scores", JOptionPane.YES_NO_OPTION);
-                if (confirm != JOptionPane.YES_OPTION) {
-                    courseScores[i].requestFocus();
-                    return;
-                }
-            }
-        }
-
-        // 2. Proceed with Saving if validation passes
-        try {
-            ScoreTabRecord record = gatherData();
-            logic.save(record);
-            JOptionPane.showMessageDialog(this, "Record Saved Successfully!");
-            loadAllRecordsToTable();
-            clearFields(); // Optional: clear fields after a successful save
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Error saving record: " + e.getMessage(), "System Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
         try(PrintWriter pw = new PrintWriter(new FileWriter(getMarksheetPath(),true))){
             String nextMRK = getNextMRK();
-            String id = studentIdField.getText().trim();
             String sem = semesterField.getSelectedItem().toString();
             StringBuilder sb = new StringBuilder();
             sb.append(nextMRK).append(",").append(id).append(",").append(sem);
@@ -508,9 +429,6 @@ private void searchRecord() {
 
     private void updateRecord() {
         try {
-            ScoreTabRecord record = gatherData();
-            boolean updated = logic.update(record);
-            JOptionPane.showMessageDialog(this, updated ? "Record Updated!" : "Record not found");
             File inputFile = new File(getMarksheetPath());
             File tempFile = new File("temp_marksheet.txt");
             boolean updated = false;
@@ -555,16 +473,7 @@ private void searchRecord() {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private ScoreTabRecord gatherData() {
-        ScoreTabRecord record = new ScoreTabRecord();
-        record.id = studentIdField.getText().trim();
-        record.semester = semesterField.getSelectedItem().toString();
-        for (int i = 0; i < 5; i++) {
-            record.courses[i] = getCourseCode(courseDropdowns[i].getSelectedItem().toString());
-            record.grades[i] = courseScores[i].getText().trim();
-        }
-        record.gpa = logic.calculateGPA(record.grades);
-        return record;
+
     private String getNextMRK(){
         int max=0;
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))){

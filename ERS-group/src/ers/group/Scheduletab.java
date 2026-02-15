@@ -577,7 +577,7 @@ public class Scheduletab extends javax.swing.JPanel {
 }
     
     /**
-     * Validates that a student's schedule spans at least 3 different days.
+     * Validates that a student's schedule spans at least 2 different days.
      * Displays a warning if the policy is violated.
      * @param studentID The student ID to validate
      * @return true if schedule spans 3+ days, false otherwise
@@ -594,10 +594,10 @@ public class Scheduletab extends javax.swing.JPanel {
             }
         }
         
-        if (scheduledDays.size() < 3) {
+        if (scheduledDays.size() < 2) {
             javax.swing.JOptionPane.showMessageDialog(this,
                 "Warning: This student's schedule only spans " + scheduledDays.size() + 
-                " day(s).\nMinimum 3 days required per university policy.\n\nScheduled days: " + 
+                " day(s).\nMinimum 2 days required per university policy.\n\nScheduled days: " + 
                 String.join(", ", scheduledDays),
                 "Schedule Policy Violation",
                 javax.swing.JOptionPane.WARNING_MESSAGE);
@@ -1204,7 +1204,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                 // Display student's schedule
                 displayStudentSchedule(searchID);
                 
-                // Validate schedule spans at least 3 days
+                // Validate schedule spans at least 2 days
                 validateStudentScheduleSpread(searchID);
                
                 // Update table to show only this student

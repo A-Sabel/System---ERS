@@ -1,5 +1,7 @@
 package ers.group;
 
+import java.util.HashMap;
+import java.util.Map;
 
 public class Enrollment {
 
@@ -13,6 +15,8 @@ public class Enrollment {
     private String yearLevel;
     private String semester;
     private String status;
+    private String academicYear;
+    private Map<String, String> courseStatuses; // Track individual course statuses: PASSED, FAILED, INC, DROPPED, PENDING
 
 
     public Enrollment(String enrollmentID, String studentID, String courseID, String yearLevel, String semester, String status) {
@@ -32,6 +36,44 @@ public class Enrollment {
         this.yearLevel = yearLevel;
         this.semester = semester;
         this.status = status;
+        this.academicYear = AcademicUtilities.getAcademicYear(); // Auto-set from calendar
+        this.courseStatuses = new HashMap<>();
+        // Initialize course status as PENDING
+        if (courseID != null && !courseID.isEmpty()) {
+            String[] courses = courseID.split(";");
+            for (String course : courses) {
+                this.courseStatuses.put(course.trim(), "PENDING");
+            }
+        }
+    }
+
+    // Constructor with academicYear parameter
+    public Enrollment(String enrollmentID, String studentID, String courseID, String yearLevel, String semester, String status, String academicYear) {
+        if (enrollmentID == null || enrollmentID.isEmpty()) {
+            throw new IllegalArgumentException("Enrollment ID cannot be empty");
+        }
+        if (studentID == null || studentID.isEmpty()) {
+            throw new IllegalArgumentException("Student ID cannot be empty");
+        }
+        if (courseID == null || courseID.isEmpty()) {
+            throw new IllegalArgumentException("Course ID cannot be empty");
+        }
+        this.enrollmentID = enrollmentID;
+        this.studentID = studentID;
+        this.sectionID = ""; // Section assigned later
+        this.courseID = courseID;
+        this.yearLevel = yearLevel;
+        this.semester = semester;
+        this.status = status;
+        this.academicYear = academicYear != null ? academicYear : AcademicUtilities.getAcademicYear();
+        this.courseStatuses = new HashMap<>();
+        // Initialize course status as PENDING
+        if (courseID != null && !courseID.isEmpty()) {
+            String[] courses = courseID.split(";");
+            for (String course : courses) {
+                this.courseStatuses.put(course.trim(), "PENDING");
+            }
+        }
     }
 
     // Static method to generate new enrollment ID
@@ -72,6 +114,7 @@ public class Enrollment {
     public String getYearLevel() { return yearLevel; }
     public String getSemester() { return semester; }
     public String getStatus() { return status; }
+    public String getAcademicYear() { return academicYear; }
 
     public void setEnrollmentID(String enrollmentID) {
         if (enrollmentID == null || enrollmentID.isEmpty()) {
@@ -110,11 +153,43 @@ public class Enrollment {
         this.status = status;
     }
 
+    public void setAcademicYear(String academicYear) {
+        this.academicYear = academicYear;
+    }
+
+    public Map<String, String> getCourseStatuses() {
+        return courseStatuses;
+    }
+
+    public void setCourseStatuses(Map<String, String> courseStatuses) {
+        this.courseStatuses = courseStatuses;
+    }
+
+    public String getCourseStatus(String courseCode) {
+        return courseStatuses.getOrDefault(courseCode, "PENDING");
+    }
+
+    public void setCourseStatus(String courseCode, String status) {
+        if (courseCode != null && !courseCode.isEmpty()) {
+            this.courseStatuses.put(courseCode, status);
+        }
+    }
+
+    public void updateCourseStatusFromGrade(String courseCode, double grade) {
+        if (grade >= 1.0 && grade <= 3.0) {
+            setCourseStatus(courseCode, "PASSED");
+        } else if (grade == 5.0) {
+            setCourseStatus(courseCode, "FAILED");
+        } else {
+            setCourseStatus(courseCode, "INC");
+        }
+    }
+
 
     @Override
     public String toString() {
         return "Enrollment " + enrollmentID + ": Student " + studentID + " in Course " + courseID +
-            " (Section " + sectionID + ") - Status: " + status;
+            " (Section " + sectionID + ") - Status: " + status + " [" + academicYear + "]";
     }
 }
 

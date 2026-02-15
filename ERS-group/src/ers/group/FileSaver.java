@@ -43,15 +43,56 @@ abstract class BaseFileSaver<T> implements FileSaver {
 
 
 class StudentFileSaver extends BaseFileSaver<Student> {
+    
+    /**
+     * Convert full semester format to abbreviated format for file storage
+     * 1st Semester -> 1, 2nd Semester -> 2, Summer -> 3
+     */
+    private String compressSemester(String full) {
+        if (full == null) return "1"; // Default to 1 if null
+        switch (full) {
+            case "1st Semester": return "1";
+            case "2nd Semester": return "2";
+            case "Summer": return "3";
+            default: return full; // Already abbreviated or unknown
+        }
+    }
+    
+    @Override
+    public void save(String filePath, java.util.List<?> data) throws java.io.IOException {
+        // Deduplicate students by ID before saving
+        java.util.Map<String, Student> uniqueStudents = new java.util.LinkedHashMap<>();
+        
+        for (Object obj : data) {
+            @SuppressWarnings("unchecked")
+            Student student = (Student) obj;
+            // Keep the last occurrence of each student ID (most up-to-date)
+            uniqueStudents.put(student.getStudentID(), student);
+        }
+        
+        // Write deduplicated students
+        try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(filePath))) {
+            for (Student student : uniqueStudents.values()) {
+                String line = formatLine(student);
+                if (line != null && !line.isEmpty()) {
+                    writer.write(line);
+                    writer.newLine();
+                }
+            }
+        }
+    }
+    
     @Override
     protected String formatLine(Student s) {
         String subjects = String.join(";", s.getSubjectsEnrolled());
+        String compressedSemester = compressSemester(s.getCurrentSemester());
         return String.join(",",
             s.getStudentID(),
             s.getStudentName(),
             String.valueOf(s.getAge()),
             s.getDateOfBirth(),
             s.getYearLevel(),
+            compressedSemester, // Save compressed format (1, 2, or 3)
             s.getSection(),
             s.getStudentType(),
             subjects,
@@ -149,14 +190,24 @@ class RoomsFileSaver extends BaseFileSaver<Rooms> {
 class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(EnrollmentFileSaver.class.getName());
     
+    /**
+     * Convert full semester format to abbreviated format for file storage
+     * 1st Semester -> 1, 2nd Semester -> 2, Summer -> 3
+     */
+    private String compressSemester(String full) {
+        switch (full) {
+            case "1st Semester": return "1";
+            case "2nd Semester": return "2";
+            case "Summer": return "3";
+            default: return full; // Already abbreviated or unknown
+        }
+    }
+
     @Override
     protected String formatLine(Enrollment enrollment) {
-        // This method shouldn't be used with new format - use saveEnrollmentsByStudent instead
-        return enrollment.getStudentID() + "," + enrollment.getCourseID() + "," + enrollment.getYearLevel() + "," + enrollment.getSemester() + "," + enrollment.getStatus() + "," + (enrollment.getSectionID() != null ? enrollment.getSectionID() : "");
+        return enrollment.getStudentID() + "," + enrollment.getCourseID() + "," + enrollment.getYearLevel() + "," + compressSemester(enrollment.getSemester()) + "," + enrollment.getStatus() + "," + (enrollment.getSectionID() != null ? enrollment.getSectionID() : "");
     }
-    
-    @Override
-    public void save(String filePath, java.util.List<?> data) throws java.io.IOException {
+        public void save(String filePath, java.util.List<?> data) throws java.io.IOException {
         // Cast and validate before saving
         @SuppressWarnings("unchecked")
         java.util.List<Enrollment> enrollments = (java.util.List<Enrollment>) data;
@@ -200,9 +251,27 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     }
     
     public void saveEnrollmentsByStudent(String filePath, java.util.List<Enrollment> enrollments) throws java.io.IOException {
-        // Group enrollments by student for new efficient format
-        java.util.Map<String, java.util.List<Enrollment>> studentEnrollments = new java.util.LinkedHashMap<>();
+        // Group enrollments by enrollment period (student + semester + yearLevel + academicYear)
+        // This creates separate lines for each enrollment period instead of grouping all semesters together
+        java.util.Map<String, java.util.List<Enrollment>> enrollmentPeriods = new java.util.LinkedHashMap<>();
         
+        for (Enrollment e : enrollments) {
+            String studentID = e.getStudentID();
+            String semester = e.getSemester();
+            String yearLevel = e.getYearLevel();
+            String academicYear = e.getAcademicYear() != null ? e.getAcademicYear() : AcademicUtilities.getAcademicYear();
+            
+            // Create unique key for each enrollment period
+            String periodKey = studentID + "|" + yearLevel + "|" + semester + "|" + academicYear;
+            
+            if (!enrollmentPeriods.containsKey(periodKey)) {
+                enrollmentPeriods.put(periodKey, new java.util.ArrayList<Enrollment>());
+            }
+            enrollmentPeriods.get(periodKey).add(e);
+        }
+        
+        // Validate each student's schedule spans at least 3 days (log warning but don't block)
+        java.util.Map<String, java.util.List<Enrollment>> studentEnrollments = new java.util.LinkedHashMap<>();
         for (Enrollment e : enrollments) {
             String studentID = e.getStudentID();
             if (!studentEnrollments.containsKey(studentID)) {
@@ -211,7 +280,6 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
             studentEnrollments.get(studentID).add(e);
         }
         
-        // Validate each student's schedule spans at least 3 days (log warning but don't block)
         for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : studentEnrollments.entrySet()) {
             String studentID = entry.getKey();
             java.util.List<Enrollment> studentCourses = entry.getValue();
@@ -233,30 +301,46 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
         }
         
         try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
-            for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : studentEnrollments.entrySet()) {
-                String studentID = entry.getKey();
-                java.util.List<Enrollment> studentCourses = entry.getValue();
+            // Write one line per enrollment period (not per student)
+            for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : enrollmentPeriods.entrySet()) {
+                String periodKey = entry.getKey();
+                java.util.List<Enrollment> periodCourses = entry.getValue();
                 
-                if (studentCourses.isEmpty()) continue;
+                if (periodCourses.isEmpty()) continue;
+                
+                // Extract student info from first enrollment in this period
+                Enrollment firstEnrollment = periodCourses.get(0);
+                String studentID = firstEnrollment.getStudentID();
+                String yearLevel = firstEnrollment.getYearLevel();
+                String semester = firstEnrollment.getSemester();
+                String status = firstEnrollment.getStatus();
+                String academicYear = firstEnrollment.getAcademicYear();
+                if (academicYear == null || academicYear.isEmpty()) {
+                    academicYear = AcademicUtilities.getAcademicYear();
+                }
                 
                 // Build course list and section list
                 java.util.List<String> courses = new java.util.ArrayList<>();
                 java.util.List<String> sections = new java.util.ArrayList<>();
+                java.util.List<String> courseStatusPairs = new java.util.ArrayList<>();
                 
-                String yearLevel = studentCourses.get(0).getYearLevel();
-                String semester = studentCourses.get(0).getSemester();
-                String status = studentCourses.get(0).getStatus();
-                
-                for (Enrollment e : studentCourses) {
+                for (Enrollment e : periodCourses) {
                     courses.add(e.getCourseID());
                     sections.add(e.getSectionID() != null ? e.getSectionID() : "");
+                    
+                    // Save course statuses if available
+                    if (e.getCourseStatuses() != null && !e.getCourseStatuses().isEmpty()) {
+                        String courseStatus = e.getCourseStatus(e.getCourseID());
+                        courseStatusPairs.add(e.getCourseID() + ":" + courseStatus);
+                    }
                 }
                 
-                // Format: studentID,courseList,yearLevel,semester,status,sectionList
+                // Format: studentID,courseList,yearLevel,semester,status,sectionList,academicYear,courseStatuses
                 String courseList = String.join(";", courses);
                 String sectionList = String.join(";", sections);
+                String courseStatusList = String.join(";", courseStatusPairs);
                 
-                writer.println(studentID + "," + courseList + "," + yearLevel + "," + semester + "," + status + "," + sectionList);
+                writer.println(studentID + "," + courseList + "," + yearLevel + "," + compressSemester(semester) + "," + status + "," + sectionList + "," + academicYear + "," + courseStatusList);
             }
         }
     }
@@ -264,15 +348,30 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
 
 
 class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
+    
+    /**
+     * Convert full semester format to abbreviated format for file storage
+     * 1st Semester -> 1, 2nd Semester -> 2, Summer -> 3
+     */
+    private String compressSemester(String full) {
+        switch (full) {
+            case "1st Semester": return "1";
+            case "2nd Semester": return "2";
+            case "Summer": return "3";
+            default: return full; // Already abbreviated or unknown
+        }
+    }
+    
     @Override
     protected String formatLine(Marksheet m) {
-        // Format: ID, StudentID, Semester, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
+        // Format: ID, StudentID, Semester, YearLevel, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
         StringBuilder sb = new StringBuilder();
        
         // Generate ID (e.g., MRK-001)
         sb.append("MRK-").append(String.format("%03d", System.currentTimeMillis() % 1000)).append(",");
         sb.append(m.getStudentID()).append(",");
-        sb.append(m.getSemester()).append(",");
+        sb.append(compressSemester(m.getSemester())).append(",");
+        sb.append(m.getSchoolYear() != null ? m.getSchoolYear() : "").append(","); // Add YearLevel field
        
         // Add 5 course-score pairs
         String[] subjects = m.getSubjects();

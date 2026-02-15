@@ -1,24 +1,10 @@
-// student course tab
-
 package ers.group;
 
-import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Collection;
-import javax.swing.table.DefaultTableModel;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
-import java.awt.Color;
-import java.awt.Component;
-
-/**
- *
- * @author Eli
- */
+import javax.swing.table.DefaultTableModel;
 public class StudentCourseTab extends javax.swing.JFrame {
-    
-    // Session Manager - holds current student for auto-population in Course Tab
     public static class SessionManager {
         private static String currentStudentID = null;
         private static String currentStudentName = null;
@@ -46,37 +32,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private StudentFileSaver studentFileSaver;
-
-    private String studentFilePath; // Store the actual file path found during loading
-    private CourseSubjectFileLoader courseLoader; // For loading suggested courses
-    private CourseTab courseTab; // Reference to CourseTab for refreshing
-    private boolean isInitialized = false; // Flag to prevent premature tab change events
-
-    
-    // Schedule Data
+    private String studentFilePath;
+    private CourseSubjectFileLoader courseLoader;
+    private CourseTab courseTab;
+    private Marksheettab marksheettab;
+    private ScoreTab scoreTab;
+    private boolean isInitialized = false; 
     private ArrayList<Schedule> schedules;
     private Map<String, ArrayList<String>> studentCourses;
-    
-    // Schedule Tab Components - Commented out as now using Scheduletab instance
-    /*private javax.swing.JPanel SCH_SearchPanel;
-    private javax.swing.JPanel SCH_FiltersPanel;
-    private javax.swing.JLabel SCH_SemesterIDLabel;
-    private javax.swing.JTextField SCH_StudentSearchField;
-    private javax.swing.JButton SCH_SearchStudentButton;
-    private javax.swing.JTextField SCH_SemesterSearchField;
-    private javax.swing.JLabel SCH_StudentIDLabel;
-    private javax.swing.JButton SCH_SearchSemesterButton;
-    private javax.swing.JPanel SCH_GWAPanel;
-    private javax.swing.JLabel SCH_GWALabel;
-    private javax.swing.JPanel SCH_MonthYearPanel;
-    private javax.swing.JComboBox<String> SCH_MonthComboBox;
-    private javax.swing.JSpinner SCH_YearSpinner;
-    private javax.swing.JLabel SCH_MonthYearDisplayLabel;
-    private javax.swing.JButton SCH_RefreshButton;
-    private javax.swing.JScrollPane SCH_TableScrollPane;
-    private javax.swing.JTable SCH_Table;*/
-    
-    // File paths
     private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
 
 
@@ -92,18 +55,13 @@ public class StudentCourseTab extends javax.swing.JFrame {
         loadCourseData();
         loadStudentData();
         loadStudentTableData();
+        setCurrentActiveSemester();
     }
     
-    /**
-     * Helper method to find the student file path.
-     * Returns the resolved path if found, or the first possible path if not found.
-     */
     private String getStudentFilePath() {
         if (studentFilePath != null) {
             return studentFilePath;
         }
-        
-        // Try to find the file using the same logic as loadStudentData
         String[] possiblePaths = {
             "ERS-group/src/ers/group/master files/student.txt",
             "src/ers/group/master files/student.txt",
@@ -112,21 +70,17 @@ public class StudentCourseTab extends javax.swing.JFrame {
             "ERS-group/student.txt",
             "../student.txt"
         };
-        
         for (String path : possiblePaths) {
             java.io.File f = new java.io.File(path);
             if (f.exists()) {
                 return path;
             }
         }
-        
-        // If not found, return the most likely path (first option)
         return possiblePaths[0];
     }
     
     private void loadStudentData() {
         try {
-            // Try multiple possible paths
             String[] possiblePaths = {
                 "ERS-group/src/ers/group/master files/student.txt",
                 "src/ers/group/master files/student.txt",
@@ -136,7 +90,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 "../student.txt",
                 new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/student.txt"
             };
-            
             String filePath = null;
             for (String path : possiblePaths) {
                 java.io.File f = new java.io.File(path);
@@ -146,13 +99,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     break;
                 }
             }
-            
             if (filePath == null) {
                 logger.warning("Could not find student.txt in any expected location");
                 students = new ArrayList<>();
                 return;
             }
-            
             studentFileLoader = new StudentFileLoader();
             studentFileLoader.load(filePath);
             Collection<Student> allStudents = studentFileLoader.getAllStudents();
@@ -167,10 +118,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private void loadStudentTableData() {
         // Get the model from ST_Table directly
         DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
-        
-        // Clear existing rows
         model.setRowCount(0);
-        
         // Add student data to table
         for (Student stud : students) {
             model.addRow(new Object[]{
@@ -186,7 +134,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getPhoneNumber()
             });
         }
-        
         // Refresh display
         if (ST_TableScrollPane.getParent() != null) {
             ST_TableScrollPane.revalidate();
@@ -194,10 +141,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
+    @SuppressWarnings("unchecked")                        
     private void initComponents() {
-
         MainScrollPane = new javax.swing.JScrollPane();
         MainPanel = new javax.swing.JPanel();
         SMSPanel = new javax.swing.JPanel();
@@ -861,12 +806,24 @@ public class StudentCourseTab extends javax.swing.JFrame {
             } 
             else if (selectedTab == 1) { // Course tab
                 courseTab.refreshStudentList();
+                courseTab.refreshSemesterSelection(); // Update semester to current
                 
                 // Auto-populate student ID if coming from Save & Enroll
                 String sessionStudentID = SessionManager.getCurrentStudentID();
                 if (sessionStudentID != null && !sessionStudentID.isEmpty()) {
                     courseTab.autoPopulateStudent(sessionStudentID);
                     SessionManager.clearSession(); // Clear after use
+                }
+            }
+            else if (selectedTab == 2) { // Score tab
+                if (scoreTab != null) {
+                    scoreTab.refreshSemesterSelection(); // Update semester to current
+                }
+            }
+            else if (selectedTab == 3) { // Marksheet tab
+                // Refresh marksheet data when switching to this tab
+                if (marksheettab != null) {
+                    marksheettab.loadMarksheetTableData();
                 }
             }
         });
@@ -1200,223 +1157,16 @@ public class StudentCourseTab extends javax.swing.JFrame {
             .addGap(0, 571, Short.MAX_VALUE)
         );
 
-        MainTabPanel.addTab("Score",new ScoreTab());
+        scoreTab = new ScoreTab();
+        MainTabPanel.addTab("Score", scoreTab);
 
-        MainTabPanel.addTab("Mark Sheet", new Marksheettab());
+        marksheettab = new Marksheettab();
+        MainTabPanel.addTab("Mark Sheet", marksheettab);
 
         MainTabPanel.addTab("Schedule", new Scheduletab());
         
-        /*ScheduleTab.setBackground(new java.awt.Color(31, 58, 95));
-        
-        SCH_SearchPanel = new javax.swing.JPanel();
-        SCH_FiltersPanel = new javax.swing.JPanel();
-        SCH_SemesterIDLabel = new javax.swing.JLabel();
-        SCH_StudentSearchField = new javax.swing.JTextField();
-        SCH_SearchStudentButton = new javax.swing.JButton();
-        SCH_SemesterSearchField = new javax.swing.JTextField();
-        SCH_StudentIDLabel = new javax.swing.JLabel();
-        SCH_SearchSemesterButton = new javax.swing.JButton();
-        SCH_GWAPanel = new javax.swing.JPanel();
-        SCH_GWALabel = new javax.swing.JLabel();
-        SCH_MonthYearPanel = new javax.swing.JPanel();
-        SCH_MonthComboBox = new javax.swing.JComboBox<>();
-        SCH_YearSpinner = new javax.swing.JSpinner();
-        SCH_MonthYearDisplayLabel = new javax.swing.JLabel();
-        SCH_RefreshButton = new javax.swing.JButton();
-        SCH_TableScrollPane = new javax.swing.JScrollPane();
-        SCH_Table = new javax.swing.JTable();
-
-        SCH_SearchPanel.setBackground(new java.awt.Color(0, 30, 58));
-        SCH_SearchPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-
-        SCH_FiltersPanel.setBackground(new java.awt.Color(0, 30, 58));
-        SCH_FiltersPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
-
-        SCH_SemesterIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
-        SCH_SemesterIDLabel.setForeground(new java.awt.Color(255, 255, 255));
-        SCH_SemesterIDLabel.setText("Semester's ID");
-
-        SCH_StudentSearchField.setBackground(new java.awt.Color(146, 190, 219));
-
-        SCH_SearchStudentButton.setBackground(new java.awt.Color(189, 216, 233));
-        SCH_SearchStudentButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
-        SCH_SearchStudentButton.setText("Search");
-        SCH_SearchStudentButton.addActionListener(this::SCH_SearchStudentButtonActionPerformed);
-
-        SCH_SemesterSearchField.setBackground(new java.awt.Color(146, 190, 219));
-
-        SCH_StudentIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
-        SCH_StudentIDLabel.setForeground(new java.awt.Color(255, 255, 255));
-        SCH_StudentIDLabel.setText("Student ID");
-
-        SCH_SearchSemesterButton.setBackground(new java.awt.Color(189, 216, 233));
-        SCH_SearchSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
-        SCH_SearchSemesterButton.setText("Search");
-
-        javax.swing.GroupLayout SCH_FiltersPanelLayout = new javax.swing.GroupLayout(SCH_FiltersPanel);
-        SCH_FiltersPanel.setLayout(SCH_FiltersPanelLayout);
-        SCH_FiltersPanelLayout.setHorizontalGroup(
-            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(SCH_StudentIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SCH_SemesterIDLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                        .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
-                            .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(SCH_SearchSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGroup(javax.swing.GroupLayout.Alignment.LEADING, SCH_FiltersPanelLayout.createSequentialGroup()
-                            .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addGap(31, 31, 31)
-                            .addComponent(SCH_SearchStudentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(20, Short.MAX_VALUE))
-        );
-        SCH_FiltersPanelLayout.setVerticalGroup(
-            SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_FiltersPanelLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addComponent(SCH_StudentIDLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(SCH_StudentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SCH_SearchStudentButton))
-                .addGap(18, 18, 18)
-                .addComponent(SCH_SemesterIDLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(SCH_FiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(SCH_SemesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SCH_SearchSemesterButton))
-                .addContainerGap(25, Short.MAX_VALUE))
-        );
-
-        SCH_GWAPanel.setBackground(new java.awt.Color(0, 30, 58));
-        SCH_GWAPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
-
-        SCH_GWALabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); 
-        SCH_GWALabel.setForeground(new java.awt.Color(255, 255, 255));
-        SCH_GWALabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        SCH_GWALabel.setText("GWA. --");
-
-        javax.swing.GroupLayout SCH_GWAPanelLayout = new javax.swing.GroupLayout(SCH_GWAPanel);
-        SCH_GWAPanel.setLayout(SCH_GWAPanelLayout);
-        SCH_GWAPanelLayout.setHorizontalGroup(
-            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        SCH_GWAPanelLayout.setVerticalGroup(
-            SCH_GWAPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_GWAPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(SCH_GWALabel, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        javax.swing.GroupLayout SCH_SearchPanelLayout = new javax.swing.GroupLayout(SCH_SearchPanel);
-        SCH_SearchPanel.setLayout(SCH_SearchPanelLayout);
-        SCH_SearchPanelLayout.setHorizontalGroup(
-            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );
-        SCH_SearchPanelLayout.setVerticalGroup(
-            SCH_SearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_SearchPanelLayout.createSequentialGroup()
-                .addGap(22, 22, 22)
-                .addComponent(SCH_FiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(SCH_GWAPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        SCH_MonthYearPanel.setBackground(new java.awt.Color(0, 30, 58));
-        SCH_MonthYearPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
-
-        SCH_MonthComboBox.addActionListener(this::SCH_MonthComboBoxActionPerformed);
-
-        SCH_MonthYearDisplayLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
-        SCH_MonthYearDisplayLabel.setForeground(new java.awt.Color(255, 255, 255));
-        SCH_MonthYearDisplayLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        SCH_MonthYearDisplayLabel.setText("January 2026");
-
-        SCH_RefreshButton.setBackground(new java.awt.Color(189, 216, 233));
-        SCH_RefreshButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
-        SCH_RefreshButton.setText("Refresh");
-        SCH_RefreshButton.addActionListener(this::SCH_RefreshButtonActionPerformed);
-
-        SCH_Table.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {},
-            new String [] {
-                "Time", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
-            }
-        ));
-        SCH_TableScrollPane.setViewportView(SCH_Table);
-
-        javax.swing.GroupLayout SCH_MonthYearPanelLayout = new javax.swing.GroupLayout(SCH_MonthYearPanel);
-        SCH_MonthYearPanel.setLayout(SCH_MonthYearPanelLayout);
-        SCH_MonthYearPanelLayout.setHorizontalGroup(
-            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
-                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
-                        .addGap(18, 18, 18)
-                        .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(36, 36, 36)
-                        .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(30, 30, 30)
-                        .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 207, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(SCH_RefreshButton, javax.swing.GroupLayout.PREFERRED_SIZE, 145, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(SCH_TableScrollPane)))
-                .addContainerGap())
-        );
-        SCH_MonthYearPanelLayout.setVerticalGroup(
-            SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(SCH_MonthYearPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(SCH_MonthYearPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(SCH_MonthComboBox, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SCH_YearSpinner, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SCH_MonthYearDisplayLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(SCH_RefreshButton))
-                .addGap(18, 18, 18)
-                .addComponent(SCH_TableScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-        javax.swing.GroupLayout ScheduleTabLayout = new javax.swing.GroupLayout(ScheduleTab);
-        ScheduleTab.setLayout(ScheduleTabLayout);
-        ScheduleTabLayout.setHorizontalGroup(
-            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(ScheduleTabLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        ScheduleTabLayout.setVerticalGroup(
-            ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, ScheduleTabLayout.createSequentialGroup()
-                .addGap(15, 15, 15)
-                .addGroup(ScheduleTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(SCH_MonthYearPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(SCH_SearchPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addContainerGap())
-        );*/
-
-        //MainTabPanel.addTab("Schedule", ScheduleTab); // Removed: Now using Scheduletab instance
+        // Admin Panel for 2-year program academic management
+        MainTabPanel.addTab("Admin Controls", new TestingPanel());
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
         MainPanel.setLayout(MainPanelLayout);
@@ -1478,10 +1228,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 }
             }
         });
-        
         // Mark initialization as complete
         isInitialized = true;
-    }// </editor-fold>                        
+    }                     
 
     private void ST_StudentNameActionPerformed(java.awt.event.ActionEvent evt) {                                               
         // TODO add your handling code here:
@@ -1538,9 +1287,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getEmail(),
                     student.getPhoneNumber()
                 });
-
                 logger.info("Found student: " + student.getStudentID());
-                
                 // Create and set table
                 javax.swing.JTable table = new javax.swing.JTable(model);
                 ST_TableScrollPane.setViewportView(table);
@@ -1549,7 +1296,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 return;
             }
         }
-        
         // Find student by name
         for (Student student : students) {
             if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
@@ -1570,9 +1316,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getEmail(),
                     student.getPhoneNumber()
                 });
-
                 logger.info("Found student: " + student.getStudentName());
-                
                 // Create and set table
                 javax.swing.JTable table = new javax.swing.JTable(model);
                 ST_TableScrollPane.setViewportView(table);
@@ -1610,9 +1354,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     student.getEmail(),
                     student.getPhoneNumber()
                 });
-
                 logger.info("Found student: " + student.getStudentID());
-                
                 // Create and set table
                 javax.swing.JTable table = new javax.swing.JTable(model);
                 CT_TableScrollPane.setViewportView(table);
@@ -1621,7 +1363,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 return;
             }
         }
-        
         // Find student by name
         for (Student student : students) {
             if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
@@ -1756,8 +1497,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Create new Student object (constructor without ID will auto-generate)
+            // Default new students to 1st Semester
             Student newStudent = new Student(
-                name, age, dob, yearLevel, section, studentType,
+                name, age, dob, yearLevel, "1st Semester", section, studentType,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
@@ -1879,9 +1621,18 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 gwa = 0.0; // Default to 0.0 if parsing fails
             }
             
+            // Get current semester from existing student, default to 1st Semester
+            String currentSemester = "1st Semester";
+            for (Student s : students) {
+                if (s.getStudentID().equals(originalID)) {
+                    currentSemester = s.getCurrentSemester() != null ? s.getCurrentSemester() : "1st Semester";
+                    break;
+                }
+            }
+            
             // Create updated Student object
             Student updatedStudent = new Student(
-                newID, name, age, dob, yearLevel, section, studentType,
+                newID, name, age, dob, yearLevel, currentSemester, section, studentType,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
@@ -1893,16 +1644,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     break;
                 }
             }
-            
             // Save to file
             studentFileSaver.save(getStudentFilePath(), students);
-            
             // Refresh table
             loadStudentTableData();
-            
-            // Clear form
             clearStudentForm();
-            
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Student updated successfully!", 
                 "Success", 
@@ -1964,20 +1710,16 @@ public class StudentCourseTab extends javax.swing.JFrame {
             // Enable Student ID field for updates (keep read-only to prevent ID changes)
             ST_StudentID.setEditable(false); // Keep read-only even for updates to prevent ID conflicts
             ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
-            
             javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
-            
             // Get student ID from table and find full student object
             String studentID = model.getValueAt(rowIndex, 0).toString();
             Student student = null;
-            
             for (Student s : students) {
                 if (s.getStudentID().equals(studentID)) {
                     student = s;
                     break;
                 }
             }
-            
             if (student != null) {
                 // Populate form fields
                 ST_StudentID.setText(student.getStudentID());
@@ -1988,7 +1730,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 ST_FathersName.setText(student.getFathersName() != null ? student.getFathersName() : "");
                 ST_MothersName.setText(student.getMothersName() != null ? student.getMothersName() : "");
                 ST_GuardiansPhoneNumber.setText(student.getGuardiansPhoneNumber() != null ? student.getGuardiansPhoneNumber() : "");
-                
                 // Set gender
                 String gender = student.getGender();
                 if ("Male".equalsIgnoreCase(gender)) {
@@ -1996,7 +1737,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 } else if ("Female".equalsIgnoreCase(gender)) {
                     ST_Gender.setSelectedIndex(1);
                 }
-                
                 // Set date of birth
                 try {
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
@@ -2006,7 +1746,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     logger.warning("Error parsing date: " + e.getMessage());
                     ST_DateOfBirth.setValue(new java.util.Date());
                 }
-                
                 // Populate academic fields
                 String yearLevel = student.getYearLevel();
                 if ("1st Year".equals(yearLevel)) {
@@ -2016,7 +1755,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 } else {
                     ST_YearLevel.setSelectedIndex(0); // Default to 1st Year
                 }
-                
                 String studentType = student.getStudentType();
                 if ("Regular".equals(studentType)) {
                     ST_StudentType.setSelectedIndex(0);
@@ -2025,11 +1763,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 } else {
                     ST_StudentType.setSelectedIndex(0); // Default to Regular
                 }
-                
                 ST_Section.setText(student.getSection() != null && !student.getSection().isEmpty() ? 
                     student.getSection() : "(Auto-assigned)");
                 ST_GWA.setText(String.format("%.2f", student.getGwa()));
-                
                 // Refresh suggested courses with student's enrollment status
                 loadSuggestedCourses();
             }
@@ -2045,10 +1781,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
             "Logout Confirmation", 
             javax.swing.JOptionPane.YES_NO_OPTION
         );
-        
         if (confirm == javax.swing.JOptionPane.YES_OPTION) {
             javax.swing.JOptionPane.showMessageDialog(this, "Logged out successfully!", "Logout", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            // Optionally, close the window
             this.dispose();
         }
     }
@@ -2061,7 +1795,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 "master files/courseSubject.txt",
                 "courseSubject.txt"
             };
-            
             String filePath = null;
             for (String path : possiblePaths) {
                 java.io.File f = new java.io.File(path);
@@ -2071,7 +1804,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     break;
                 }
             }
-            
             if (filePath != null) {
                 courseLoader.load(filePath);
                 logger.info("Loaded " + courseLoader.getAllSubjects().size() + " courses from file");
@@ -2087,19 +1819,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
         try {
             String selectedYearLevel = (String) ST_YearLevel.getSelectedItem();
             String selectedSemester = (String) ST_CurrentSemester.getSelectedItem();
-            
             if (selectedYearLevel == null || selectedSemester == null) {
                 return;
             }
-            
-            // Parse year level (1st Year -> 1, 2nd Year -> 2)
             int yearLevel = selectedYearLevel.equals("1st Year") ? 1 : 2;
             int semester = Integer.parseInt(selectedSemester);
-            
             // Get current student's ID from form
             String currentStudentID = ST_StudentID.getText().trim();
             Student currentStudent = null;
-            
             // Find the student object
             if (!currentStudentID.isEmpty()) {
                 for (Student s : students) {
@@ -2109,22 +1836,18 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     }
                 }
             }
-            
             // Filter courses by year level and semester with status indicators
             java.util.List<String> courseList = new java.util.ArrayList<>();
             Collection<CourseSubject> allCourses = courseLoader.getAllSubjects();
-            
             if (allCourses != null && !allCourses.isEmpty()) {
                 for (CourseSubject course : allCourses) {
                     if (course.getYearLevel() == yearLevel && course.getSemester() == semester) {
                         String statusPrefix = "[A]"; // Available
                         String prereqNote = "";
-                        
                         // Determine status if we have a student selected
                         if (currentStudent != null) {
                             String courseID = course.getCourseSubjectID();
                             java.util.ArrayList<String> enrolledSubjects = currentStudent.getSubjectsEnrolled();
-                            
                             // Check if student has passed or is enrolled in this course
                             if (enrolledSubjects != null && enrolledSubjects.contains(courseID)) {
                                 statusPrefix = "[/]"; // Passed/Enrolled
@@ -2133,21 +1856,18 @@ public class StudentCourseTab extends javax.swing.JFrame {
                             else if (course.getPrerequisites() != null && !course.getPrerequisites().isEmpty()) {
                                 java.util.ArrayList<CourseSubject> prerequisites = course.getPrerequisites();
                                 java.util.ArrayList<String> missingPrereqs = new java.util.ArrayList<>();
-                                
                                 for (CourseSubject prereq : prerequisites) {
                                     String prereqID = prereq.getCourseSubjectID();
                                     if (enrolledSubjects == null || !enrolledSubjects.contains(prereqID)) {
                                         missingPrereqs.add(prereqID);
                                     }
                                 }
-                                
                                 if (!missingPrereqs.isEmpty()) {
                                     statusPrefix = "[X]"; // Blocked by prerequisite
                                     prereqNote = " (Need: " + String.join(", ", missingPrereqs) + ")";
                                 }
                             }
                         }
-                        
                         String courseInfo = String.format("%s %s - %s (%d units)%s", 
                             statusPrefix,
                             course.getCourseSubjectID(), 
@@ -2158,14 +1878,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     }
                 }
             }
-            
             // Update the list
             if (courseList.isEmpty()) {
                 courseList.add("No courses found for " + selectedYearLevel + ", Semester " + selectedSemester);
             }
-            
             ST_SuggestedCoursesList.setListData(courseList.toArray(new String[0]));
-            
         } catch (Exception e) {
             logger.warning("Error loading suggested courses: " + e.getMessage());
             ST_SuggestedCoursesList.setListData(new String[]{"Error loading courses"});
@@ -2181,7 +1898,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
         // Syncing student ID
         int maxId = 0;
         for (Student s : students) {
@@ -2189,7 +1905,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             if (idNum > maxId) maxId = idNum;
         }
         Student.setNextIdNum(maxId);
-
         try {
             // Collect data from form fields (same as Add New)
             String name = ST_StudentName.getText().trim();
@@ -2200,11 +1915,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             String fathersName = ST_FathersName.getText().trim();
             String mothersName = ST_MothersName.getText().trim();
             String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
-            
             java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
             String dob = sdf.format(dobDate);
-            
             java.util.Calendar dobCal = java.util.Calendar.getInstance();
             dobCal.setTime(dobDate);
             java.util.Calendar today = java.util.Calendar.getInstance();
@@ -2212,7 +1925,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DAY_OF_YEAR)) {
                 age--;
             }
-            
             String yearLevel = (String) ST_YearLevel.getSelectedItem();
             String studentType = (String) ST_StudentType.getSelectedItem();
             String section = ST_Section.getText().equals("(Auto-assigned)") ? "" : ST_Section.getText();
@@ -2226,30 +1938,22 @@ public class StudentCourseTab extends javax.swing.JFrame {
             } catch (NumberFormatException e) {
                 gwa = 0.0;
             }
-            
+            // Create new student, default to 1st Semester
             Student newStudent = new Student(
-                name, age, dob, yearLevel, section, studentType,
+                name, age, dob, yearLevel, "1st Semester", section, studentType,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
-            
             students.add(newStudent);
-            
-            // Save to file
             studentFileSaver.save(getStudentFilePath(), students);
             loadStudentTableData();
-            
             // Store student in session for auto-population in Course Tab
             SessionManager.setCurrentStudent(newStudent.getStudentID(), newStudent.getStudentName());
-            
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Student saved successfully!\nID: " + newStudent.getStudentID() + "\n\nSwitching to Course Tab for enrollment...", 
                 "Success", 
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            
-            // Switch to Course Tab
             MainTabPanel.setSelectedIndex(1);
-            
         } catch (Exception e) {
             logger.severe("Error in Save & Enroll: " + e.getMessage());
             e.printStackTrace(); // Print full stack trace to console for debugging
@@ -2259,21 +1963,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.ERROR_MESSAGE);
         }
     }
-
-    /*private void SCH_SearchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // Placeholder for Schedule tab student search functionality
-        // This would search for students in the schedule system
-    }
-
-    private void SCH_MonthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
-        // Placeholder for Schedule tab month selection
-        // This would filter schedules by selected month
-    }
-
-    private void SCH_RefreshButtonActionPerformed(java.awt.event.ActionEvent evt) {
-        // Placeholder for Schedule tab refresh functionality
-        // This would reload the schedule data
-    }*/
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
         // This method is in CourseTab, not StudentCourseTab
@@ -2298,13 +1987,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
         } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
             logger.log(java.util.logging.Level.SEVERE, null, ex);
         }
-        //</editor-fold>
-
-        /* Create and display the form */
         java.awt.EventQueue.invokeLater(() -> new LogIn().setVisible(true));
     }
 
-    // Variables declaration - do not modify                     
+    // Variables declaration                     
     private javax.swing.JPanel CT_BottomPanel;
     private javax.swing.JLabel CT_COURSE1;
     private javax.swing.JLabel CT_COURSE2;
@@ -2398,6 +2084,17 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JScrollPane ST_SuggestedCoursesScrollPane;
     private javax.swing.JList<String> ST_SuggestedCoursesList;
     private javax.swing.JButton ST_SaveAndEnroll;
-    // End of variables declaration                   
+    
+    private void setCurrentActiveSemester() {
+        try {
+            String currentSemester = AcademicUtilities.getCurrentSemester();
+            if (currentSemester != null && !currentSemester.isEmpty()) {
+                CT_Semester.setSelectedItem(currentSemester);
+                logger.info("Set active semester to: " + currentSemester);
+            }
+        } catch (Exception e) {
+            logger.warning("Could not set current semester: " + e.getMessage());
+        }
+    }        
 }
 

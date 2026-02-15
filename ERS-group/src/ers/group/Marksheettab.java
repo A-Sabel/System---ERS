@@ -1,8 +1,8 @@
 package ers.group;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
@@ -97,6 +97,22 @@ public class Marksheettab extends javax.swing.JPanel {
         }
         return courseNameMap.getOrDefault(courseID, courseID);
     }
+    
+    /**
+     * Gets student name with ID in format "Name (ID)" or just "ID" if student not found.
+     * @param studentID The student ID to look up
+     * @return Formatted string with student name and ID
+     */
+    private String getStudentNameWithID(String studentID) {
+        if (studentID == null || studentID.isEmpty()) {
+            return "";
+        }
+        Student student = studentMap.get(studentID);
+        if (student != null) {
+            return student.getStudentName() + " (" + studentID + ")";
+        }
+        return studentID; // Return just ID if student not found
+    }
 
     private void loadMarksheetData() {
         try {
@@ -124,7 +140,11 @@ public class Marksheettab extends javax.swing.JPanel {
         }
     }
 
-    private void loadMarksheetTableData() {
+    /**
+     * Load all marksheet data from file into the table
+     * Made public to allow refreshing from tab change events
+     */
+    public void loadMarksheetTableData() {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0); // Clear existing rows
         
@@ -138,9 +158,9 @@ public class Marksheettab extends javax.swing.JPanel {
 
                 Object[] row = new Object[15];
                 row[0] = d[0]; // MRK ID
-                row[1] = d[1]; // Student ID
-                row[2] = d[3]; // Year Level (Index 3)
-                row[3] = d[2]; // Semester (Index 2)
+                row[1] = getStudentNameWithID(d[1]); // Student Name (ID)
+                row[2] = expandSemester(d[2]); // Semester - expand compressed format
+                row[3] = d[3]; // Year Level (Index 3)
 
                 // Courses & Scores (Indices 4-13)
                 for (int i = 0; i < 5; i++) {
@@ -152,6 +172,20 @@ public class Marksheettab extends javax.swing.JPanel {
             }
         } catch (Exception e) {
             logger.severe("Error loading marksheet table data: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Expand compressed semester format for display
+     * 1 -> 1st Semester, 2 -> 2nd Semester, 3 -> Summer
+     */
+    private String expandSemester(String compressed) {
+        if (compressed == null) return "1st Semester";
+        switch (compressed.trim()) {
+            case "1": return "1st Semester";
+            case "2": return "2nd Semester";
+            case "3": return "Summer";
+            default: return compressed; // Already expanded or unknown
         }
     }
 
@@ -246,16 +280,17 @@ public class Marksheettab extends javax.swing.JPanel {
     
     // Helper to add a row from file data array
     private void addFileRowToModel(javax.swing.table.DefaultTableModel model, String[] d) {
-        Object[] row = new Object[15];
+        Object[] row = new Object[16]; // Increased from 15 to 16 for Status column
         row[0] = d[0]; // MRK ID
-        row[1] = d[1]; // Student ID
-        row[2] = d[3]; // Year Level
-        row[3] = d[2]; // Semester
+        row[1] = getStudentNameWithID(d[1]); // Student Name (ID)
+        row[2] = d[2]; // Semester
+        row[3] = d[3]; // Year Level
+        row[4] = getEnrollmentStatus(d[1], d[2], d[3]); // Status (NEW)
         for (int i = 0; i < 5; i++) {
-            row[4 + (i * 2)] = getCourseName(d[4 + (i * 2)]);
-            row[5 + (i * 2)] = d[5 + (i * 2)];
+            row[5 + (i * 2)] = getCourseName(d[4 + (i * 2)]); // Shifted by 1
+            row[6 + (i * 2)] = d[5 + (i * 2)]; // Shifted by 1
         }
-        row[14] = d[14]; // GPA
+        row[15] = d[14]; // GPA (shifted from index 14 to 15)
         model.addRow(row);
     }
 
@@ -378,16 +413,31 @@ public class Marksheettab extends javax.swing.JPanel {
 
         scoretable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
-                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null}
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null},
+                {null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null}
             },
             new String [] {
-                "ID", "Student ID", "Year Level", "Semester", "Course 1", "Score 1", "Course 2", "Score 2", "Course 3", "Score 3", "Course 4", "Score 4", "Course 5", "Score 5", "Average"
+                "ID", "Student ID", "Semester", "Year Level", "Status", "Course 1", "Score 1", "Course 2", "Score 2", "Course 3", "Score 3", "Course 4", "Score 4", "Course 5", "Score 5", "Average"
             }
         ));
         scoretable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        
+        // Apply status color renderer to the Status column (index 4)
+        scoretable.getColumnModel().getColumn(4).setCellRenderer(new StatusColorRenderer());
+        
+        // Add row selection listener to highlight and show details
+        scoretable.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                int row = scoretable.getSelectedRow();
+                if (row >= 0) {
+                    highlightSelectedRow(row);
+                }
+            }
+        });
+        
         jScrollPane1.setViewportView(scoretable);
 
         jPanel2.setBackground(new java.awt.Color(0, 30, 58));
@@ -517,19 +567,13 @@ public class Marksheettab extends javax.swing.JPanel {
 }
 
     private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
-    // Clear search bar
-    SearchbarID.setText("");
-    // Reset GWA label
-    GWA.setText("GWA: --");
-    // Clear table data
-    javax.swing.table.DefaultTableModel model =
-            (javax.swing.table.DefaultTableModel) scoretable.getModel();
-    for (int row = 0; row < model.getRowCount(); row++) {
-        for (int col = 0; col < model.getColumnCount(); col++) {
-            model.setValueAt(null, row, col);
-        }
+        // Clear search bar
+        SearchbarID.setText("");
+        // Reset GWA label
+        GWA.setText("GWA: --");
+        // Reload all data to table
+        loadMarksheetTableData();
     }
-}
 
     private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {
     int choice = javax.swing.JOptionPane.showConfirmDialog(
@@ -546,6 +590,110 @@ public class Marksheettab extends javax.swing.JPanel {
         }
     }
 }
+
+    /**
+     * Highlight selected row and populate search field
+     */
+    private void highlightSelectedRow(int row) {
+        try {
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+            
+            // Get student ID from selected row
+            Object studentIDObj = model.getValueAt(row, 1);
+            if (studentIDObj != null) {
+                String studentID = studentIDObj.toString();
+                // Extract just the ID if it contains name (format: "Name (ID)")
+                if (studentID.contains("(") && studentID.contains(")")) {
+                    studentID = studentID.substring(studentID.lastIndexOf("(") + 1, studentID.lastIndexOf(")"));
+                }
+                SearchbarID.setText(studentID);
+                
+                // Optionally show a message with row details
+                String semester = model.getValueAt(row, 2).toString();
+                String yearLevel = model.getValueAt(row, 3).toString();
+                String status = model.getValueAt(row, 4).toString();
+                System.out.println("Selected: " + studentID + " - " + semester + " " + yearLevel + " (" + status + ")");
+            }
+        } catch (Exception e) {
+            System.err.println("Error highlighting row: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Look up the enrollment status for a student in a given semester and year level
+     */
+    private String getEnrollmentStatus(String studentID, String semester, String yearLevel) {
+        try {
+            String[] enrollmentPaths = {
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            };
+            String enrollmentPath = FilePathResolver.resolveFilePath(enrollmentPaths);
+            
+            try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(enrollmentPath))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    String[] d = line.split(",");
+                    if (d.length < 5) continue;
+                    
+                    // Format: StudentID, CourseList, YearLevel, Semester, Status, SectionList, AcademicYear
+                    if (d[0].equals(studentID) && d[3].equals(semester) && d[2].equals(yearLevel)) {
+                        return d[4]; // Return status
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "UNKNOWN"; // Default if not found
+    }
+
+    /**
+     * Custom TableCellRenderer to color-code enrollment status
+     */
+    static class StatusColorRenderer extends javax.swing.table.DefaultTableCellRenderer {
+        @Override
+        public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            java.awt.Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            
+            if (value != null) {
+                String status = value.toString();
+                switch (status.toUpperCase()) {
+                    case "PASSED":
+                        c.setBackground(new java.awt.Color(144, 238, 144)); // Light green
+                        c.setForeground(java.awt.Color.BLACK);
+                        break;
+                    case "FAILED":
+                        c.setBackground(new java.awt.Color(255, 99, 71)); // Tomato red
+                        c.setForeground(java.awt.Color.WHITE);
+                        break;
+                    case "INC":
+                        c.setBackground(new java.awt.Color(255, 255, 102)); // Light yellow
+                        c.setForeground(java.awt.Color.BLACK);
+                        break;
+                    case "DROPPED":
+                        c.setBackground(new java.awt.Color(169, 169, 169)); // Dark gray
+                        c.setForeground(java.awt.Color.WHITE);
+                        break;
+                    case "ENROLLED":
+                        c.setBackground(new java.awt.Color(173, 216, 230)); // Light blue
+                        c.setForeground(java.awt.Color.BLACK);
+                        break;
+                    default:
+                        c.setBackground(java.awt.Color.WHITE);
+                        c.setForeground(java.awt.Color.BLACK);
+                }
+            } else {
+                c.setBackground(java.awt.Color.WHITE);
+                c.setForeground(java.awt.Color.BLACK);
+            }
+            
+            return c;
+        }
+    }
 
     /**
      * @param args the command line arguments

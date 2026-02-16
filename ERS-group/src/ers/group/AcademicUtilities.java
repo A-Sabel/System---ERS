@@ -505,21 +505,9 @@ public class AcademicUtilities {
      * Check if student is eligible for graduation
      */
     public static boolean isEligibleForGraduation(String studentID) {
-        if (hasIncompleteRequirements(studentID)) {
-            return false;
-        }
-        
-        int totalUnits = getTotalUnitsEarned(studentID);
-        if (totalUnits < 120) {
-            return false;
-        }
-        
-        double gwa = getStudentGWA(studentID);
-        if (gwa > 3.0 || gwa == 0.0) {
-            return false;
-        }
-        
-        return true;
+        // Use the same logic as graduation report
+        Map<String, Boolean> reqs = getGraduationRequirements(studentID);
+        return reqs.values().stream().allMatch(v -> v);
     }
     
     /**

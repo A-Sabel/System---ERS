@@ -251,6 +251,28 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     }
     
     public void saveEnrollmentsByStudent(String filePath, java.util.List<Enrollment> enrollments) throws java.io.IOException {
+        // FIRST: Read existing file to preserve PASSED/FAILED/INC statuses
+        // This prevents overwriting completed semesters with ENROLLED status
+        java.util.Map<String, String> existingStatuses = new java.util.LinkedHashMap<>();
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 7) {
+                    String studentID = parts[0].trim();
+                    String yearLevel = parts[2].trim();
+                    String semester = parts[3].trim(); // Abbrev format
+                    String status = parts[4].trim();
+                    String academicYear = parts[6].trim();
+                    String periodKey = studentID + "|" + yearLevel + "|" + semester + "|" + academicYear;
+                    existingStatuses.put(periodKey, status);
+                }
+            }
+        } catch (java.io.IOException e) {
+            // File may not exist yet, that's OK
+            logger.info("No existing enrollment file found, creating new");
+        }
+        
         // Group enrollments by enrollment period (student + semester + yearLevel + academicYear)
         // This creates separate lines for each enrollment period instead of grouping all semesters together
         java.util.Map<String, java.util.List<Enrollment>> enrollmentPeriods = new java.util.LinkedHashMap<>();
@@ -309,6 +331,7 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
                 if (periodCourses.isEmpty()) continue;
                 
                 // Extract student info from first enrollment in this period
+                // IMPORTANT: Preserve completed statuses (PASSED/FAILED/INC) from file
                 Enrollment firstEnrollment = periodCourses.get(0);
                 String studentID = firstEnrollment.getStudentID();
                 String yearLevel = firstEnrollment.getYearLevel();
@@ -317,6 +340,28 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
                 String academicYear = firstEnrollment.getAcademicYear();
                 if (academicYear == null || academicYear.isEmpty()) {
                     academicYear = AcademicUtilities.getAcademicYear();
+                }
+                
+                // Create lookup key to check existing file status
+                String lookupKey = studentID + "|" + yearLevel + "|" + compressSemester(semester) + "|" + academicYear;
+                
+                // PRIORITY 1: Use status from existing file if it's a completed status (set by processEndOfSemester)
+                if (existingStatuses.containsKey(lookupKey)) {
+                    String fileStatus = existingStatuses.get(lookupKey);
+                    if ("PASSED".equals(fileStatus) || "FAILED".equals(fileStatus) || "INC".equals(fileStatus)) {
+                        status = fileStatus;
+                        logger.info("Preserving completed status from file: " + lookupKey + " = " + status);
+                    }
+                }
+                
+                // PRIORITY 2: Check if any in-memory enrollment has completed status (from recent updates)
+                if ("ENROLLED".equals(status)) {
+                    for (Enrollment e : periodCourses) {
+                        if ("PASSED".equals(e.getStatus()) || "FAILED".equals(e.getStatus()) || "INC".equals(e.getStatus())) {
+                            status = e.getStatus();
+                            break; // Completed status takes priority over ENROLLED
+                        }
+                    }
                 }
                 
                 // Build course list and section list

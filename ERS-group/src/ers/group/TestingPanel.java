@@ -307,19 +307,12 @@ public class TestingPanel extends JPanel {
         if (confirm == JOptionPane.YES_OPTION) {
             String semester = AcademicUtilities.getCurrentSemester();
             String academicYear = AcademicUtilities.getAcademicYear();
-            
-            // Process grades
             AcademicUtilities.processEndOfSemester(semester, academicYear);
-            
-            // Clear all schedules for new semester
             Schedule.clearAllSchedules();
-            
             JOptionPane.showMessageDialog(this,
                 "Semester completed successfully!\nAll grades have been processed.\nSchedules have been cleared.",
                 "Success",
                 JOptionPane.INFORMATION_MESSAGE);
-            
-            // Refresh the info panel
             refreshInfoPanel();
         }
     }

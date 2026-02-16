@@ -203,15 +203,26 @@ public class Scheduletab extends javax.swing.JPanel {
            
             enrollmentLoader.load(filePath); // Use the instance variable
             
+            logger.info("Total enrollments loaded by loader: " + enrollmentLoader.getAllEnrollments().size());
+            
             int enrollmentCount = 0;
-            // Build student-course mapping from enrollments with ENROLLED status
+            // Build student-course mapping from ENROLLED courses (show what student is actively taking)
             for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
-                if ("ENROLLED".equals(enrollment.getStatus()) || "PASSED".equals(enrollment.getStatus())) {
+                logger.info("Processing enrollment: " + enrollment.getStudentID() + " - Course: " + enrollment.getCourseID() + " - Semester: " + enrollment.getSemester() + " - Section: " + enrollment.getSectionID() + " - Status: " + enrollment.getStatus());
+                
+                // Only include ENROLLED courses (not PASSED, to show current schedule)
+                if ("ENROLLED".equals(enrollment.getStatus())) {
                     String studentID = enrollment.getStudentID();
-                    String courseID = enrollment.getCourseID();
-                    studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(courseID);
-                    enrollmentCount++;
-                    logger.info("Loaded enrollment: " + studentID + " -> " + courseID);
+                    String sectionID = enrollment.getSectionID();
+                    
+                    // Each enrollment has ONE section ID (e.g., "CS101-SEC1")
+                    if (sectionID != null && !sectionID.isEmpty()) {
+                        studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(sectionID);
+                        enrollmentCount++;
+                        logger.info("Added course mapping: " + studentID + " -> " + sectionID);
+                    } else {
+                        logger.warning("Enrollment has no section ID: " + studentID + " - " + enrollment.getCourseID());
+                    }
                 }
             }
             
@@ -286,24 +297,15 @@ public class Scheduletab extends javax.swing.JPanel {
             for (Schedule schedule : schedules) {
                 // Only show schedules for courses the student is actually enrolled in with exact section match
                 boolean matches = false;
-                String scheduleID = schedule.getCourseID(); // This could be CS101-SEC1, CS101-SEC2, etc.
+                String scheduleID = schedule.getCourseID().trim(); // This should be CS101-SEC1, etc.
                 
-                // FIXED: Only match if this schedule is for the CURRENT course being displayed
-                // Check if schedule is for THIS specific course (not any other course)
-                if (scheduleID.startsWith(courseID + "-")) {
-                    // Verify student is actually enrolled in this specific section
-                    for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
-                        if (enrollment.getStudentID().equals(studentID) && 
-                            enrollment.getCourseID().equals(courseID) &&
-                            ("ENROLLED".equals(enrollment.getStatus()) || "PASSED".equals(enrollment.getStatus())) &&
-                            scheduleID.equals(enrollment.getSectionID())) {
-                            matches = true;
-                            break;
-                        }
-                    }
+                // Direct match: courseID is already the full section ID (e.g., "CS101-SEC1")
+                // Just check if the schedule's courseID matches the student's enrolled section
+                if (scheduleID.equals(courseID.trim())) {
+                    matches = true;
                 }
                 
-                logger.info("  Checking schedule " + schedule.getCourseID() + " - matches=" + matches);
+                logger.info("  Checking schedule '" + scheduleID + "' against '" + courseID + "' - matches=" + matches);
                 
                 if (matches) {
                     String startTime = schedule.getStartTime().trim();

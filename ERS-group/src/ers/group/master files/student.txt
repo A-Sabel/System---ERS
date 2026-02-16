@@ -1,1 +1,1 @@
-STU-001,Miguel Reyes,21,2005-02-16,1st Year,2,,Regular,1.00;CS201;CS202;CS203;CS204;CS205,0.0,,,Male,,,,
+STU-001,Ethan,24,2002-02-16,2nd Year,2,,Regular,1.10,0.0,,,Male,,,,

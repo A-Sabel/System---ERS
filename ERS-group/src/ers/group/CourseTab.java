@@ -742,14 +742,15 @@ public class CourseTab extends JPanel {
                     "ENROLLED"
                 );
                 newEnrollment.setSectionID(sectionID);
-                // Check for duplicates before adding
+                // Check for duplicates before adding - prevent enrolling in ALREADY ENROLLED or PASSED courses
                 boolean duplicateExists = false;
                 for (int i = 0; i < enrollments.size(); i++) {
                     Enrollment e = enrollments.get(i);
                     if (e.getStudentID().equals(studentID) && 
                         e.getCourseID().equals(course.getCourseSubjectID()) &&
-                        e.getStatus().equals("ENROLLED")) {
+                        (e.getStatus().equals("ENROLLED") || e.getStatus().equals("PASSED"))) {
                         duplicateExists = true;
+                        logger.warning("Cannot enroll in " + course.getCourseSubjectID() + " - already " + e.getStatus());
                         break;
                     }
                 }
@@ -849,10 +850,65 @@ public class CourseTab extends JPanel {
                     }
                 }
                 enrollments = uniqueEnrollments;
+                
+                // SYNC COURSE STATUSES WITH GRADES BEFORE SAVING
+                // This ensures course statuses always reflect actual grades in marksheet.txt
+                // Note: The FileSaver will preserve PASSED/FAILED/INC statuses from the file
+                // Update course statuses directly in the enrollments list
+                java.util.Set<String> processedCombos = new java.util.HashSet<>();
+                for (Enrollment e : enrollments) {
+                    String combo = e.getStudentID() + "|" + e.getSemester() + "|" + e.getYearLevel();
+                    if (!processedCombos.contains(combo)) {
+                        processedCombos.add(combo);
+                        // Update course statuses in memory for this student/semester/year
+                        try {
+                            // Find matching marksheet and update statuses
+                            String marksheetPath = FilePathResolver.resolveFilePath(new String[]{
+                                "ERS-group/src/ers/group/master files/marksheet.txt",
+                                "src/ers/group/master files/marksheet.txt",
+                                "master files/marksheet.txt",
+                                "marksheet.txt"
+                            });
+                            MarksheetFileLoader marksheetLoader = new MarksheetFileLoader();
+                            marksheetLoader.load(marksheetPath);
+                            
+                            // Find matching marksheet
+                            for (Object obj : marksheetLoader.getAllMarksheets()) {
+                                Marksheet m = (Marksheet) obj;
+                                if (m.getStudentID().equals(e.getStudentID()) && 
+                                    m.getSemester().equals(e.getSemester()) && 
+                                    m.getSchoolYear().equals(e.getYearLevel())) {
+                                    
+                                    // Update course statuses based on grades
+                                    String[] subjects = m.getSubjects();
+                                    double[] marks = m.getMarks();
+                                    for (int i = 0; i < subjects.length && i < marks.length; i++) {
+                                        if (subjects[i] != null && !subjects[i].isEmpty() && marks[i] > 0.0) {
+                                            // Find all enrollments for this course and update status
+                                            for (Enrollment enr : enrollments) {
+                                                if (enr.getStudentID().equals(e.getStudentID()) &&
+                                                    enr.getSemester().equals(e.getSemester()) &&
+                                                    enr.getYearLevel().equals(e.getYearLevel()) &&
+                                                    enr.getCourseID().equals(subjects[i])) {
+                                                    enr.updateCourseStatusFromGrade(subjects[i], marks[i]);
+                                                }
+                                            }
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                        } catch (Exception ex) {
+                            // If no grades exist yet, that's fine - statuses will remain PENDING
+                            logger.info("No grades found for " + combo + " - course statuses remain PENDING");
+                        }
+                    }
+                }
+                
                 enrollmentFileSaver.saveEnrollmentsByStudent(savePath, enrollments);
-                logger.info("Saved " + enrollments.size() + " unique enrollment records");
+                logger.info("Saved " + enrollments.size() + " unique enrollment records with synced course statuses");
                 // Auto-generate marksheet record with pending grades
-                java.util.List<String> enrolledCourseIds = getEnrolledCoursesForStudent(studentID, semesterStr);
+                java.util.List<String> enrolledCourseIds = getEnrolledCoursesForStudent(studentID, semesterStr, yearLevel);
                 if (!enrolledCourseIds.isEmpty()) {
                     autoGenerateMarksheetRecord(studentID, semesterStr, yearLevel, enrolledCourseIds);
                 } else {
@@ -1522,13 +1578,14 @@ public class CourseTab extends JPanel {
     }
 
     /**
-     * Gets all enrolled courses for a student in a specific semester.
+     * Gets all enrolled courses for a student in a specific semester and year level.
      */
-    private java.util.List<String> getEnrolledCoursesForStudent(String studentID, String semesterStr) {
+    private java.util.List<String> getEnrolledCoursesForStudent(String studentID, String semesterStr, String yearLevel) {
         java.util.List<String> courses = new java.util.ArrayList<>();
         for (Enrollment enrollment : enrollments) {
             if (enrollment.getStudentID().equals(studentID) && 
                 enrollment.getSemester().equals(semesterStr) &&
+                enrollment.getYearLevel().equals(yearLevel) &&  // NOW checks year level too!
                 "ENROLLED".equals(enrollment.getStatus())) {
                 courses.add(enrollment.getCourseID());
             }

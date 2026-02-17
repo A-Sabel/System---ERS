@@ -137,7 +137,7 @@ public class Scheduletab extends javax.swing.JPanel {
         // Create a proper table if it doesn't exist
         if (model == null) {
             model = new DefaultTableModel(
-                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "Email", "Phone"},
                 0
             );
             table = new javax.swing.JTable(model);
@@ -160,7 +160,6 @@ public class Scheduletab extends javax.swing.JPanel {
                 stud.getDateOfBirth(),
                 stud.getYearLevel(),
                 stud.getStudentType(),
-                stud.getGwa(),
                 stud.getEmail(),
                 stud.getPhoneNumber()
             });
@@ -656,8 +655,6 @@ public class Scheduletab extends javax.swing.JPanel {
         semesterSearchField = new javax.swing.JTextField();
         studentIDLabel = new javax.swing.JLabel();
         searchSemesterButton = new javax.swing.JButton();
-        scheduleTablePanel = new javax.swing.JPanel();
-        gwaLabel = new javax.swing.JLabel();
         monthYearPanel = new javax.swing.JPanel();
         monthComboBox = new javax.swing.JComboBox<>();
         yearSpinner = new javax.swing.JSpinner();
@@ -852,34 +849,6 @@ public class Scheduletab extends javax.swing.JPanel {
         );
 
 
-        scheduleTablePanel.setBackground(new java.awt.Color(0, 30, 58));
-        scheduleTablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
-
-
-        gwaLabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); // NOI18N
-        gwaLabel.setForeground(new java.awt.Color(255, 255, 255));
-        gwaLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        gwaLabel.setText("GWA. --");
-
-
-        javax.swing.GroupLayout scheduleTablePanelLayout = new javax.swing.GroupLayout(scheduleTablePanel);
-        scheduleTablePanel.setLayout(scheduleTablePanelLayout);
-        scheduleTablePanelLayout.setHorizontalGroup(
-            scheduleTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(scheduleTablePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(gwaLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        scheduleTablePanelLayout.setVerticalGroup(
-            scheduleTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(scheduleTablePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(gwaLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-
         javax.swing.GroupLayout scheduleSearchPanelLayout = new javax.swing.GroupLayout(scheduleSearchPanel);
         scheduleSearchPanel.setLayout(scheduleSearchPanelLayout);
         scheduleSearchPanelLayout.setHorizontalGroup(
@@ -887,8 +856,7 @@ public class Scheduletab extends javax.swing.JPanel {
             .addGroup(scheduleSearchPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(scheduleSearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(scheduleTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         scheduleSearchPanelLayout.setVerticalGroup(
@@ -897,7 +865,6 @@ public class Scheduletab extends javax.swing.JPanel {
                 .addGap(22, 22, 22)
                 .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(scheduleTablePanel)
                 .addContainerGap())
         );
 
@@ -1096,7 +1063,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         loadStudentCourseMappings();
         
         loadStudentTableData();
-        gwaLabel.setText("GWA. --");
         displayEmptySchedule();
     }
    
@@ -1181,7 +1147,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         String searchID = studentSearchField.getText().trim();
         if (searchID.isEmpty()) {
             loadStudentTableData();
-            gwaLabel.setText("GWA. --");
             semesterSearchField.setText("");
             return;
         }
@@ -1189,9 +1154,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         // Find student by ID
         for (Student student : students) {
             if (student.getStudentID().equals(searchID)) {
-                // Display GWA
-                gwaLabel.setText("GWA. " + student.getGwa());
-               
                 // Auto-populate section field from enrollment
                 String foundSection = null;
                 for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
@@ -1211,7 +1173,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "Email", "Phone"},
                     0
                 );
                 model.addRow(new Object[]{
@@ -1221,7 +1183,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                     student.getDateOfBirth(),
                     student.getYearLevel(),
                     student.getStudentType(),
-                    student.getGwa(),
                     student.getEmail(),
                     student.getPhoneNumber()
                 });
@@ -1237,8 +1198,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                 return;
             }
         }
-       
-        gwaLabel.setText("GWA. Not found");
     }
    
     private void searchSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1590,7 +1549,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
 
 
     // Variables declaration - do not modify                    
-    private javax.swing.JLabel gwaLabel;
     private javax.swing.JPanel Marksheet;
     private javax.swing.JComboBox<String> monthComboBox;
     private javax.swing.JButton refreshButton;
@@ -1615,7 +1573,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JPanel headerPanel;
     private javax.swing.JPanel scheduleSearchPanel;
     private javax.swing.JPanel scheduleFiltersPanel;
-    private javax.swing.JPanel scheduleTablePanel;
     private javax.swing.JPanel monthYearPanel;
     private javax.swing.JPanel studentFormPanel;
     private javax.swing.JPanel studentTablePanel;

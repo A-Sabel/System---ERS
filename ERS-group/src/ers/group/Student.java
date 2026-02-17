@@ -1,11 +1,11 @@
 package ers.group;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 public class Student {
@@ -26,13 +26,13 @@ public class Student {
     private Map<String, Double> semesterGWAs; // GWA for each semester (key: "1st Year-1st Semester")
     private String latinHonor; // Summa Cum Laude, Magna Cum Laude, Cum Laude, or empty
     private Set<String> completedCourses; // Set of course codes with PASSED status
-   
+
     // contact information
     private String email;
     private String phoneNumber;
     private final String gender;
     private String address;
-   
+
     // family information
     private String fathersName;
     private String mothersName;
@@ -42,8 +42,9 @@ public class Student {
     // generate student number
     private static int nextIdNum = 1;
 
-
-
+    // student status (active/graduate)
+    private String status;
+    private String program;
 
     // constructors
     // Constructor for loading existing students from file (uses provided ID)
@@ -56,6 +57,7 @@ public class Student {
         this.currentSemester = currentSemester;
         this.section = section;
         this.studentType = studentType;
+        this.status = "Active"; // Default to Active when loading from file
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
         this.cumulativeGWA = 0.0; // Will be calculated
@@ -70,7 +72,7 @@ public class Student {
         this.mothersName = mothersName;
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
-   
+
     // Constructor for creating new students (generates new ID)
     public Student(String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = generateNewID();
@@ -81,6 +83,7 @@ public class Student {
         this.currentSemester = currentSemester;
         this.section = section;
         this.studentType = studentType;
+        this.status = "Active"; // Default status for new students
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
         this.cumulativeGWA = 0.0; // Will be calculated
@@ -96,10 +99,55 @@ public class Student {
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
 
+    // Checks if student has completed all required courses
+    public boolean isGraduated(ArrayList<String> allCourses) {
+        if (allCourses == null || allCourses.isEmpty()) {
+            return false; // nothing to check
+        }
+        return completedCourses.containsAll(allCourses);
+    }
+
+    // Overloaded version: checks graduation using previously set statusCourses
+    private ArrayList<String> graduationCourses = new ArrayList<>();
+
+    public void setGraduationCourses(ArrayList<String> allCourses) {
+        if (allCourses != null) {
+            graduationCourses = new ArrayList<>(allCourses);
+        }
+    }
+
+    public boolean isGraduated() {
+        if (graduationCourses.isEmpty()) return false;
+        Set<String> normalizedCompleted = completedCourses.stream()
+            .map(String::trim)
+            .map(String::toUpperCase)
+            .collect(Collectors.toSet());
+
+        return graduationCourses.stream()
+            .map(String::trim)
+            .map(String::toUpperCase)
+            .allMatch(normalizedCompleted::contains);
+    }
+
+    // Extract all courses from curriculum map
+    public static ArrayList<String> getAllCoursesFromCurriculum(HashMap<String, ArrayList<String>> curriculumMap) {
+        ArrayList<String> allCourses = new ArrayList<>();
+        if (curriculumMap != null) {
+            for (ArrayList<String> courses : curriculumMap.values()) {
+                allCourses.addAll(courses);
+            }
+        }
+        return allCourses;
+    }
 
     // methods
     public String getStudentID() {
         return studentID;
+    }
+
+
+    public String getProgram() {
+        return program;
     }
 
 
@@ -168,6 +216,17 @@ public class Student {
         return String.format("STU-%03d", nextIdNum++);
     }
 
+    // Returns current status: Graduate if completed, otherwise current status
+    public String getStatus() {
+        if (isGraduated()) {
+            return "Graduate";
+        }
+        return status != null ? status : "Active";
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
     public static void setNextIdNum(int lastID) {
         nextIdNum = lastID + 1;
@@ -233,7 +292,9 @@ public class Student {
     }
 
     public void addCompletedCourse(String courseCode) {
-        this.completedCourses.add(courseCode);
+        if (courseCode != null) {
+            completedCourses.add(courseCode.trim().toUpperCase());
+        }
     }
 
     public void removeCompletedCourse(String courseCode) {

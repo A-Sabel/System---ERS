@@ -2,6 +2,8 @@ package ers.group;
 
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -816,6 +818,28 @@ public class Schedule {
     public static void clearStudentSectionCache() {
         studentSectionCache.clear();
         System.out.println("Cleared student-section cache");
+    }
+    
+    /**
+     * Clear all schedules. Call this when starting a new semester.
+     */
+    public static void clearAllSchedules() {
+        try {
+            String scheduleFilePath = FilePathResolver.resolveScheduleFilePath();
+            File scheduleFile = new File(scheduleFilePath);
+            
+            // Create empty file (or overwrite with empty content)
+            PrintWriter writer = new PrintWriter(new FileWriter(scheduleFile, false));
+            writer.close();
+            
+            // Also clear the cache
+            clearStudentSectionCache();
+            
+            System.out.println("Cleared all schedules from: " + scheduleFilePath);
+        } catch (Exception e) {
+            System.err.println("Error clearing schedules: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     
     /**

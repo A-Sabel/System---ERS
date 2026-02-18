@@ -2,6 +2,10 @@ package ers.group;
 
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 
 public class Student {
@@ -13,17 +17,22 @@ public class Student {
     private int age;
     private final String dob;
     private String yearLevel;
+    private String currentSemester; // Track which semester the student is in
     private String section;
     private String studentType;
     private ArrayList<String> subjectsEnrolled;
     private double gwa;
-   
+    private double cumulativeGWA; // Overall GWA across all semesters
+    private Map<String, Double> semesterGWAs; // GWA for each semester (key: "1st Year-1st Semester")
+    private String latinHonor; // Summa Cum Laude, Magna Cum Laude, Cum Laude, or empty
+    private Set<String> completedCourses; // Set of course codes with PASSED status
+
     // contact information
     private String email;
     private String phoneNumber;
     private final String gender;
     private String address;
-   
+
     // family information
     private String fathersName;
     private String mothersName;
@@ -33,21 +42,27 @@ public class Student {
     // generate student number
     private static int nextIdNum = 1;
 
-
-
+    // active or graduate
+    private String status;
 
     // constructors
     // Constructor for loading existing students from file (uses provided ID)
-    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
+    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, String status,ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = studentID;
         this.studentName = studentName;
         this.age = age;
         this.dob = dob;
         this.yearLevel = yearLevel;
+        this.currentSemester = currentSemester;
         this.section = section;
         this.studentType = studentType;
+        this.status = status;
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
+        this.cumulativeGWA = 0.0; // Will be calculated
+        this.semesterGWAs = new HashMap<>();
+        this.latinHonor = "";
+        this.completedCourses = new HashSet<>();
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.gender = gender;
@@ -56,18 +71,24 @@ public class Student {
         this.mothersName = mothersName;
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
-   
+
     // Constructor for creating new students (generates new ID)
-    public Student(String studentName, int age, String dob, String yearLevel, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
+    public Student(String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, String status, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = generateNewID();
         this.studentName = studentName;
         this.age = age;
         this.dob = dob;
         this.yearLevel = yearLevel;
+        this.currentSemester = currentSemester;
         this.section = section;
         this.studentType = studentType;
+        this.status = status;
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
+        this.cumulativeGWA = 0.0; // Will be calculated
+        this.semesterGWAs = new HashMap<>();
+        this.latinHonor = "";
+        this.completedCourses = new HashSet<>();
         this.email = email;
         this.phoneNumber = phoneNumber;
         this.gender = gender;
@@ -79,6 +100,15 @@ public class Student {
 
 
     // methods
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getStudentID() {
         return studentID;
     }
@@ -104,6 +134,11 @@ public class Student {
     }
 
 
+    public String getCurrentSemester() {
+        return currentSemester;
+    }
+
+
     public String getSection() {
         return section;
     }
@@ -121,6 +156,22 @@ public class Student {
 
     public double getGwa() {
         return gwa;
+    }
+
+    public double getCumulativeGWA() {
+        return cumulativeGWA;
+    }
+
+    public Map<String, Double> getSemesterGWAs() {
+        return semesterGWAs;
+    }
+
+    public String getLatinHonor() {
+        return latinHonor;
+    }
+
+    public Set<String> getCompletedCourses() {
+        return completedCourses;
     }
 
 
@@ -148,6 +199,11 @@ public class Student {
     }
 
 
+    public void setCurrentSemester(String currentSemester) {
+        this.currentSemester = currentSemester;
+    }
+
+
     public void setSection(String section) {
         this.section = section;
     }
@@ -165,6 +221,34 @@ public class Student {
 
     public void setGwa(double gwa) {
         this.gwa = gwa;
+    }
+
+    public void setCumulativeGWA(double cumulativeGWA) {
+        this.cumulativeGWA = cumulativeGWA;
+    }
+
+    public void setSemesterGWAs(Map<String, Double> semesterGWAs) {
+        this.semesterGWAs = semesterGWAs;
+    }
+
+    public void setSemesterGWA(String semesterKey, double gwa) {
+        this.semesterGWAs.put(semesterKey, gwa);
+    }
+
+    public void setLatinHonor(String latinHonor) {
+        this.latinHonor = latinHonor;
+    }
+
+    public void setCompletedCourses(Set<String> completedCourses) {
+        this.completedCourses = completedCourses;
+    }
+
+    public void addCompletedCourse(String courseCode) {
+        this.completedCourses.add(courseCode);
+    }
+
+    public void removeCompletedCourse(String courseCode) {
+        this.completedCourses.remove(courseCode);
     }
 
 
@@ -256,18 +340,17 @@ public class Student {
         System.out.println("Mother's Name: " + mothersName);
         System.out.println("Guardian's Phone Number: " + guardiansPhoneNumber);
     }
+    
     public boolean hasPassed(ArrayList<CourseSubject> prerequisites) {
         if (prerequisites == null || prerequisites.isEmpty()) {
             return true;
         }
-        // Check if all prerequisites are in the subjectsEnrolled list
+        // Check if all prerequisites are in the completedCourses set
         for (CourseSubject prerequisite : prerequisites) {
-            if (!subjectsEnrolled.contains(prerequisite.getCourseSubjectID())) {
+            if (!completedCourses.contains(prerequisite.getCourseSubjectID())) {
                 return false;
             }
         }
         return true;
-    }}
-
-
-
+    }
+}

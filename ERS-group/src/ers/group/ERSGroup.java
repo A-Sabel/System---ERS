@@ -211,9 +211,9 @@ public class ERSGroup {
         System.out.print("Address: ");
         String address = scanner.nextLine().trim();
        
-        // Create new student with defaults
+        // Create new student with defaults (1st Semester for new students)
         Student newStudent = new Student(
-            id, name, age, dob, "", "", "", new ArrayList<>(), 0.0,
+            id, name, age, dob, "", "1st Semester", "", "", new ArrayList<>(), 0.0,
             email, phone, gender, address, fatherName, motherName, guardianPhone
         );
        

@@ -137,7 +137,7 @@ public class Scheduletab extends javax.swing.JPanel {
         // Create a proper table if it doesn't exist
         if (model == null) {
             model = new DefaultTableModel(
-                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "Email", "Phone"},
                 0
             );
             table = new javax.swing.JTable(model);
@@ -160,7 +160,6 @@ public class Scheduletab extends javax.swing.JPanel {
                 stud.getDateOfBirth(),
                 stud.getYearLevel(),
                 stud.getStudentType(),
-                stud.getGwa(),
                 stud.getEmail(),
                 stud.getPhoneNumber()
             });
@@ -203,15 +202,26 @@ public class Scheduletab extends javax.swing.JPanel {
            
             enrollmentLoader.load(filePath); // Use the instance variable
             
+            logger.info("Total enrollments loaded by loader: " + enrollmentLoader.getAllEnrollments().size());
+            
             int enrollmentCount = 0;
-            // Build student-course mapping from enrollments with ENROLLED status
+            // Build student-course mapping from ENROLLED courses (show what student is actively taking)
             for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
-                if ("ENROLLED".equals(enrollment.getStatus()) || "PASSED".equals(enrollment.getStatus())) {
+                logger.info("Processing enrollment: " + enrollment.getStudentID() + " - Course: " + enrollment.getCourseID() + " - Semester: " + enrollment.getSemester() + " - Section: " + enrollment.getSectionID() + " - Status: " + enrollment.getStatus());
+                
+                // Only include ENROLLED courses (not PASSED, to show current schedule)
+                if ("ENROLLED".equals(enrollment.getStatus())) {
                     String studentID = enrollment.getStudentID();
-                    String courseID = enrollment.getCourseID();
-                    studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(courseID);
-                    enrollmentCount++;
-                    logger.info("Loaded enrollment: " + studentID + " -> " + courseID);
+                    String sectionID = enrollment.getSectionID();
+                    
+                    // Each enrollment has ONE section ID (e.g., "CS101-SEC1")
+                    if (sectionID != null && !sectionID.isEmpty()) {
+                        studentCourses.computeIfAbsent(studentID, k -> new ArrayList<>()).add(sectionID);
+                        enrollmentCount++;
+                        logger.info("Added course mapping: " + studentID + " -> " + sectionID);
+                    } else {
+                        logger.warning("Enrollment has no section ID: " + studentID + " - " + enrollment.getCourseID());
+                    }
                 }
             }
             
@@ -286,24 +296,15 @@ public class Scheduletab extends javax.swing.JPanel {
             for (Schedule schedule : schedules) {
                 // Only show schedules for courses the student is actually enrolled in with exact section match
                 boolean matches = false;
-                String scheduleID = schedule.getCourseID(); // This could be CS101-SEC1, CS101-SEC2, etc.
+                String scheduleID = schedule.getCourseID().trim(); // This should be CS101-SEC1, etc.
                 
-                // FIXED: Only match if this schedule is for the CURRENT course being displayed
-                // Check if schedule is for THIS specific course (not any other course)
-                if (scheduleID.startsWith(courseID + "-")) {
-                    // Verify student is actually enrolled in this specific section
-                    for (Enrollment enrollment : enrollmentLoader.getAllEnrollments()) {
-                        if (enrollment.getStudentID().equals(studentID) && 
-                            enrollment.getCourseID().equals(courseID) &&
-                            ("ENROLLED".equals(enrollment.getStatus()) || "PASSED".equals(enrollment.getStatus())) &&
-                            scheduleID.equals(enrollment.getSectionID())) {
-                            matches = true;
-                            break;
-                        }
-                    }
+                // Direct match: courseID is already the full section ID (e.g., "CS101-SEC1")
+                // Just check if the schedule's courseID matches the student's enrolled section
+                if (scheduleID.equals(courseID.trim())) {
+                    matches = true;
                 }
                 
-                logger.info("  Checking schedule " + schedule.getCourseID() + " - matches=" + matches);
+                logger.info("  Checking schedule '" + scheduleID + "' against '" + courseID + "' - matches=" + matches);
                 
                 if (matches) {
                     String startTime = schedule.getStartTime().trim();
@@ -577,7 +578,7 @@ public class Scheduletab extends javax.swing.JPanel {
 }
     
     /**
-     * Validates that a student's schedule spans at least 3 different days.
+     * Validates that a student's schedule spans at least 2 different days.
      * Displays a warning if the policy is violated.
      * @param studentID The student ID to validate
      * @return true if schedule spans 3+ days, false otherwise
@@ -594,10 +595,10 @@ public class Scheduletab extends javax.swing.JPanel {
             }
         }
         
-        if (scheduledDays.size() < 3) {
+        if (scheduledDays.size() < 2) {
             javax.swing.JOptionPane.showMessageDialog(this,
                 "Warning: This student's schedule only spans " + scheduledDays.size() + 
-                " day(s).\nMinimum 3 days required per university policy.\n\nScheduled days: " + 
+                " day(s).\nMinimum 2 days required per university policy.\n\nScheduled days: " + 
                 String.join(", ", scheduledDays),
                 "Schedule Policy Violation",
                 javax.swing.JOptionPane.WARNING_MESSAGE);
@@ -654,8 +655,6 @@ public class Scheduletab extends javax.swing.JPanel {
         semesterSearchField = new javax.swing.JTextField();
         studentIDLabel = new javax.swing.JLabel();
         searchSemesterButton = new javax.swing.JButton();
-        scheduleTablePanel = new javax.swing.JPanel();
-        gwaLabel = new javax.swing.JLabel();
         monthYearPanel = new javax.swing.JPanel();
         monthComboBox = new javax.swing.JComboBox<>();
         yearSpinner = new javax.swing.JSpinner();
@@ -850,34 +849,6 @@ public class Scheduletab extends javax.swing.JPanel {
         );
 
 
-        scheduleTablePanel.setBackground(new java.awt.Color(0, 30, 58));
-        scheduleTablePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
-
-
-        gwaLabel.setFont(new java.awt.Font("Segoe UI", 1, 40)); // NOI18N
-        gwaLabel.setForeground(new java.awt.Color(255, 255, 255));
-        gwaLabel.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        gwaLabel.setText("GWA. --");
-
-
-        javax.swing.GroupLayout scheduleTablePanelLayout = new javax.swing.GroupLayout(scheduleTablePanel);
-        scheduleTablePanel.setLayout(scheduleTablePanelLayout);
-        scheduleTablePanelLayout.setHorizontalGroup(
-            scheduleTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(scheduleTablePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(gwaLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-        scheduleTablePanelLayout.setVerticalGroup(
-            scheduleTablePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(scheduleTablePanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(gwaLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 93, Short.MAX_VALUE)
-                .addContainerGap())
-        );
-
-
         javax.swing.GroupLayout scheduleSearchPanelLayout = new javax.swing.GroupLayout(scheduleSearchPanel);
         scheduleSearchPanel.setLayout(scheduleSearchPanelLayout);
         scheduleSearchPanelLayout.setHorizontalGroup(
@@ -885,8 +856,7 @@ public class Scheduletab extends javax.swing.JPanel {
             .addGroup(scheduleSearchPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(scheduleSearchPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(scheduleTablePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         scheduleSearchPanelLayout.setVerticalGroup(
@@ -895,7 +865,6 @@ public class Scheduletab extends javax.swing.JPanel {
                 .addGap(22, 22, 22)
                 .addComponent(scheduleFiltersPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(scheduleTablePanel)
                 .addContainerGap())
         );
 
@@ -1094,7 +1063,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         loadStudentCourseMappings();
         
         loadStudentTableData();
-        gwaLabel.setText("GWA. --");
         displayEmptySchedule();
     }
    
@@ -1179,7 +1147,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         String searchID = studentSearchField.getText().trim();
         if (searchID.isEmpty()) {
             loadStudentTableData();
-            gwaLabel.setText("GWA. --");
             semesterSearchField.setText("");
             return;
         }
@@ -1187,9 +1154,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         // Find student by ID
         for (Student student : students) {
             if (student.getStudentID().equals(searchID)) {
-                // Display GWA
-                gwaLabel.setText("GWA. " + student.getGwa());
-               
                 // Auto-populate section field from enrollment
                 String foundSection = null;
                 for (Enrollment enr : enrollmentLoader.getAllEnrollments()) {
@@ -1204,12 +1168,12 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                 // Display student's schedule
                 displayStudentSchedule(searchID);
                 
-                // Validate schedule spans at least 3 days
+                // Validate schedule spans at least 2 days
                 validateStudentScheduleSpread(searchID);
                
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "GWA", "Email", "Phone"},
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Type", "Email", "Phone"},
                     0
                 );
                 model.addRow(new Object[]{
@@ -1219,7 +1183,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                     student.getDateOfBirth(),
                     student.getYearLevel(),
                     student.getStudentType(),
-                    student.getGwa(),
                     student.getEmail(),
                     student.getPhoneNumber()
                 });
@@ -1235,8 +1198,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
                 return;
             }
         }
-       
-        gwaLabel.setText("GWA. Not found");
     }
    
     private void searchSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1588,7 +1549,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
 
 
     // Variables declaration - do not modify                    
-    private javax.swing.JLabel gwaLabel;
     private javax.swing.JPanel Marksheet;
     private javax.swing.JComboBox<String> monthComboBox;
     private javax.swing.JButton refreshButton;
@@ -1613,7 +1573,6 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JPanel headerPanel;
     private javax.swing.JPanel scheduleSearchPanel;
     private javax.swing.JPanel scheduleFiltersPanel;
-    private javax.swing.JPanel scheduleTablePanel;
     private javax.swing.JPanel monthYearPanel;
     private javax.swing.JPanel studentFormPanel;
     private javax.swing.JPanel studentTablePanel;

@@ -43,13 +43,13 @@ public class Marksheettab extends javax.swing.JPanel {
     private java.util.Map<String, String> courseNameMap;
     private StudentFileLoader studentFileLoader;
     private java.util.Map<String, Student> studentMap;
+    private String selectedStatusFilter = "All";
 
 
     /**
      * Creates new form Marksheettab
      */
     public Marksheettab() {
-        initComponents();
         marksheets = new ArrayList<>();
         marksheetFileLoader = new MarksheetFileLoader();
         marksheetFileSaver = new MarksheetFileSaver();
@@ -57,6 +57,7 @@ public class Marksheettab extends javax.swing.JPanel {
         courseNameMap = new java.util.HashMap<>();
         studentFileLoader = new StudentFileLoader();
         studentMap = new java.util.HashMap<>();
+        initComponents();
         loadStudentData();
         loadCourseData();
         loadMarksheetData();
@@ -96,6 +97,19 @@ public class Marksheettab extends javax.swing.JPanel {
         return courseNameMap.getOrDefault(courseID, courseID);
     }
 
+    private java.util.List<String> getUniqueSemesters() {
+        java.util.Set<String> semesterSet = new java.util.TreeSet<>();
+        semesterSet.add("All");
+        if (marksheets != null) {
+            for (Marksheet m : marksheets) {
+                if (m.getSemester() != null && !m.getSemester().isEmpty()) {
+                    semesterSet.add(m.getSemester());
+                }
+            }
+        }
+        return new java.util.ArrayList<>(semesterSet);
+    }
+
     private void loadMarksheetData() {
         try {
             String[] possiblePaths = {
@@ -126,6 +140,15 @@ public class Marksheettab extends javax.swing.JPanel {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0); // Clear existing rows
         for (Marksheet m : marksheets) {
+            // Apply status filter
+            Student student = studentMap.get(m.getStudentID());
+            if (student != null && !selectedStatusFilter.equals("All")) {
+                String studentStatus = student.getStudentType();
+                if (!studentStatus.equalsIgnoreCase(selectedStatusFilter)) {
+                    continue; // Skip this student if status doesn't match
+                }
+            }
+
             String[] subjects = m.getSubjects();
             double[] marks = m.getMarks();
             // Calculate average
@@ -142,7 +165,6 @@ public class Marksheettab extends javax.swing.JPanel {
             row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
             row[1] = m.getStudentID();
             // Add year level
-            Student student = studentMap.get(m.getStudentID());
             row[2] = (student != null) ? student.getYearLevel() : "";
             row[3] = m.getSemester();
             // Add course-score pairs with course names
@@ -321,6 +343,20 @@ public class Marksheettab extends javax.swing.JPanel {
         Searchbutton.setForeground(new java.awt.Color(0, 0, 0));
         Searchbutton.addActionListener(this::SearchbuttonActionPerformed);
 
+        javax.swing.JLabel statusLabel = new javax.swing.JLabel();
+        statusLabel.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        statusLabel.setForeground(new java.awt.Color(255, 255, 255));
+        statusLabel.setText("Status Filter:");
+
+        javax.swing.JComboBox<String> statusFilterCombo = new javax.swing.JComboBox<>(new String[]{"All", "Active", "Graduate"});
+        statusFilterCombo.setBackground(new java.awt.Color(146, 190, 219));
+        statusFilterCombo.addActionListener(e -> {
+            selectedStatusFilter = (String) statusFilterCombo.getSelectedItem();
+            loadMarksheetTableData();
+        });
+
+        // Semester filter removed per UI update request
+
         javax.swing.GroupLayout StudentIDPanelLayout = new javax.swing.GroupLayout(StudentIDPanel);
         StudentIDPanel.setLayout(StudentIDPanelLayout);
         StudentIDPanelLayout.setHorizontalGroup(
@@ -330,21 +366,31 @@ public class Marksheettab extends javax.swing.JPanel {
                 .addGroup(StudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 148, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(StudentIDPanelLayout.createSequentialGroup()
-                        .addComponent(SearchbarID, javax.swing.GroupLayout.PREFERRED_SIZE, 322, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(31, 31, 31)
-                        .addComponent(Searchbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addComponent(SearchbarID, javax.swing.GroupLayout.PREFERRED_SIZE, 250, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(Searchbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(StudentIDPanelLayout.createSequentialGroup()
+                        .addComponent(statusLabel)
+                        .addGap(10, 10, 10)
+                        .addComponent(statusFilterCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE))
+                )
                 .addContainerGap(20, Short.MAX_VALUE))
         );
         StudentIDPanelLayout.setVerticalGroup(
             StudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(StudentIDPanelLayout.createSequentialGroup()
-                .addGap(25, 25, 25)
+                .addGap(10, 10, 10)
                 .addComponent(StudentID)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(StudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(SearchbarID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(Searchbutton))
-                .addContainerGap(29, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(StudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(statusLabel)
+                    .addComponent(statusFilterCombo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                
+                .addContainerGap(10, Short.MAX_VALUE))
         );
 
         jPanel5.setBackground(new java.awt.Color(0, 30, 58));
@@ -414,7 +460,7 @@ public class Marksheettab extends javax.swing.JPanel {
         printbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         printbutton.setText("Print");
         printbutton.setForeground(new java.awt.Color(0, 0, 0));
-        printbutton.addActionListener(this::printbuttonActionPerformed); 
+        printbutton.addActionListener(this::printbuttonActionPerformed);
 
         clearbutton.setBackground(new java.awt.Color(73, 118, 159));
         clearbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
@@ -428,28 +474,48 @@ public class Marksheettab extends javax.swing.JPanel {
         logoutbutton.setForeground(new java.awt.Color(0, 0, 0));
         logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
 
+        javax.swing.JButton torButton = new javax.swing.JButton();
+        torButton.setBackground(new java.awt.Color(73, 118, 159));
+        torButton.setFont(new java.awt.Font("Segoe UI", 1, 24));
+        torButton.setText("TOR");
+        torButton.setForeground(new java.awt.Color(0, 0, 0));
+        torButton.addActionListener(this::torButtonActionPerformed);
+
+        javax.swing.JButton yearSemesterButton = new javax.swing.JButton();
+        yearSemesterButton.setBackground(new java.awt.Color(73, 118, 159));
+        yearSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 24));
+        yearSemesterButton.setText("Year / Semester");
+        yearSemesterButton.setForeground(new java.awt.Color(0, 0, 0));
+        yearSemesterButton.addActionListener(this::yearSemesterButtonActionPerformed);
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
-                .addGap(31, 31, 31)
-                .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(clearbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 100, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(logoutbutton)
+                .addGap(15, 15, 15)
+                .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
+                .addComponent(torButton, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
+                .addComponent(yearSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
+                .addComponent(clearbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 120, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(12, 12, 12)
+                .addComponent(logoutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(28, Short.MAX_VALUE)
+                .addContainerGap(15, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(printbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(torButton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(yearSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(clearbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(logoutbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(23, 23, 23))
+                .addGap(15, 15, 15))
         );
 
 
@@ -529,9 +595,188 @@ public class Marksheettab extends javax.swing.JPanel {
                 "Print Error",
                 JOptionPane.ERROR_MESSAGE);
     }
-
-
 }
+
+    private void torButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            // Get unique students in current table
+            java.util.Set<String> uniqueStudents = new java.util.LinkedHashSet<>();
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+            
+            for (int row = 0; row < model.getRowCount(); row++) {
+                uniqueStudents.add((String) model.getValueAt(row, 1)); // Student ID
+            }
+
+            if (uniqueStudents.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No marksheet data to print!", "Print TOR", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Create a new table model for TOR with aggregated information
+            javax.swing.table.DefaultTableModel torModel = new javax.swing.table.DefaultTableModel(
+                new String[]{"Student ID", "Name", "Year Level", "Status", "Total Courses", "Average GWA"}, 0
+            );
+
+            for (String studentID : uniqueStudents) {
+                Student student = studentMap.get(studentID);
+                if (student == null) continue;
+
+                String name = student.getStudentName();
+                String yearLevel = student.getYearLevel();
+                String status = student.getStudentType();
+                
+                // Calculate averages for this student
+                double totalGwa = 0.0;
+                int courseCount = 0;
+                for (Marksheet m : marksheets) {
+                    if (m.getStudentID().equals(studentID)) {
+                        double[] marks = m.getMarks();
+                        double average = 0.0;
+                        int count = 0;
+                        for (double mark : marks) {
+                            if (mark > 0) {
+                                average += mark;
+                                count++;
+                            }
+                        }
+                        if (count > 0) {
+                            totalGwa += average / count;
+                            courseCount++;
+                        }
+                    }
+                }
+                
+                double finalGwa = courseCount > 0 ? totalGwa / courseCount : 0.0;
+                
+                torModel.addRow(new Object[]{
+                    studentID,
+                    name,
+                    yearLevel,
+                    status,
+                    courseCount,
+                    String.format("%.2f", finalGwa)
+                });
+            }
+
+            // Create a temporary table with TOR data
+            javax.swing.JTable torTable = new javax.swing.JTable(torModel);
+            torTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            boolean complete = torTable.print(
+                    javax.swing.JTable.PrintMode.FIT_WIDTH,
+                    new java.text.MessageFormat("Transcript of Records (TOR)"),
+                    new java.text.MessageFormat("Page {0}")
+            );
+
+            if (complete) {
+                JOptionPane.showMessageDialog(this, "TOR printing completed!");
+            } else {
+                JOptionPane.showMessageDialog(this, "TOR printing cancelled.");
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "TOR Print failed: " + e.getMessage(),
+                    "Print Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void yearSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        try {
+            // Create report grouped by year level and semester
+            java.util.Map<String, java.util.Map<String, java.util.List<Marksheet>>> yearSemesterMap = new java.util.LinkedHashMap<>();
+
+            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+
+            // Group data by year level and semester
+            for (int row = 0; row < model.getRowCount(); row++) {
+                String yearLevel = (String) model.getValueAt(row, 2);
+                String semester = (String) model.getValueAt(row, 3);
+
+                if (yearLevel == null || yearLevel.isEmpty()) continue;
+                if (semester == null || semester.isEmpty()) continue;
+
+                // No semester filter (removed) — include all semesters
+
+                yearSemesterMap.putIfAbsent(yearLevel, new java.util.LinkedHashMap<>());
+                java.util.Map<String, java.util.List<Marksheet>> semesterMap = yearSemesterMap.get(yearLevel);
+                semesterMap.putIfAbsent(semester, new java.util.ArrayList<>());
+
+                String studentID = (String) model.getValueAt(row, 1);
+                for (Marksheet m : marksheets) {
+                    if (m.getStudentID().equals(studentID) && m.getSemester().equalsIgnoreCase(semester)) {
+                        semesterMap.get(semester).add(m);
+                    }
+                }
+            }
+
+            if (yearSemesterMap.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "No data to generate year/semester report!", "Print Year/Semester", JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            // Create report table
+            javax.swing.table.DefaultTableModel reportModel = new javax.swing.table.DefaultTableModel(
+                new String[]{"Year Level", "Semester", "Student Count", "Average Grade", "Total Courses"}, 0
+            );
+
+            for (String year : yearSemesterMap.keySet()) {
+                for (String semester : yearSemesterMap.get(year).keySet()) {
+                    java.util.List<Marksheet> marksheetList = yearSemesterMap.get(year).get(semester);
+                    
+                    double totalGrade = 0.0;
+                    int courseCount = 0;
+                    java.util.Set<String> studentSet = new java.util.HashSet<>();
+
+                    for (Marksheet m : marksheetList) {
+                        studentSet.add(m.getStudentID());
+                        double[] marks = m.getMarks();
+                        for (double mark : marks) {
+                            if (mark > 0) {
+                                totalGrade += mark;
+                                courseCount++;
+                            }
+                        }
+                    }
+
+                    double avgGrade = courseCount > 0 ? totalGrade / courseCount : 0.0;
+
+                    reportModel.addRow(new Object[]{
+                        year,
+                        semester,
+                        studentSet.size(),
+                        String.format("%.2f", avgGrade),
+                        courseCount
+                    });
+                }
+            }
+
+            // Create temporary table for report
+            javax.swing.JTable reportTable = new javax.swing.JTable(reportModel);
+            reportTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
+
+            String reportTitle = "Year and Semester Report";
+
+            boolean complete = reportTable.print(
+                    javax.swing.JTable.PrintMode.FIT_WIDTH,
+                    new java.text.MessageFormat(reportTitle),
+                    new java.text.MessageFormat("Page {0}")
+            );
+
+            if (complete) {
+                JOptionPane.showMessageDialog(this, "Year/Semester report printing completed!");
+            } else {
+                JOptionPane.showMessageDialog(this, "Year/Semester report printing cancelled.");
+            }
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Year/Semester Print failed: " + e.getMessage(),
+                    "Print Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
 
     private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
     // Clear search bar

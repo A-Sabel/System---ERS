@@ -1,20 +1,19 @@
 package ers.group;
 
+import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.stream.Collectors;
-
+import java.util.Set;
+import javax.swing.JComboBox;
+import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
+
 public class StudentCourseTab extends javax.swing.JFrame {
     public static class SessionManager {
         private static String currentStudentID = null;
@@ -38,7 +37,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             currentStudentName = null;
         }
     }
-
+    
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
@@ -69,32 +68,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         setCurrentActiveSemester();
         filterByStatus();
     }
-
-    private void filterByStatus() {
-        String selectedStatus = (String) ST_StatusFilter.getSelectedItem();
-        DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
-        model.setRowCount(0); // clear current table
-
-        for (Student s : students) {
-            String status = s.getStatus() != null ? s.getStatus().trim() : "Active";
-            if (selectedStatus.equals("All") || status.equalsIgnoreCase(selectedStatus)) {
-                model.addRow(new Object[]{
-                    s.getStudentID(),
-                    s.getStudentName(),
-                    s.getAge(),
-                    s.getDateOfBirth(),
-                    s.getYearLevel(),
-                    s.getSection(),
-                    s.getStudentType(),
-                    s.getStatus(),
-                    s.getGwa(),
-                    s.getEmail(),
-                    s.getPhoneNumber()
-                });
-            }
-        }
-    }
-
+    
     private String getStudentFilePath() {
         if (studentFilePath != null) {
             return studentFilePath;
@@ -116,147 +90,119 @@ public class StudentCourseTab extends javax.swing.JFrame {
         return possiblePaths[0];
     }
     
-    private void loadStudentData() { 
+    private void loadStudentData() {
         try {
-            // 1️⃣ Find student.txt 
-            String[] possiblePaths = { "ERS-group/src/ers/group/master files/student.txt", 
-                "src/ers/group/master files/student.txt", 
-                "master files/student.txt", 
-                "student.txt", 
-                "ERS-group/student.txt", 
-                "../student.txt", 
-                new java.io.File(".").getAbsolutePath() + "/ERS-group/src/ers/group/master files/student.txt" }; 
-            
-            String filePath = null; 
-            
-            for (String path : possiblePaths) { 
-                java.io.File f = new java.io.File(path); 
-                
-                if (f.exists()) { 
-                filePath = path; 
-                logger.info("Found student data at: " + f.getAbsolutePath()); 
-                break; 
-                } 
-            }
-            
-        if (filePath == null) { 
-            logger.warning("Could not find student.txt in any expected location"); 
-            students = new ArrayList<>(); 
-            return;
-        }
-        // 2️⃣ Load students
-        studentFileLoader = new StudentFileLoader();
-        studentFileLoader.load(filePath);
-        students = new ArrayList<>(studentFileLoader.getAllStudents());
-        logger.info("Loaded " + students.size() + " students from file");
+            // 1️⃣ Find student.txt
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/student.txt",
+                "src/ers/group/master files/student.txt",
+                "master files/student.txt",
+                "student.txt"
+            };
 
-        // 3️⃣ Load curriculum from courseSubject.txt - collect all course codes as required courses
-        ArrayList<String> allRequiredCourses = new ArrayList<>();
-        String[] coursePaths = {
-            "ERS-group/src/ers/group/master files/courseSubject.txt",
-            "src/ers/group/master files/courseSubject.txt",
-            "master files/courseSubject.txt",
-            "courseSubject.txt"
-        };
-        String courseFilePath = null;
-        for (String path : coursePaths) {
-            java.io.File f = new java.io.File(path);
-            if (f.exists()) {
-                courseFilePath = path;
-                break;
-            }
-        }
-        if (courseFilePath != null) {
-            try (BufferedReader br = new BufferedReader(new FileReader(courseFilePath))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    String[] parts = line.split(",");
-                    if (parts.length >= 1) {
-                        // Collect the course code (parts[0]) as a required course
-                        allRequiredCourses.add(parts[0].trim());
-                    }
+            String studentFilePath = null;
+            for (String path : possiblePaths) {
+                File f = new File(path);
+                if (f.exists()) {
+                    studentFilePath = path;
+                    break;
                 }
-            } catch (Exception e) {
-                logger.severe("Error loading curriculum: " + e.getMessage());
             }
-            logger.info("Loaded " + allRequiredCourses.size() + " courses as graduation requirements");
-        } else {
-            logger.warning("Could not find courseSubject.txt");
-        }
 
-        // 4️⃣ Load enrollments directly into students (no extra method)
-        String[] enrollmentPaths = {
-            "ERS-group/src/ers/group/master files/enrollment.txt",
-            "src/ers/group/master files/enrollment.txt",
-            "master files/enrollment.txt",
-            "enrollment.txt"
-        };
-        String enrollmentFile = null;
-        for (String path : enrollmentPaths) {
-            java.io.File f = new java.io.File(path);
-            if (f.exists()) {
-                enrollmentFile = path;
-                break;
+            if (studentFilePath == null) {
+                System.err.println("student.txt not found!");
+                students = new ArrayList<>();
+                return;
             }
-        }
 
-        if (enrollmentFile != null) {
-            try (BufferedReader br = new BufferedReader(new FileReader(enrollmentFile))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    String[] parts = line.split(",", 8);
-                    if (parts.length < 8) continue;
+            // 2️⃣ Load students from file
+            studentFileLoader = new StudentFileLoader();
+            studentFileLoader.load(studentFilePath);
+            students = new ArrayList<>(studentFileLoader.getAllStudents());
 
-                    String studentID = parts[0].trim();
-                    String[] grades = parts[7].trim().split(";");
+            // 3️⃣ Load graduates.txt to determine status
+            Set<String> graduatedIDs = new HashSet<>();
+            String[] gradPaths = {
+                "ERS-group/src/ers/group/master files/graduates.txt",
+                "src/ers/group/master files/graduates.txt",
+                "master files/graduates.txt",
+                "graduates.txt"
+            };
+            String gradFilePath = null;
+            for (String path : gradPaths) {
+                File f = new File(path);
+                if (f.exists()) {
+                    gradFilePath = path;
+                    break;
+                }
+            }
 
-                    // Loop through your existing students list
-                    for (Student s : students) {
-                        if (s.getStudentID().equals(studentID)) {
-                            for (String g : grades) {
-                                String[] gradeParts = g.split(":");
-                                if (gradeParts.length < 2) continue;
-                                if (gradeParts[1].trim().equalsIgnoreCase("PASSED")) {
-                                    s.addCompletedCourse(gradeParts[0].trim());
-                                }
-                            }
-                            break; // found the student, stop inner loop
+            if (gradFilePath != null) {
+                try (BufferedReader br = new BufferedReader(new FileReader(gradFilePath))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String[] parts = line.split(",");
+                        if (parts.length >= 1) {
+                            graduatedIDs.add(parts[0].trim()); // studentID is first column
                         }
                     }
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-            } catch (Exception e) {
-                logger.severe("Error loading enrollments: " + e.getMessage());
-            }
-        } else {
-            logger.warning("Enrollment file not found");
-        }
-
-        // 5️⃣ Check graduation for each student
-        for (Student s : students) {
-            // Set all required courses for this student
-            s.setGraduationCourses(allRequiredCourses);
-
-            // Check if student has completed all required courses
-            if (s.isGraduated()) {
-                s.setStatus("Graduate");
+                System.out.println("Loaded " + graduatedIDs.size() + " graduates from " + gradFilePath);
             } else {
-                s.setStatus("Active");
+                System.out.println("Graduates file not found");
+            }
+
+            // 4️⃣ Set status based on graduates.txt
+            for (Student s : students) {
+                if (graduatedIDs.contains(s.getStudentID())) {
+                    s.setStatus("Graduate");
+                } else {
+                    s.setStatus("Active");
+                }
+            }
+
+            // 5️⃣ Refresh table
+            loadStudentTableData();
+
+            System.out.println("Loaded " + students.size() + " students with status from admin decisions.");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            students = new ArrayList<>();
+        }
+    }
+
+    private void filterByStatus() {
+        String selectedStatus = (String) ST_StatusFilter.getSelectedItem(); // All / Active / Graduate
+        DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
+        model.setRowCount(0); // clear table first
+
+        for (Student s : students) {
+            String status = s.getStatus() != null ? s.getStatus().trim() : "Active";
+            if (selectedStatus.equals("All") || status.equalsIgnoreCase(selectedStatus)) {
+                model.addRow(new Object[]{
+                    s.getStudentID(),
+                    s.getStudentName(),
+                    s.getAge(),
+                    s.getDateOfBirth(),
+                    s.getYearLevel(),
+                    s.getSection(),
+                    s.getStudentType(),
+                    status,
+                    s.getGwa(),
+                    s.getEmail(),
+                    s.getPhoneNumber()
+                });
             }
         }
-
-        logger.info("Student data loaded and graduation status updated.");
-
-    } catch (Exception e) {
-        logger.severe("Error loading student data: " + e.getMessage());
-        students = new ArrayList<>();
     }
-}
-    
+
     private void loadStudentTableData() {
-        // Get the model from ST_Table directly
         DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
-        model.setRowCount(0);
-        // Add student data to table
+        model.setRowCount(0); // clear table
+
         for (Student stud : students) {
             model.addRow(new Object[]{
                 stud.getStudentID(),
@@ -266,13 +212,14 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getYearLevel(),
                 stud.getSection(),
                 stud.getStudentType(),
-                stud.getStatus(),
+                stud.getStatus(), // show Active/Graduate
                 stud.getGwa(),
                 stud.getEmail(),
                 stud.getPhoneNumber()
             });
         }
-        // Refresh display
+
+        // refresh table display
         if (ST_TableScrollPane.getParent() != null) {
             ST_TableScrollPane.revalidate();
             ST_TableScrollPane.repaint();
@@ -809,12 +756,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Student ID", "Student Name", "Age", "Date of Birth", "Year Level", "Section", "Student Type","Status", "GWA", "Email", "Phone No.",
+                "Student ID", "Student Name", "Age", "Date of Birth", "Year Level", "Section", "Type", "Status", "GWA", "Email", "Phone No.",
             }
         ));
         ST_TableScrollPane.setViewportView(ST_Table);
 
-        // Initialize your filter combo box here
         ST_StatusFilter = new javax.swing.JComboBox<>();
         ST_StatusFilter.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Active", "Graduate" }));
         ST_StatusFilter.addActionListener(evt -> filterByStatus());
@@ -1448,7 +1394,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             if (student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
                 // Update table to show only this student
                 DefaultTableModel model = new DefaultTableModel(
-                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Section", "Type", "Status", "GWA", "Email", "Phone"},
+                    new String[]{"Student ID", "Name", "Age", "DOB", "Year Level", "Section", "Type", "Status","GWA", "Email", "Phone"},
                     0
                 );
                 model.addRow(new Object[]{
@@ -1649,9 +1595,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             // Create new Student object (constructor without ID will auto-generate)
             // Default new students to 1st Semester
             Student newStudent = new Student(
-                name, age, dob, yearLevel, "1st Semester", section,
-                studentType, subjectsEnrolled, gwa, email, phoneNumber,
-                gender, address, fathersName, mothersName, guardiansPhone
+                name, age, dob, yearLevel, "1st Semester", section, studentType,
+                subjectsEnrolled, gwa, email, phoneNumber, gender,
+                address, fathersName, mothersName, guardiansPhone
             );
             
             // Add to ArrayList
@@ -1680,52 +1626,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 "Error", 
                 javax.swing.JOptionPane.ERROR_MESSAGE);
         }
-    }
-
-    private String getStudentStatus(String studentID) {
-        String[] possiblePaths = {
-            "ERS-group/src/ers/group/master files/enrollment.txt",
-            "src/ers/group/master files/enrollment.txt",
-            "master files/enrollment.txt",
-            "enrollment.txt"
-        };
-
-        String filePath = null;
-        for (String path : possiblePaths) {
-            File f = new File(path);
-            if (f.exists()) {
-                filePath = path;
-                break;
-            }
-        }
-
-        if (filePath == null) {
-            System.err.println("Enrollment file not found!");
-            return "Active"; // default
-        }
-
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",", 8); // 8 columns
-                String id = parts[0].trim();
-                if (!id.equals(studentID)) continue;
-
-                String subjectGrades = parts[7].trim(); // last column
-                String[] grades = subjectGrades.split(";");
-                for (String g : grades) {
-                    String status = g.split(":")[1].trim();
-                    if (!status.equalsIgnoreCase("PASSED")) {
-                        return "Active";
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "Active";
-        }
-
-        return "Graduate";
     }
 
     private void ST_UpdateActionPerformed(java.awt.event.ActionEvent evt) {
@@ -1776,15 +1676,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             String fathersName = ST_FathersName.getText().trim();
             String mothersName = ST_MothersName.getText().trim();
             String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
-
-            // Get existing status
-            String status = "Active"; // default if something goes wrong
-            for (Student s : students) {
-                if (s.getStudentID().equals(originalID)) {
-                    status = s.getStatus(); // get current status
-                    break;
-                }
-            }
             
             // Get date of birth from spinner
             java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
@@ -1836,16 +1727,16 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             
             // Create updated Student object
-            Student newStudent = new Student(
-                name, age, dob, yearLevel, "1st Semester", section,
-                studentType, subjectsEnrolled, gwa, email, phoneNumber,
-                gender, address, fathersName, mothersName, guardiansPhone
+            Student updatedStudent = new Student(
+                newID, name, age, dob, yearLevel, currentSemester, section, studentType,
+                subjectsEnrolled, gwa, email, phoneNumber, gender,
+                address, fathersName, mothersName, guardiansPhone
             );
             
             // Update in ArrayList
             for (int i = 0; i < students.size(); i++) {
                 if (students.get(i).getStudentID().equals(originalID)) {
-                    students.set(i, newStudent);
+                    students.set(i, updatedStudent);
                     break;
                 }
             }
@@ -2145,9 +2036,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             // Create new student, default to 1st Semester
             Student newStudent = new Student(
-                name, age, dob, yearLevel, "1st Semester", section,
-                studentType, subjectsEnrolled, gwa, email, phoneNumber,
-                gender, address, fathersName, mothersName, guardiansPhone
+                name, age, dob, yearLevel, "1st Semester", section, studentType,
+                subjectsEnrolled, gwa, email, phoneNumber, gender,
+                address, fathersName, mothersName, guardiansPhone
             );
             students.add(newStudent);
             studentFileSaver.save(getStudentFilePath(), students);
@@ -2303,4 +2194,3 @@ public class StudentCourseTab extends javax.swing.JFrame {
         }
     }        
 }
-

@@ -35,6 +35,7 @@ public class ScoreTab extends JPanel {
     
     // Enrollment integration
     private Map<String, List<String>> studentEnrollments; // StudentID -> List of CourseIDs
+    private Map<String, String> studentStatusMap; // StudentID -> Status
     
     // Course data
     private final Map<String, String> courseMap = new LinkedHashMap<>(); // CourseCode -> CourseName
@@ -59,6 +60,7 @@ public class ScoreTab extends JPanel {
 
         initCourseMap();
         loadEnrollmentData();
+        loadStudentStatusData();
 
         add(createTopSpacer(), BorderLayout.NORTH);
         add(createMainPanel(), BorderLayout.CENTER);
@@ -160,6 +162,37 @@ public class ScoreTab extends JPanel {
         } catch (Exception e) {
             System.err.println("Error loading enrollment data: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Load student status data (specifically checking for graduates)
+     */
+    private void loadStudentStatusData() {
+        studentStatusMap = new HashMap<>();
+        try {
+            String[] graduatePaths = {
+                "ERS-group/src/ers/group/master files/graduates.txt",
+                "src/ers/group/master files/graduates.txt",
+                "master files/graduates.txt",
+                "graduates.txt"
+            };
+            String graduatesPath = FilePathResolver.resolveFilePath(graduatePaths);
+            File graduatesFile = new File(graduatesPath);
+            
+            if (graduatesFile.exists()) {
+                try (BufferedReader br = new BufferedReader(new FileReader(graduatesFile))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        String[] parts = line.split(",");
+                        if (parts.length > 0) {
+                            studentStatusMap.put(parts[0].trim(), "Graduate");
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading student status data: " + e.getMessage());
         }
     }
     
@@ -615,6 +648,12 @@ public class ScoreTab extends JPanel {
         searchBtn.setPreferredSize(new Dimension(110, 38));
         searchBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
         searchBtn.addActionListener(e -> searchRecord());
+        
+        JButton refreshBtn = new StyledButton("Refresh");
+        refreshBtn.setPreferredSize(new Dimension(110, 38));
+        refreshBtn.setFont(new Font("Segoe UI", Font.BOLD, 16));
+        refreshBtn.addActionListener(e -> loadAllRecordsToTable());
+        
         search.add(label("ID:"));
         search.add(searchIdField);
         search.add(label("Sem:"));
@@ -622,6 +661,7 @@ public class ScoreTab extends JPanel {
         search.add(label("Year:"));
         search.add(searchYearField);
         search.add(searchBtn);
+        search.add(refreshBtn);
         return search;
     }
 
@@ -753,6 +793,7 @@ public class ScoreTab extends JPanel {
 
     private void loadAllRecordsToTable() {
     model.setRowCount(0);
+    loadStudentStatusData(); // Refresh status data
 
     try (BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
         String line;
@@ -760,6 +801,12 @@ public class ScoreTab extends JPanel {
         while ((line = br.readLine()) != null) {
             String[] d = line.split(",");
             if (d.length < 15) continue;
+
+            // Skip graduates
+            String status = studentStatusMap.get(d[1]);
+            if (status != null && status.equalsIgnoreCase("Graduate")) {
+                continue;
+            }
 
             Object[] row = new Object[15];
 
@@ -812,6 +859,7 @@ public class ScoreTab extends JPanel {
         String compressedSem = compressSemester(sem);
         
         model.setRowCount(0);
+        loadStudentStatusData(); // Refresh status data
 
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
             String line;
@@ -820,6 +868,12 @@ public class ScoreTab extends JPanel {
                 String[] d = line.split(",");
                 if(d.length < 15) continue;
                 
+                // Skip graduates
+                String status = studentStatusMap.get(d[1]);
+                if (status != null && status.equalsIgnoreCase("Graduate")) {
+                    continue;
+                }
+
                 // Flexible search: match based on provided criteria only
                 boolean matches = true;
                 

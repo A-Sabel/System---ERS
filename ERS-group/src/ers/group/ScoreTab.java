@@ -171,28 +171,32 @@ public class ScoreTab extends JPanel {
     private void loadStudentStatusData() {
         studentStatusMap = new HashMap<>();
         try {
-            String[] graduatePaths = {
-                "ERS-group/src/ers/group/master files/graduates.txt",
-                "src/ers/group/master files/graduates.txt",
-                "master files/graduates.txt",
-                "graduates.txt"
-            };
-            String graduatesPath = FilePathResolver.resolveFilePath(graduatePaths);
-            File graduatesFile = new File(graduatesPath);
+            String studentPath = FilePathResolver.resolveStudentFilePath();
+            File studentFile = new File(studentPath);
+            System.out.println("Loading student statuses from: " + studentFile.getAbsolutePath()); // Debug print
             
-            if (graduatesFile.exists()) {
-                try (BufferedReader br = new BufferedReader(new FileReader(graduatesFile))) {
+            if (studentFile.exists()) {
+                try (BufferedReader br = new BufferedReader(new FileReader(studentFile))) {
                     String line;
                     while ((line = br.readLine()) != null) {
-                        String[] parts = line.split(",");
-                        if (parts.length > 0) {
-                            studentStatusMap.put(parts[0].trim(), "Graduate");
+                        String[] parts = line.split(",", -1); // Use -1 to keep trailing empty strings
+                        // Format: ID, Name, Age, DOB, YearLevel, Semester, Section, StudentType, Status, ...
+                        if (parts.length >= 9) {
+                            String studentID = parts[0].trim();
+                            String status = parts[8].trim();
+                            if (!studentID.isEmpty() && !status.isEmpty()) {
+                                studentStatusMap.put(studentID, status);
+                            }
                         }
                     }
                 }
+                System.out.println("Loaded statuses for " + studentStatusMap.size() + " students."); // Debug print
+            } else {
+                System.err.println("Student file not found at: " + studentPath);
             }
         } catch (Exception e) {
             System.err.println("Error loading student status data: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -793,18 +797,23 @@ public class ScoreTab extends JPanel {
 
     private void loadAllRecordsToTable() {
     model.setRowCount(0);
-    loadStudentStatusData(); // Refresh status data
+    loadStudentStatusData(); // Refresh status data from student.txt
 
-    try (BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
+    String marksheetPath = getMarksheetPath();
+    System.out.println("Attempting to load marksheet records from: " + new File(marksheetPath).getAbsolutePath());
+
+    try (BufferedReader br = new BufferedReader(new FileReader(marksheetPath))) {
         String line;
 
         while ((line = br.readLine()) != null) {
             String[] d = line.split(",");
             if (d.length < 15) continue;
 
+            String studentID = d[1];
             // Skip graduates
-            String status = studentStatusMap.get(d[1]);
-            if (status != null && status.equalsIgnoreCase("Graduate")) {
+            String status = studentStatusMap.get(studentID);
+            if ("Graduate".equalsIgnoreCase(status)) {
+                System.out.println("Skipping marksheet record for graduate student: " + studentID);
                 continue;
             }
 
@@ -825,6 +834,12 @@ public class ScoreTab extends JPanel {
 
             model.addRow(row);
         }
+    } catch (FileNotFoundException e) {
+        System.err.println("ERROR: Marksheet file not found at " + marksheetPath);
+        JOptionPane.showMessageDialog(this,
+            "Marksheet file not found. Please ensure 'marksheet.txt' exists.",
+            "File Not Found",
+            JOptionPane.ERROR_MESSAGE);
     } catch (Exception e) {
         e.printStackTrace();
     }
@@ -868,9 +883,11 @@ public class ScoreTab extends JPanel {
                 String[] d = line.split(",");
                 if(d.length < 15) continue;
                 
+                String studentID = d[1];
                 // Skip graduates
-                String status = studentStatusMap.get(d[1]);
-                if (status != null && status.equalsIgnoreCase("Graduate")) {
+                String status = studentStatusMap.get(studentID);
+                if ("Graduate".equalsIgnoreCase(status)) {
+                    System.out.println("Skipping search result for graduate student: " + studentID);
                     continue;
                 }
 

@@ -26,6 +26,7 @@ abstract class BaseFileLoader implements FileLoader {
             System.out.println("Error: Could not find " + filePath);
         } catch (Exception e) {
             System.out.println("Error during file processing: " + e.getMessage());
+            e.printStackTrace();
         }
     }
     
@@ -348,59 +349,64 @@ class StudentFileLoader extends BaseFileLoader {
         studentMap.clear(); // Clear the map before loading
         readFile(filePath, line -> {
             String[] parts = line.split(",", -1); // -1 to preserve trailing empty strings
-            // Format: ID, Name, Age, DOB, YearLevel, CurrentSemester, Section, StudentType, Status, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
-            if (parts.length < 18) return;
-            
+            // Flexible parsing to support older shorter student records as well as full records
             try {
-                String id = parts[0].trim();
-                String name = parts[1].trim();
-                int age = Integer.parseInt(parts[2].trim());
-                String dob = parts[3].trim();
-                String yearLevel = parts[4].trim();
-                String currentSemester = expandSemester(parts[5].trim()); // Expand compressed format
-                String section = parts[6].trim();
-                String studentType = parts[7].trim();
-                String status = parts[8].trim();
+                String id = parts.length > 0 ? parts[0].trim() : "";
+                String name = parts.length > 1 ? parts[1].trim() : "";
+                int age = 0;
+                if (parts.length > 2 && !parts[2].trim().isEmpty()) {
+                    try { age = Integer.parseInt(parts[2].trim()); } catch (NumberFormatException ignored) {}
+                }
+                String dob = parts.length > 3 ? parts[3].trim() : "";
+                String yearLevel = parts.length > 4 ? parts[4].trim() : "";
+                String currentSemester = parts.length > 5 ? expandSemester(parts[5].trim()) : "";
+                // Some files place section at index 6, others leave it empty
+                String section = parts.length > 6 ? parts[6].trim() : "";
+
+                // studentType and status fields may be swapped depending on file format
+                String studentType = "";
+                String status = "";
+                if (parts.length > 7) studentType = parts[7].trim();
+                if (parts.length > 8) status = parts[8].trim();
+                // If studentType looks like a status (Active/Graduate) and status empty, swap
+                if ((studentType.equalsIgnoreCase("Active") || studentType.equalsIgnoreCase("Graduate")) && status.isEmpty()) {
+                    status = studentType;
+                    studentType = "Regular"; // default type
+                }
 
                 ArrayList<String> subjects = new ArrayList<>();
-                if (!parts[9].trim().isEmpty()) {
+                if (parts.length > 9 && !parts[9].trim().isEmpty()) {
                     String[] subjectList = parts[9].split(";");
-                    for (String subject : subjectList) {
-                        subjects.add(subject.trim());
-                    }
+                    for (String subject : subjectList) subjects.add(subject.trim());
                 }
-                
-                // Handle empty GWA field
+
                 double gwa = 0.0;
-                if (!parts[10].trim().isEmpty()) {
-                    try {
-                        gwa = Double.parseDouble(parts[10].trim());
-                    } catch (NumberFormatException e) {
-                        gwa = 0.0;
-                    }
+                if (parts.length > 10 && !parts[10].trim().isEmpty()) {
+                    try { gwa = Double.parseDouble(parts[10].trim()); } catch (NumberFormatException ignored) {}
                 }
-                
-                String email = parts[11].trim();
-                String phoneNumber = parts[12].trim();
-                String gender = parts[13].trim();
-                String address = parts[14].trim();
-                String fathersName = parts[15].trim();
-                String mothersName = parts[16].trim();
-                String guardiansPhoneNumber = parts[17].trim();
-                
+
+                String email = parts.length > 11 ? parts[11].trim() : "";
+                String phoneNumber = parts.length > 12 ? parts[12].trim() : "";
+                String gender = parts.length > 13 ? parts[13].trim() : "";
+                String address = parts.length > 14 ? parts[14].trim() : "";
+                String fathersName = parts.length > 15 ? parts[15].trim() : "";
+                String mothersName = parts.length > 16 ? parts[16].trim() : "";
+                String guardiansPhoneNumber = parts.length > 17 ? parts[17].trim() : "";
+
+                // Use Student constructor signature matching class definition:
+                // (id, name, age, dob, yearLevel, currentSemester, section, studentType, status, subjects, gwa, email, phoneNumber, gender, address, fathersName, mothersName, guardiansPhoneNumber)
                 Student student = new Student(id, name, age, dob, yearLevel, currentSemester, section,
-                        studentType, status, subjects, gwa, email, phoneNumber, gender, address,
-                        fathersName, mothersName, guardiansPhoneNumber);
-                
+                    studentType, status, subjects, gwa, email, phoneNumber, gender, address,
+                    fathersName, mothersName, guardiansPhoneNumber);
+
                 // Deduplicate: only keep the last occurrence of each student ID
-                studentMap.put(id, student);
+                if (!id.isEmpty()) studentMap.put(id, student);
             } catch (Exception e) {
-                // Log parsing error but continue with other records
                 System.err.println("Error parsing student record: " + line);
                 e.printStackTrace();
             }
         });
-        
+
         // Rebuild allStudents list from deduplicated map
         allStudents.clear();
         allStudents.addAll(studentMap.values());
@@ -439,48 +445,53 @@ class MarksheetFileLoader extends BaseFileLoader {
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
-            String[] parts = line.split(",");
-            // Format: ID, StudentID, Semester, YearLevel, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
-            if (parts.length < 14) return;
-            
-            String id = parts[0].trim();
-            String studentID = parts[1].trim();
-            String semester = expandSemester(parts[2].trim());
-            String yearLevel = parts.length > 3 ? parts[3].trim() : ""; // Read year level from field 3
-            
-            // Extract 5 course-score pairs (starting from index 4 after yearLevel)
-            String[] subjects = new String[5];
-            double[] marks = new double[5];
-            
-            for (int i = 0; i < 5; i++) {
-                int courseIndex = 4 + (i * 2); // Adjusted index after adding yearLevel field
-                int scoreIndex = 5 + (i * 2);
-                
-                if (courseIndex < parts.length) {
-                    subjects[i] = parts[courseIndex].trim();
-                } else {
-                    subjects[i] = "";
-                }
-                
-                if (scoreIndex < parts.length) {
-                    String scoreStr = parts[scoreIndex].trim();
-                    if (scoreStr.equals("PENDING") || scoreStr.isEmpty()) {
-                        marks[i] = 0.0;
+            try {
+                String[] parts = line.split(",");
+                // Format: ID, StudentID, Semester, YearLevel, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
+                if (parts.length < 14) return;
+
+                String id = parts[0].trim();
+                String studentID = parts[1].trim();
+                String semester = expandSemester(parts[2].trim());
+                String yearLevel = parts.length > 3 ? parts[3].trim() : ""; // Read year level from field 3
+
+                // Extract 5 course-score pairs (starting from index 4 after yearLevel)
+                String[] subjects = new String[5];
+                double[] marks = new double[5];
+
+                for (int i = 0; i < 5; i++) {
+                    int courseIndex = 4 + (i * 2); // Adjusted index after adding yearLevel field
+                    int scoreIndex = 5 + (i * 2);
+
+                    if (courseIndex < parts.length) {
+                        subjects[i] = parts[courseIndex].trim();
                     } else {
-                        try {
-                            marks[i] = Double.parseDouble(scoreStr);
-                        } catch (NumberFormatException e) {
-                            marks[i] = 0.0;
-                        }
+                        subjects[i] = "";
                     }
-                } else {
-                    marks[i] = 0.0;
+
+                    if (scoreIndex < parts.length) {
+                        String scoreStr = parts[scoreIndex].trim();
+                        if (scoreStr.equals("PENDING") || scoreStr.isEmpty()) {
+                            marks[i] = 0.0;
+                        } else {
+                            try {
+                                marks[i] = Double.parseDouble(scoreStr);
+                            } catch (NumberFormatException e) {
+                                marks[i] = 0.0;
+                            }
+                        }
+                    } else {
+                        marks[i] = 0.0;
+                    }
                 }
+
+                // Pass yearLevel as schoolYear parameter
+                Marksheet marksheet = new Marksheet(studentID, "", yearLevel, semester, subjects, marks);
+                allMarksheets.add(marksheet);
+            } catch (Exception e) {
+                System.out.println("Error processing marksheet line: " + line);
+                e.printStackTrace();
             }
-            
-            // Pass yearLevel as schoolYear parameter
-            Marksheet marksheet = new Marksheet(studentID, "", yearLevel, semester, subjects, marks);
-            allMarksheets.add(marksheet);
         });
     }
     

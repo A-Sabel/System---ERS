@@ -135,6 +135,39 @@ public class Marksheettab extends javax.swing.JPanel {
         for (Marksheet m : marksheets) {
             String[] subjects = m.getSubjects();
             double[] marks = m.getMarks();
+
+            // Compute semester and year/schoolYear
+            String semester = m.getSemester();
+            String yearLevel = m.getSchoolYear();
+
+            // Try to enrich with Student object if available
+            Student student = studentMap.get(m.getStudentID());
+            if (student != null) {
+                if (student.getYearLevel() != null && !student.getYearLevel().isEmpty()) {
+                    yearLevel = student.getYearLevel();
+                }
+            }
+
+            // Determine status (prefer Student.status when available, fall back to studentType)
+            String status = "UNKNOWN";
+            if (student != null) {
+                if (student.getStatus() != null && !student.getStatus().isEmpty()) {
+                    status = student.getStatus();
+                } else if (student.getStudentType() != null && !student.getStudentType().isEmpty()) {
+                    status = student.getStudentType();
+                }
+            }
+            if (status.equals("UNKNOWN")) {
+                status = getEnrollmentStatus(m.getStudentID(), semester, yearLevel);
+            }
+
+            // Apply status filter
+            if (selectedStatusFilter != null && !"All".equalsIgnoreCase(selectedStatusFilter)) {
+                if (status == null || !status.toLowerCase().contains(selectedStatusFilter.toLowerCase())) {
+                    continue; // skip this marksheet as it doesn't match filter
+                }
+            }
+
             // Calculate average
             double average = 0.0;
             int count = 0;
@@ -145,20 +178,24 @@ public class Marksheettab extends javax.swing.JPanel {
                 }
             }
             average = count > 0 ? average / count : 0.0;
-            Object[] row = new Object[15];
+
+            Object[] row = new Object[16];
             row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
-            row[1] = m.getStudentID();
-            // Add year level
-            Student student = studentMap.get(m.getStudentID());
-            row[2] = (student != null) ? student.getYearLevel() : "";
-            row[3] = m.getSemester();
-            // Add course-score pairs with course names
+            row[1] = m.getStudentID(); // keep Student ID in column 1 (used by TOR and other logic)
+            row[2] = semester; // Semester
+            row[3] = yearLevel; // Year Level / School Year
+            row[4] = status; // Status
+
+            // Course and score columns start at index 5
             for (int i = 0; i < 5; i++) {
-                String courseID = subjects[i] != null ? subjects[i] : "";
-                row[4 + (i * 2)] = getCourseName(courseID);
-                row[5 + (i * 2)] = marks[i] > 0 ? marks[i] : "";
+                String courseID = (subjects != null && subjects.length > i && subjects[i] != null) ? subjects[i] : "";
+                int courseIndex = 5 + (i * 2);
+                int scoreIndex = 6 + (i * 2);
+                row[courseIndex] = getCourseName(courseID);
+                row[scoreIndex] = (marks != null && marks.length > i && marks[i] > 0) ? marks[i] : "";
             }
-            row[14] = String.format("%.2f", average);
+
+            row[15] = String.format("%.2f", average);
             model.addRow(row);
         }
     }
@@ -254,17 +291,43 @@ public class Marksheettab extends javax.swing.JPanel {
     
     // Helper to add a row from file data array
     private void addFileRowToModel(javax.swing.table.DefaultTableModel model, String[] d) {
-        Object[] row = new Object[16]; // Increased from 15 to 16 for Status column
+        // Expecting file format: [0]=MRK ID, [1]=StudentID, [2]=Semester, [3]=YearLevel, [4]=Course1, [5]=Score1, ... [13]=Score5, [14]=GWA
+        Object[] row = new Object[16];
         row[0] = d[0]; // MRK ID
-        row[1] = getStudentNameWithID(d[1]); // Student Name (ID)
+        row[1] = d[1]; // Student ID (keep plain for other logic)
         row[2] = d[2]; // Semester
         row[3] = d[3]; // Year Level
-        row[4] = getEnrollmentStatus(d[1], d[2], d[3]); // Status (NEW)
-        for (int i = 0; i < 5; i++) {
-            row[5 + (i * 2)] = getCourseName(d[4 + (i * 2)]); // Shifted by 1
-            row[6 + (i * 2)] = d[5 + (i * 2)]; // Shifted by 1
+
+        // Determine status (prefer Student.status, then studentType)
+        String status = "UNKNOWN";
+        Student st = studentMap.get(d[1]);
+        if (st != null) {
+            if (st.getStatus() != null && !st.getStatus().isEmpty()) {
+                status = st.getStatus();
+            } else if (st.getStudentType() != null && !st.getStudentType().isEmpty()) {
+                status = st.getStudentType();
+            }
         }
-        row[15] = d[14]; // GPA (shifted from index 14 to 15)
+        if (status.equals("UNKNOWN")) {
+            status = getEnrollmentStatus(d[1], d[2], d[3]);
+        }
+        row[4] = status;
+
+        for (int i = 0; i < 5; i++) {
+            String courseID = (4 + (i * 2) < d.length) ? d[4 + (i * 2)] : "";
+            String score = (5 + (i * 2) < d.length) ? d[5 + (i * 2)] : "";
+            int courseIndex = 5 + (i * 2);
+            int scoreIndex = 6 + (i * 2);
+            row[courseIndex] = getCourseName(courseID);
+            row[scoreIndex] = (score != null && !score.isEmpty()) ? score : "";
+        }
+        row[15] = (d.length > 14) ? d[14] : ""; // GWA
+        // Apply status filter before adding
+        if (selectedStatusFilter != null && !"All".equalsIgnoreCase(selectedStatusFilter)) {
+            if (status == null || !status.toLowerCase().contains(selectedStatusFilter.toLowerCase())) {
+                return; // skip adding this row
+            }
+        }
         model.addRow(row);
     }
 
@@ -608,7 +671,7 @@ public class Marksheettab extends javax.swing.JPanel {
 
                 String name = student.getStudentName();
                 String yearLevel = student.getYearLevel();
-                String status = student.getStudentType();
+                String status = (student.getStatus() != null && !student.getStatus().isEmpty()) ? student.getStatus() : student.getStudentType();
                 
                 // Calculate averages for this student
                 double totalGwa = 0.0;
@@ -676,8 +739,8 @@ public class Marksheettab extends javax.swing.JPanel {
 
             // Group data by year level and semester
             for (int row = 0; row < model.getRowCount(); row++) {
-                String yearLevel = (String) model.getValueAt(row, 2);
-                String semester = (String) model.getValueAt(row, 3);
+                String semester = (String) model.getValueAt(row, 2);
+                String yearLevel = (String) model.getValueAt(row, 3);
 
                 if (yearLevel == null || yearLevel.isEmpty()) continue;
                 if (semester == null || semester.isEmpty()) continue;
@@ -768,8 +831,9 @@ public class Marksheettab extends javax.swing.JPanel {
         SearchbarID.setText("");
         // Reset GWA label
         GWA.setText("GWA: --");
-        // Reload all data to table
-        loadMarksheetTableData();
+        // Clear table rows (do not reload data)
+        javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
+        model.setRowCount(0);
     }
 
     private void logoutbuttonActionPerformed(java.awt.event.ActionEvent evt) {

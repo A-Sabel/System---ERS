@@ -9,8 +9,6 @@ import java.util.Set;
 
 
 public class Student {
-
-
     // identity
     private final String studentID;
     private String studentName;
@@ -26,22 +24,17 @@ public class Student {
     private Map<String, Double> semesterGWAs; // GWA for each semester (key: "1st Year-1st Semester")
     private String latinHonor; // Summa Cum Laude, Magna Cum Laude, Cum Laude, or empty
     private Set<String> completedCourses; // Set of course codes with PASSED status
-
     // contact information
     private String email;
     private String phoneNumber;
     private final String gender;
     private String address;
-
     // family information
     private String fathersName;
     private String mothersName;
     private String guardiansPhoneNumber;
-
-
     // generate student number
     private static int nextIdNum = 1;
-
     // active or graduate
     private String status;
 

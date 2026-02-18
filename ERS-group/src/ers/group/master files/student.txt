@@ -1,2 +1,2 @@
-STU-001,Ethan,24,2002-02-16,2nd Year,2,,Regular,Active,1.10,0.0,,,Male,,,,
+STU-001,Ethan,24,2002-02-16,2nd Year,2,,Regular,Graduate,1.10,0.0,,,Male,,,,
 STU-002,Eli,20,2006-02-17,1st Year,1,,Regular,Active,,0.0,,,Female,,,,

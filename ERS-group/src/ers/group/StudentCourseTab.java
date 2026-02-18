@@ -163,6 +163,13 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 }
             }
 
+            // 4.5️⃣ Save updated student statuses to file
+            try {
+                studentFileSaver.save(studentFilePath, students);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             // 5️⃣ Refresh table
             loadStudentTableData();
 

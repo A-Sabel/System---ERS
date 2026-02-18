@@ -26,13 +26,13 @@ public class Student {
     private Map<String, Double> semesterGWAs; // GWA for each semester (key: "1st Year-1st Semester")
     private String latinHonor; // Summa Cum Laude, Magna Cum Laude, Cum Laude, or empty
     private Set<String> completedCourses; // Set of course codes with PASSED status
-   
+
     // contact information
     private String email;
     private String phoneNumber;
     private final String gender;
     private String address;
-   
+
     // family information
     private String fathersName;
     private String mothersName;
@@ -47,7 +47,7 @@ public class Student {
 
     // constructors
     // Constructor for loading existing students from file (uses provided ID)
-    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
+    public Student(String studentID, String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, String status,ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = studentID;
         this.studentName = studentName;
         this.age = age;
@@ -56,6 +56,7 @@ public class Student {
         this.currentSemester = currentSemester;
         this.section = section;
         this.studentType = studentType;
+        this.status = status;
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
         this.cumulativeGWA = 0.0; // Will be calculated
@@ -70,9 +71,9 @@ public class Student {
         this.mothersName = mothersName;
         this.guardiansPhoneNumber = guardiansPhoneNumber;
     }
-   
+
     // Constructor for creating new students (generates new ID)
-    public Student(String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
+    public Student(String studentName, int age, String dob, String yearLevel, String currentSemester, String section, String studentType, String status, ArrayList<String> subjectsEnrolled, double gwa, String email, String phoneNumber, String gender, String address, String fathersName, String mothersName, String guardiansPhoneNumber) {
         this.studentID = generateNewID();
         this.studentName = studentName;
         this.age = age;
@@ -81,6 +82,7 @@ public class Student {
         this.currentSemester = currentSemester;
         this.section = section;
         this.studentType = studentType;
+        this.status = status;
         this.subjectsEnrolled = subjectsEnrolled;
         this.gwa = gwa;
         this.cumulativeGWA = 0.0; // Will be calculated

@@ -28,7 +28,7 @@ abstract class BaseFileLoader implements FileLoader {
             System.out.println("Error during file processing: " + e.getMessage());
         }
     }
-   
+    
     @FunctionalInterface
     protected interface LineProcessor {
         void processLine(String line);
@@ -38,7 +38,7 @@ abstract class BaseFileLoader implements FileLoader {
 
 class CourseSubjectFileLoader extends BaseFileLoader {
     private final Map<String, CourseSubject> subjectMap = new LinkedHashMap<>();
-   
+    
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
@@ -54,7 +54,7 @@ class CourseSubjectFileLoader extends BaseFileLoader {
             CourseSubject subject = new CourseSubject(id, name, units, count, isLab, yearLevel, semester);
             subjectMap.put(id, subject);
         });
-       
+        
         // prerequisites
         readFile(filePath, line -> {
             String[] parts = line.split(",");
@@ -74,11 +74,11 @@ class CourseSubjectFileLoader extends BaseFileLoader {
             }
         });
     }
-   
+    
     public Collection<CourseSubject> getAllSubjects() {
         return subjectMap.values();
     }
-   
+    
     public Map<String, CourseSubject> getSubjectMap() {
         return subjectMap;
     }
@@ -87,7 +87,7 @@ class CourseSubjectFileLoader extends BaseFileLoader {
 
 class TeacherFileLoader extends BaseFileLoader {
     private final Map<String, Teachers> teacherMap = new LinkedHashMap<>();
-   
+    
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
@@ -105,11 +105,11 @@ class TeacherFileLoader extends BaseFileLoader {
             teacherMap.put(id, teacher);
         });
     }
-   
+    
     public Collection<Teachers> getAllTeachers() {
         return teacherMap.values();
     }
-   
+    
     public Map<String, Teachers> getTeacherMap() {
         return teacherMap;
     }
@@ -118,7 +118,7 @@ class TeacherFileLoader extends BaseFileLoader {
 
 class RoomFileLoader extends BaseFileLoader {
     private final List<Rooms> allRooms = new ArrayList<>();
-   
+    
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
@@ -152,11 +152,11 @@ class RoomFileLoader extends BaseFileLoader {
 class SectionFileLoader extends BaseFileLoader {
     private final List<Section> allSections = new ArrayList<>();
     private final Map<String, CourseSubject> courseMap;
-   
+    
     public SectionFileLoader(Map<String, CourseSubject> courseMap) {
         this.courseMap = courseMap;
     }
-   
+    
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
@@ -181,11 +181,11 @@ class SectionFileLoader extends BaseFileLoader {
             allSections.add(section);
         });
     }
-   
+    
     public Collection<Section> getAllSections() {
         return allSections;
     }
-   
+    
     public Map<String, Section> getSectionMap() {
         Map<String, Section> sectionMap = new LinkedHashMap<>();
         for (Section section : allSections) {
@@ -198,7 +198,7 @@ class SectionFileLoader extends BaseFileLoader {
 
 class ScheduleFileLoader extends BaseFileLoader {
     private final List<Schedule> allSchedules = new ArrayList<>();
-   
+    
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
@@ -212,16 +212,16 @@ class ScheduleFileLoader extends BaseFileLoader {
             String startTime = parts[4].trim();
             String endTime = parts[5].trim();
             String teacherName = parts[6].trim();
-           
+            
             Schedule schedule = new Schedule(scheduleID, courseID, room, day, startTime, endTime, teacherName);
             allSchedules.add(schedule);
         });
     }
-   
+    
     public Collection<Schedule> getAllSchedules() {
         return allSchedules;
     }
-   
+    
     public Map<String, Schedule> getScheduleMap() {
         Map<String, Schedule> scheduleMap = new LinkedHashMap<>();
         for (Schedule schedule : allSchedules) {
@@ -234,7 +234,7 @@ class ScheduleFileLoader extends BaseFileLoader {
 
 class EnrollmentFileLoader extends BaseFileLoader {
     private final List<Enrollment> allEnrollments = new ArrayList<>();
-   
+    
     /**
      * Convert abbreviated semester format to full format for memory representation
      * 1 -> 1st Semester, 2 -> 2nd Semester, 3 -> Summer
@@ -247,7 +247,7 @@ class EnrollmentFileLoader extends BaseFileLoader {
             default: return abbrev; // Already in full format or unknown
         }
     }
-   
+    
     @Override
     public void load(String filePath) {
         allEnrollments.clear();
@@ -309,11 +309,11 @@ class EnrollmentFileLoader extends BaseFileLoader {
             }
         });
     }
-   
+    
     public Collection<Enrollment> getAllEnrollments() {
         return allEnrollments;
     }
-   
+    
     public Map<String, Enrollment> getEnrollmentMap() {
         Map<String, Enrollment> enrollmentMap = new LinkedHashMap<>();
         for (Enrollment enrollment : allEnrollments) {
@@ -328,7 +328,7 @@ class EnrollmentFileLoader extends BaseFileLoader {
 class StudentFileLoader extends BaseFileLoader {
     private final List<Student> allStudents = new ArrayList<>();
     private final Map<String, Student> studentMap = new LinkedHashMap<>(); // Deduplicate by ID
-   
+    
     /**
      * Convert abbreviated semester format to full format for memory representation
      * 1 -> 1st Semester, 2 -> 2nd Semester, 3 -> Summer
@@ -342,15 +342,15 @@ class StudentFileLoader extends BaseFileLoader {
             default: return abbrev; // Already in full format or unknown
         }
     }
-   
+    
     @Override
     public void load(String filePath) {
         studentMap.clear(); // Clear the map before loading
         readFile(filePath, line -> {
             String[] parts = line.split(",", -1); // -1 to preserve trailing empty strings
-            // Format: ID, Name, Age, DOB, YearLevel, CurrentSemester, Section, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
-            if (parts.length < 17) return;
-           
+            // Format: ID, Name, Age, DOB, YearLevel, CurrentSemester, Section, StudentType, Status, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
+            if (parts.length < 18) return;
+            
             try {
                 String id = parts[0].trim();
                 String name = parts[1].trim();
@@ -360,34 +360,36 @@ class StudentFileLoader extends BaseFileLoader {
                 String currentSemester = expandSemester(parts[5].trim()); // Expand compressed format
                 String section = parts[6].trim();
                 String studentType = parts[7].trim();
+                String status = parts[8].trim();
+
                 ArrayList<String> subjects = new ArrayList<>();
-                if (!parts[8].trim().isEmpty()) {
-                    String[] subjectList = parts[8].split(";");
+                if (!parts[9].trim().isEmpty()) {
+                    String[] subjectList = parts[9].split(";");
                     for (String subject : subjectList) {
                         subjects.add(subject.trim());
                     }
                 }
-               
+                
                 // Handle empty GWA field
                 double gwa = 0.0;
-                if (!parts[9].trim().isEmpty()) {
+                if (!parts[10].trim().isEmpty()) {
                     try {
-                        gwa = Double.parseDouble(parts[9].trim());
+                        gwa = Double.parseDouble(parts[10].trim());
                     } catch (NumberFormatException e) {
                         gwa = 0.0;
                     }
                 }
-               
-                String email = parts[10].trim();
-                String phoneNumber = parts[11].trim();
-                String gender = parts[12].trim();
-                String address = parts[13].trim();
-                String fathersName = parts[14].trim();
-                String mothersName = parts[15].trim();
-                String guardiansPhoneNumber = parts[16].trim();
-               
+                
+                String email = parts[11].trim();
+                String phoneNumber = parts[12].trim();
+                String gender = parts[13].trim();
+                String address = parts[14].trim();
+                String fathersName = parts[15].trim();
+                String mothersName = parts[16].trim();
+                String guardiansPhoneNumber = parts[17].trim();
+                
                 Student student = new Student(id, name, age, dob, yearLevel, currentSemester, section,
-                        studentType, subjects, gwa, email, phoneNumber, gender, address,
+                        studentType, status, subjects, gwa, email, phoneNumber, gender, address,
                         fathersName, mothersName, guardiansPhoneNumber);
                 
                 // Deduplicate: only keep the last occurrence of each student ID
@@ -403,11 +405,11 @@ class StudentFileLoader extends BaseFileLoader {
         allStudents.clear();
         allStudents.addAll(studentMap.values());
     }
-   
+    
     public Collection<Student> getAllStudents() {
         return allStudents;
     }
-   
+    
     public Map<String, Student> getStudentMap() {
         Map<String, Student> studentMap = new LinkedHashMap<>();
         for (Student student : allStudents) {
@@ -420,7 +422,7 @@ class StudentFileLoader extends BaseFileLoader {
 
 class MarksheetFileLoader extends BaseFileLoader {
     private final List<Marksheet> allMarksheets = new ArrayList<>();
-   
+    
     /**
      * Convert abbreviated semester format to full format for memory representation
      * 1 -> 1st Semester, 2 -> 2nd Semester, 3 -> Summer
@@ -433,27 +435,27 @@ class MarksheetFileLoader extends BaseFileLoader {
             default: return abbrev; // Already in full format or unknown
         }
     }
-   
+    
     @Override
     public void load(String filePath) {
         readFile(filePath, line -> {
             String[] parts = line.split(",");
             // Format: ID, StudentID, Semester, YearLevel, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
             if (parts.length < 14) return;
-           
+            
             String id = parts[0].trim();
             String studentID = parts[1].trim();
             String semester = expandSemester(parts[2].trim());
             String yearLevel = parts.length > 3 ? parts[3].trim() : ""; // Read year level from field 3
-           
+            
             // Extract 5 course-score pairs (starting from index 4 after yearLevel)
             String[] subjects = new String[5];
             double[] marks = new double[5];
-           
+            
             for (int i = 0; i < 5; i++) {
                 int courseIndex = 4 + (i * 2); // Adjusted index after adding yearLevel field
                 int scoreIndex = 5 + (i * 2);
-               
+                
                 if (courseIndex < parts.length) {
                     subjects[i] = parts[courseIndex].trim();
                 } else {
@@ -475,17 +477,17 @@ class MarksheetFileLoader extends BaseFileLoader {
                     marks[i] = 0.0;
                 }
             }
-           
+            
             // Pass yearLevel as schoolYear parameter
             Marksheet marksheet = new Marksheet(studentID, "", yearLevel, semester, subjects, marks);
             allMarksheets.add(marksheet);
         });
     }
-   
+    
     public Collection<Marksheet> getAllMarksheets() {
         return allMarksheets;
     }
-   
+    
     public Map<String, Marksheet> getMarksheetMap() {
         Map<String, Marksheet> marksheetMap = new LinkedHashMap<>();
         for (Marksheet marksheet : allMarksheets) {

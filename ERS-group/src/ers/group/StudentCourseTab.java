@@ -1562,7 +1562,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
             String fathersName = ST_FathersName.getText().trim();
             String mothersName = ST_MothersName.getText().trim();
             String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
-            
+            String status = "Active";
+
             // Get date of birth from spinner
             java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
@@ -1595,7 +1596,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             // Create new Student object (constructor without ID will auto-generate)
             // Default new students to 1st Semester
             Student newStudent = new Student(
-                name, age, dob, yearLevel, "1st Semester", section, studentType,
+                name, age, dob, yearLevel, "1st Semester", section, studentType, status,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
@@ -1676,6 +1677,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             String fathersName = ST_FathersName.getText().trim();
             String mothersName = ST_MothersName.getText().trim();
             String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
+            String status = "Active";
             
             // Get date of birth from spinner
             java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
@@ -1728,7 +1730,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             
             // Create updated Student object
             Student updatedStudent = new Student(
-                newID, name, age, dob, yearLevel, currentSemester, section, studentType,
+                newID, name, age, dob, yearLevel, currentSemester, section, studentType, status,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
@@ -2011,6 +2013,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
             String fathersName = ST_FathersName.getText().trim();
             String mothersName = ST_MothersName.getText().trim();
             String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
+            String status = "Active";
+
             java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
             String dob = sdf.format(dobDate);
@@ -2036,7 +2040,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
             // Create new student, default to 1st Semester
             Student newStudent = new Student(
-                name, age, dob, yearLevel, "1st Semester", section, studentType,
+                name, age, dob, yearLevel, "1st Semester", section, studentType, status,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );

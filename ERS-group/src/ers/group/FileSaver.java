@@ -7,9 +7,9 @@ public interface FileSaver {
 
 
 abstract class BaseFileSaver<T> implements FileSaver {
-   
+    
     protected abstract String formatLine(T item);
-   
+    
     @Override
     public void save(String filePath, java.util.List<?> data) throws java.io.IOException {
         try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(filePath))) {
@@ -24,7 +24,7 @@ abstract class BaseFileSaver<T> implements FileSaver {
             }
         }
     }
-   
+    
     protected void update(String filePath, java.util.List<T> data, java.util.function.Predicate<T> predicate, T updatedItem) throws java.io.IOException {
         for (int i = 0; i < data.size(); i++) {
             if (predicate.test(data.get(i))) {
@@ -34,7 +34,7 @@ abstract class BaseFileSaver<T> implements FileSaver {
         }
         save(filePath, data);
     }
-   
+    
     protected void delete(String filePath, java.util.List<T> data, java.util.function.Predicate<T> predicate) throws java.io.IOException {
         data.removeIf(predicate);
         save(filePath, data);
@@ -87,6 +87,7 @@ class StudentFileSaver extends BaseFileSaver<Student> {
         String subjects = String.join(";", s.getSubjectsEnrolled());
         String compressedSemester = compressSemester(s.getCurrentSemester());
         return String.join(",",
+        
             s.getStudentID(),
             s.getStudentName(),
             String.valueOf(s.getAge()),
@@ -95,6 +96,7 @@ class StudentFileSaver extends BaseFileSaver<Student> {
             compressedSemester, // Save compressed format (1, 2, or 3)
             s.getSection(),
             s.getStudentType(),
+            s.getStatus(),
             subjects,
             String.valueOf(s.getGwa()),
             s.getEmail(),
@@ -411,13 +413,13 @@ class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
     protected String formatLine(Marksheet m) {
         // Format: ID, StudentID, Semester, YearLevel, Course1, Score1, Course2, Score2, Course3, Score3, Course4, Score4, Course5, Score5, Average
         StringBuilder sb = new StringBuilder();
-       
+        
         // Generate ID (e.g., MRK-001)
         sb.append("MRK-").append(String.format("%03d", System.currentTimeMillis() % 1000)).append(",");
         sb.append(m.getStudentID()).append(",");
         sb.append(compressSemester(m.getSemester())).append(",");
         sb.append(m.getSchoolYear() != null ? m.getSchoolYear() : "").append(","); // Add YearLevel field
-       
+        
         // Add 5 course-score pairs
         String[] subjects = m.getSubjects();
         double[] marks = m.getMarks();
@@ -425,7 +427,7 @@ class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
             sb.append(subjects[i] != null ? subjects[i] : "").append(",");
             sb.append(marks[i]).append(",");
         }
-       
+        
         // Calculate and add average
         double average = 0.0;
         int count = 0;
@@ -437,10 +439,7 @@ class MarksheetFileSaver extends BaseFileSaver<Marksheet> {
         }
         average = count > 0 ? average / count : 0.0;
         sb.append(String.format("%.2f", average));
-       
+        
         return sb.toString();
     }
 }
-
-
-

@@ -307,24 +307,24 @@ public class AcademicUtilities {
      */
     public static void loadPrerequisites() {
         prerequisitesCache = new HashMap<>();
-        
-        try (BufferedReader br = new BufferedReader(new FileReader(
-                FilePathResolver.resolveCourseSubjectFilePath()))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(FilePathResolver.resolveCourseSubjectFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
                 if (parts.length >= 6) {
-                    String courseID = parts[0];
-                    String prereqStr = parts[5];
+                    String courseID = parts[0].trim();
+                    String prereqStr = parts[5].trim();
                     
-                    if (!prereqStr.equals("NONE") && !prereqStr.isEmpty()) {
+                    // Use equalsIgnoreCase to handle "NONE" in your file
+                    if (!prereqStr.equalsIgnoreCase("NONE") && !prereqStr.isEmpty()) {
+                        // Split CS202;CS204 into a list
                         prerequisitesCache.put(courseID, Arrays.asList(prereqStr.split(";")));
+                    } else {
+                        prerequisitesCache.put(courseID, new ArrayList<>());
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        } catch (Exception e) { e.printStackTrace(); }
     }
     
     /**
@@ -355,50 +355,47 @@ public class AcademicUtilities {
      * Get list of missing prerequisites for a course
      */
     public static List<String> getMissingPrerequisites(String studentID, String courseID) {
-        if (prerequisitesCache == null) {
-            loadPrerequisites();
-        }
+        if (prerequisitesCache == null) loadPrerequisites();
         
         List<String> required = prerequisitesCache.get(courseID);
-        if (required == null) return new ArrayList<>();
+        if (required == null || required.isEmpty()) return new ArrayList<>(); // CS205 case (NONE)
         
         Set<String> passed = getPassedCourses(studentID);
         List<String> missing = new ArrayList<>();
         
         for (String prereq : required) {
-            if (!passed.contains(prereq)) {
-                missing.add(prereq);
+            if (!passed.contains(prereq.trim())) {
+                missing.add(prereq.trim());
             }
         }
-        
         return missing;
     }
     
     private static Set<String> getPassedCourses(String studentID) {
         Set<String> passed = new HashSet<>();
-        
-        try (BufferedReader br = new BufferedReader(new FileReader(
-                FilePathResolver.resolveEnrollmentFilePath()))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                
-                if (parts.length >= 5 && parts[0].equals(studentID) && "PASSED".equals(parts[4])) {
-                    String[] courses = parts[1].split(";");
-                    for (String course : courses) {
-                        if (!course.trim().isEmpty()) {
-                            passed.add(course.trim());
+                // We ignore parts[4] ("FAILED") and target parts[7]
+                if (parts.length > 7 && parts[0].trim().equals(studentID)) {
+                    String detailedStatus = parts[7].trim();
+                    String[] entries = detailedStatus.split(";");
+                    for (String entry : entries) {
+                        if (entry.contains(":")) {
+                            String[] pair = entry.split(":");
+                            String cID = pair[0].trim();
+                            String status = pair[1].trim();
+                            if ("PASSED".equalsIgnoreCase(status)) {
+                                passed.add(cID);
+                            }
                         }
                     }
                 }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        
+        } catch (Exception e) { e.printStackTrace(); }
         return passed;
     }
-    
     // ==================== RETAKE MANAGEMENT ====================
     
     /**

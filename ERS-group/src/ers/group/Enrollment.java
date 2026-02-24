@@ -16,8 +16,37 @@ public class Enrollment {
     private String semester;
     private String status;
     private String academicYear;
-    private Map<String, String> courseStatuses; // Track individual course statuses: PASSED, FAILED, INC, DROPPED, PENDING
+    public Map<String, String> courseStatuses; // Track individual course statuses: PASSED, FAILED, INC, DROPPED, PENDING
 
+    public void loadDetailedStatusesFromString(String data) {
+        if (data == null || data.isEmpty()) return;
+        
+        // Clear the default "PENDING" statuses first
+        this.courseStatuses.clear();
+        
+        String[] entries = data.split(";");
+        for (String entry : entries) {
+            if (entry.contains(":")) {
+                String[] pair = entry.split(":");
+                if (pair.length == 2) {
+                    this.courseStatuses.put(pair[0].trim(), pair[1].trim());
+                }
+            }
+        }
+    }
+
+    public String getDetailedCourseStatuses() {
+        // This looks at the Map where you stored the ID:STATUS pairs
+        if (this.courseStatuses == null || this.courseStatuses.isEmpty()) {
+            return ""; 
+        }
+        StringBuilder sb = new StringBuilder();
+        for (java.util.Map.Entry<String, String> entry : this.courseStatuses.entrySet()) {
+            if (sb.length() > 0) sb.append(";");
+            sb.append(entry.getKey()).append(":").append(entry.getValue());
+        }
+        return sb.toString();
+    }
 
     public Enrollment(String enrollmentID, String studentID, String courseID, String yearLevel, String semester, String status) {
         if (enrollmentID == null || enrollmentID.isEmpty()) {

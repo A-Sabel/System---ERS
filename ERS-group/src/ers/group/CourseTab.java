@@ -114,6 +114,7 @@ public class CourseTab extends JPanel {
         }
     }
 
+    
     private void loadEnrollmentData() {
         try {
             String[] possiblePaths = {
@@ -622,17 +623,14 @@ public class CourseTab extends JPanel {
     }
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
-        // Validate required fields
+        // 1. Basic Student and Semester Validation
         String studentID = CT_StudentID.getText().trim();
         String semesterStr = (String) CT_Semester.getSelectedItem();
         if (studentID.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Please enter a Student ID!", 
-                "Validation Error", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Please enter a Student ID!", "Validation Error", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-        // Find the student
+
         Student student = null;
         for (Student s : students) {
             if (s.getStudentID().equals(studentID)) {
@@ -640,307 +638,125 @@ public class CourseTab extends JPanel {
                 break;
             }
         }
+        
         if (student == null) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Student ID not found!", 
-                "Validation Error", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Student ID not found!", "Validation Error", javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-        int semester = semesterStr.equals("1st Semester") ? 1 : 2;
-        String yearLevel = student.getYearLevel();
-        int year = yearLevel.equals("1st Year") ? 1 : 2;
-        // Collect selected courses
+
+        if ("Graduate".equalsIgnoreCase(student.getStatus())) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Graduate students are not allowed to enroll.", "Enrollment Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // 2. Prepare Collection for Valid Courses
         String[] selectedCourseNames = {
-            (String) CT_Course1.getSelectedItem(),
-            (String) CT_Course2.getSelectedItem(),
-            (String) CT_Course3.getSelectedItem(),
-            (String) CT_Course4.getSelectedItem(),
+            (String) CT_Course1.getSelectedItem(), (String) CT_Course2.getSelectedItem(),
+            (String) CT_Course3.getSelectedItem(), (String) CT_Course4.getSelectedItem(),
             (String) CT_Course5.getSelectedItem()
         };
+
         ArrayList<CourseSubject> coursesToEnroll = new ArrayList<>();
         StringBuilder validationErrors = new StringBuilder();
-        StringBuilder enrollmentSummary = new StringBuilder();
-        enrollmentSummary.append("Enrollment Summary:\n\n");
-        // Validate and collect courses
+        java.util.HashSet<String> duplicateCheckSet = new java.util.HashSet<>();
+        String yearLevel = student.getYearLevel();
+
+        // 3. THE GATEKEEPER LOOP
         for (String courseName : selectedCourseNames) {
-            if (courseName == null || courseName.isEmpty() || courseName.startsWith("-- Select")) {
+            if (courseName == null || courseName.isEmpty() || courseName.startsWith("-- Select")) continue;
+
+            if (!duplicateCheckSet.add(courseName)) {
+                validationErrors.append("- ").append(courseName).append(": Duplicate selection.\n");
                 continue;
             }
-            // Find course by name
+
             CourseSubject course = findCourseByName(courseName);
-            if (course == null) {
-                validationErrors.append("- ").append(courseName).append(": Course not found\n");
+            if (course == null) continue;
+
+            AcademicUtilities.loadPrerequisites();
+            java.util.List<String> missingPrereqs = AcademicUtilities.getMissingPrerequisites(studentID, course.getCourseSubjectID());
+            
+            if (!missingPrereqs.isEmpty()) {
+                validationErrors.append("- ").append(courseName).append(": Missing prereqs (").append(String.join(", ", missingPrereqs)).append(")\n");
                 continue;
             }
-            // Check if already enrolled
-            boolean alreadyEnrolled = false;
-            for (Enrollment e : enrollments) {
-                if (e.getStudentID().equals(studentID) && 
-                    e.getCourseID().equals(course.getCourseSubjectID()) &&
-                    e.getStatus().equals("ENROLLED")) {
-                    alreadyEnrolled = true;
-                    break;
+
+            if ("Summer".equalsIgnoreCase(semesterStr)) {
+                boolean isValidSummerSubject = false;
+                for (Enrollment e : enrollments) {
+                    if (e.getStudentID().equals(studentID)) {
+                        String status = e.getCourseStatus(course.getCourseSubjectID());
+                        if ("FAILED".equalsIgnoreCase(status) || "DROPPED".equalsIgnoreCase(status)) {
+                            isValidSummerSubject = true;
+                            break;
+                        }
+                    }
                 }
-            }
-            if (alreadyEnrolled) {
-                validationErrors.append("- ").append(courseName).append(": Already enrolled\n");
-                continue;
-            }
-            // Check prerequisites using AcademicUtilities for detailed feedback
-            ArrayList<CourseSubject> prereqs = course.getPrerequisites();
-            if (!prereqs.isEmpty()) {
-                AcademicUtilities.loadPrerequisites();
-                // Get detailed missing prerequisites
-                java.util.List<String> missingPrereqs = AcademicUtilities.getMissingPrerequisites(studentID, course.getCourseSubjectID());
-                if (!missingPrereqs.isEmpty()) {
-                    validationErrors.append("- ").append(courseName).append(": Missing prerequisites: ")
-                                .append(String.join(", ", missingPrereqs)).append("\n");
+                if (!isValidSummerSubject) {
+                    validationErrors.append("- ").append(courseName).append(": Only failed/dropped allowed in Summer.\n");
                     continue;
                 }
             }
             coursesToEnroll.add(course);
         }
-        // Check if any courses were selected
-        if (coursesToEnroll.isEmpty() && validationErrors.length() == 0) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Please select at least one course to enroll!", 
-                "No Courses Selected", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
+
+        if (coursesToEnroll.isEmpty()) {
+            String msg = validationErrors.length() > 0 ? "Blocked:\n" + validationErrors.toString() : "Select a course.";
+            javax.swing.JOptionPane.showMessageDialog(this, msg, "Enrollment Failed", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
         }
-        if (validationErrors.length() > 0) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Enrollment validation errors:\n\n" + validationErrors.toString(), 
-                "Validation Errors", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
-            
-            if (coursesToEnroll.isEmpty()) {
-                return;
-            }
-        }
-        // Enroll in courses
+
+        // 5. THE ENROLLMENT PHASE (Unified Record)
         int successCount = 0;
-        java.util.ArrayList<String> schedulingConflicts = new java.util.ArrayList<>();
+        StringBuilder courseIDsBuilder = new StringBuilder();
+        StringBuilder sectionsBuilder = new StringBuilder();
+        StringBuilder summary = new StringBuilder("Enrollment Summary for " + studentID + ":\n\n"); // FIXED: Added summary
+
         for (CourseSubject course : coursesToEnroll) {
             try {
-                String enrollmentID = Enrollment.generateEnrollmentID();
                 String sectionID = Schedule.assignSection(course.getCourseSubjectID(), studentID, MAX_SECTION_CAPACITY, course.isLabRoom(), course.getUnits());
-                logger.info("Assigning section " + sectionID + " for course " + course.getCourseSubjectID());
                 Schedule.cacheStudentSectionAssignment(studentID, sectionID);
-                // Assign schedule to section if not already assigned (duration based on units)
-                // Pass studentID to prevent double-booking this student in multiple classes
-                Schedule.assignScheduleToSection(sectionID, course.getCourseSubjectID(), course.isLabRoom(), course.getUnits(), studentID);
-                logger.info("Schedule assigned for " + course.getCourseSubjectID() + " in section " + sectionID);
-                // Create enrollment record
-                Enrollment newEnrollment = new Enrollment(
-                    enrollmentID, 
-                    studentID, 
-                    course.getCourseSubjectID(), 
-                    yearLevel, 
-                    semesterStr, 
-                    "ENROLLED"
-                );
-                newEnrollment.setSectionID(sectionID);
-                // Check for duplicates before adding - prevent enrolling in ALREADY ENROLLED or PASSED courses
-                boolean duplicateExists = false;
-                for (int i = 0; i < enrollments.size(); i++) {
-                    Enrollment e = enrollments.get(i);
-                    if (e.getStudentID().equals(studentID) && 
-                        e.getCourseID().equals(course.getCourseSubjectID()) &&
-                        (e.getStatus().equals("ENROLLED") || e.getStatus().equals("PASSED"))) {
-                        duplicateExists = true;
-                        logger.warning("Cannot enroll in " + course.getCourseSubjectID() + " - already " + e.getStatus());
-                        break;
-                    }
+                
+                if (courseIDsBuilder.length() > 0) {
+                    courseIDsBuilder.append(";");
+                    sectionsBuilder.append(";");
                 }
-                if (!duplicateExists) {
-                    enrollments.add(newEnrollment);
-                    logger.info("Added new enrollment: " + enrollmentID + " for " + studentID + " in " + course.getCourseSubjectID());
-                } else {
-                    logger.warning("Duplicate enrollment detected and prevented: " + studentID + " in " + course.getCourseSubjectID());
-                }
-                enrollmentSummary.append(String.format("%s - %s\n  Section: %s\n  Status: ENROLLED\n\n", 
-                    course.getCourseSubjectID(), 
-                    course.getCourseSubjectName(), 
-                    sectionID));
+                courseIDsBuilder.append(course.getCourseSubjectID());
+                sectionsBuilder.append(sectionID);
+                summary.append(course.getCourseSubjectID()).append(" (").append(sectionID).append(")\n");
+                
                 successCount++;
-            } catch (Schedule.SchedulingConflictException e) {
-                // Critical scheduling failure - cannot schedule due to resource shortage
-                String conflictMsg = String.format("%s - %s:\n   ⚠ SCHEDULING CONFLICT: %s\n   Requested: %d hours | Scheduled: %.1f hours\n",
-                    course.getCourseSubjectID(),
-                    course.getCourseSubjectName(),
-                    e.getReason(),
-                    e.getUnitsRequested(),
-                    e.getUnitsScheduled());
-                schedulingConflicts.add(conflictMsg);
-                validationErrors.append("- ").append(course.getCourseSubjectName())
-                    .append(": Cannot schedule - ").append(e.getReason()).append("\n");
-                logger.severe("Scheduling conflict for " + course.getCourseSubjectID() + ": " + e.getMessage());
-                
-            } catch (Schedule.SectionFullException e) {
-                validationErrors.append("- ").append(course.getCourseSubjectName())
-                    .append(": All sections are full (max 3 sections)\n");
             } catch (Exception e) {
-                validationErrors.append("- ").append(course.getCourseSubjectName())
-                    .append(": ").append(e.getMessage()).append("\n");
+                validationErrors.append("- ").append(course.getCourseSubjectID()).append(": ").append(e.getMessage()).append("\n");
             }
         }
-        // Display critical scheduling conflicts notification
-        if (!schedulingConflicts.isEmpty()) {
-            StringBuilder conflictNotification = new StringBuilder();
-            conflictNotification.append("⚠️ CRITICAL SCHEDULING CONFLICTS DETECTED ⚠️\n\n");
-            conflictNotification.append("The following courses CANNOT be scheduled due to resource shortages:\n\n");
-            for (String conflict : schedulingConflicts) {
-                conflictNotification.append(conflict).append("\n");
-            }
-            
-            conflictNotification.append("\n📋 ACTION REQUIRED:\n");
-            conflictNotification.append("• Add more rooms or teachers\n");
-            conflictNotification.append("• Adjust existing schedules to free up time slots\n");
-            conflictNotification.append("• Contact the academic coordinator\n\n");
-            conflictNotification.append("Successfully enrolled courses: ").append(successCount).append("\n");
-            conflictNotification.append("Failed to schedule: ").append(schedulingConflicts.size());
-            
-            javax.swing.JOptionPane.showMessageDialog(this,
-                conflictNotification.toString(),
-                "⚠️ Scheduling Conflicts - Registrar Alert",
-                javax.swing.JOptionPane.WARNING_MESSAGE);
-        }
-        // Update student's subjectsEnrolled list
-        if (successCount > 0) {
-            java.util.ArrayList<String> currentEnrollments = student.getSubjectsEnrolled();
-            if (currentEnrollments == null) {
-                currentEnrollments = new java.util.ArrayList<>();
-                student.setSubjectsEnrolled(currentEnrollments);
-            }
-            for (CourseSubject course : coursesToEnroll) {
-                String courseID = course.getCourseSubjectID();
-                if (!currentEnrollments.contains(courseID)) {
-                    currentEnrollments.add(courseID);
-                }
-            }
-            try {
-                studentFileSaver.save(studentFilePath, students);
-                logger.info("Updated student enrollments for " + studentID);
-            } catch (Exception e) {
-                logger.severe("Error updating student enrollments: " + e.getMessage());
-            }
-        }
-        // Save enrollments (only if we have new enrollments)
-        if (successCount > 0) {
-            try {
-                String[] paths = {
-                    "ERS-group/src/ers/group/master files/enrollment.txt",
-                    "src/ers/group/master files/enrollment.txt",
-                    "master files/enrollment.txt",
-                    "enrollment.txt"
-                };
-                String savePath = FilePathResolver.resolveWritablePath(paths);
-                // Remove any duplicate enrollments before saving (using basic Java only, no APIs)
-                java.util.HashSet<String> seen = new java.util.HashSet<String>();
-                java.util.ArrayList<Enrollment> uniqueEnrollments = new java.util.ArrayList<Enrollment>();
-                
-                for (int i = 0; i < enrollments.size(); i++) {
-                    Enrollment e = enrollments.get(i);
-                    String key = e.getStudentID() + "-" + e.getCourseID() + "-" + e.getStatus();
-                    if (!seen.contains(key)) {
-                        seen.add(key);
-                        uniqueEnrollments.add(e);
-                    }
-                }
-                enrollments = uniqueEnrollments;
-                
-                // SYNC COURSE STATUSES WITH GRADES BEFORE SAVING
-                // This ensures course statuses always reflect actual grades in marksheet.txt
-                // Note: The FileSaver will preserve PASSED/FAILED/INC statuses from the file
-                // Update course statuses directly in the enrollments list
-                java.util.Set<String> processedCombos = new java.util.HashSet<>();
-                for (Enrollment e : enrollments) {
-                    String combo = e.getStudentID() + "|" + e.getSemester() + "|" + e.getYearLevel();
-                    if (!processedCombos.contains(combo)) {
-                        processedCombos.add(combo);
-                        // Update course statuses in memory for this student/semester/year
-                        try {
-                            // Find matching marksheet and update statuses
-                            String marksheetPath = FilePathResolver.resolveFilePath(new String[]{
-                                "ERS-group/src/ers/group/master files/marksheet.txt",
-                                "src/ers/group/master files/marksheet.txt",
-                                "master files/marksheet.txt",
-                                "marksheet.txt"
-                            });
-                            MarksheetFileLoader marksheetLoader = new MarksheetFileLoader();
-                            marksheetLoader.load(marksheetPath);
-                            
-                            // Find matching marksheet
-                            for (Object obj : marksheetLoader.getAllMarksheets()) {
-                                Marksheet m = (Marksheet) obj;
-                                if (m.getStudentID().equals(e.getStudentID()) && 
-                                    m.getSemester().equals(e.getSemester()) && 
-                                    m.getSchoolYear().equals(e.getYearLevel())) {
-                                    
-                                    // Update course statuses based on grades
-                                    String[] subjects = m.getSubjects();
-                                    double[] marks = m.getMarks();
-                                    for (int i = 0; i < subjects.length && i < marks.length; i++) {
-                                        if (subjects[i] != null && !subjects[i].isEmpty() && marks[i] > 0.0) {
-                                            // Find all enrollments for this course and update status
-                                            for (Enrollment enr : enrollments) {
-                                                if (enr.getStudentID().equals(e.getStudentID()) &&
-                                                    enr.getSemester().equals(e.getSemester()) &&
-                                                    enr.getYearLevel().equals(e.getYearLevel()) &&
-                                                    enr.getCourseID().equals(subjects[i])) {
-                                                    enr.updateCourseStatusFromGrade(subjects[i], marks[i]);
-                                                }
-                                            }
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        } catch (Exception ex) {
-                            // If no grades exist yet, that's fine - statuses will remain PENDING
-                            logger.info("No grades found for " + combo + " - course statuses remain PENDING");
-                        }
-                    }
-                }
-                
-                enrollmentFileSaver.saveEnrollmentsByStudent(savePath, enrollments);
-                logger.info("Saved " + enrollments.size() + " unique enrollment records with synced course statuses");
-                // Auto-generate marksheet record with pending grades
-                java.util.List<String> enrolledCourseIds = getEnrolledCoursesForStudent(studentID, semesterStr, yearLevel);
-                if (!enrolledCourseIds.isEmpty()) {
-                    autoGenerateMarksheetRecord(studentID, semesterStr, yearLevel, enrolledCourseIds);
-                } else {
-                    logger.warning("No enrolled courses found for marksheet generation: " + studentID);
-                }
-                Schedule.clearStudentSectionCache();
-            } catch (Exception e) {
-                logger.severe("Error saving enrollments: " + e.getMessage());
-            }
-        }
-        // Show result
-        if (successCount > 0) {
-            enrollmentSummary.append("Successfully enrolled in " + successCount + " course(s)!");
-            loadStudentData();
-            loadStudentTableData();
-            CT_LoadCoursesActionPerformed(null);
-            loadEnrollmentData();
 
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                enrollmentSummary.toString(), 
-                "Enrollment Success", 
-                javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            clearCourseForm();
-        } else {
-            Schedule.clearStudentSectionCache();
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "No courses were enrolled.\n\n" + validationErrors.toString(), 
-                "Enrollment Failed", 
-                javax.swing.JOptionPane.ERROR_MESSAGE);
-        }
-    }
-    
+        // 6. FINAL SAVE AND REFRESH
+        if (successCount > 0) {
+            try {
+                Enrollment newEnrollment = new Enrollment(Enrollment.generateEnrollmentID(), studentID, courseIDsBuilder.toString(), yearLevel, semesterStr, "ENROLLED");
+                newEnrollment.setSectionID(sectionsBuilder.toString());
+                enrollments.add(newEnrollment);
+
+                // Save to Student File
+                student.getSubjectsEnrolled().addAll(coursesToEnroll.stream().map(CourseSubject::getCourseSubjectID).collect(java.util.stream.Collectors.toList()));
+                studentFileSaver.save(studentFilePath, students);
+                
+                // Save to Enrollment File
+                String savePath = FilePathResolver.resolveWritablePath(new String[]{"master files/enrollment.txt", "enrollment.txt"});
+                enrollmentFileSaver.saveEnrollmentsByStudent(savePath, enrollments);
+                
+                javax.swing.JOptionPane.showMessageDialog(this, summary.toString() + "\nSuccessfully Enrolled!", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                
+                loadStudentData();
+                loadStudentTableData();
+                clearCourseForm();
+            } catch (Exception e) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Save Error: " + e.getMessage());
+            }
+        } // End successCount
+    } // End Method
+        
     /**
      * Format course display name with status prefix and capacity info.
      * Ensures consistent formatting across all dropdown operations.
@@ -1237,12 +1053,13 @@ public class CourseTab extends JPanel {
      */
     private void autoLoadCoursesIfValid() {
         String studentID = CT_StudentID.getText().trim();
-        // If student ID is empty or too short, clear dropdowns and return
+        String currentSemester = (String) CT_Semester.getSelectedItem(); // This holds "Summer", "1st", etc.
+
         if (studentID.isEmpty() || studentID.length() < 3) {
             clearCourseDropdowns();
             return;
         }
-        // Find the student
+
         Student student = null;
         for (Student s : students) {
             if (s.getStudentID().equals(studentID)) {
@@ -1250,15 +1067,61 @@ public class CourseTab extends JPanel {
                 break;
             }
         }
-        // If student not found, clear dropdowns and return silently
+
         if (student == null) {
             clearCourseDropdowns();
             return;
         }
-        // Student found - load courses silently
-        loadCoursesForStudent(student, false);
+
+        // RULE 4.1: Block Graduate Students
+        if ("Graduate".equalsIgnoreCase(student.getStatus())) {
+            clearCourseDropdowns();
+            javax.swing.JOptionPane.showMessageDialog(this, "Graduate students cannot enroll.");
+            return;
+        }
+
+        // UPDATED: Pass the currentSemester to the loader
+        // You likely need to update the signature of loadCoursesForStudent to accept the semester string
+        loadCoursesForStudent(student, currentSemester); 
     }
-    
+
+    private void loadFilteredCourses(Student student, boolean isSummer) {
+        clearCourseDropdowns();
+        
+        // 1. Refresh prerequisites from file to ensure data is current
+        AcademicUtilities.loadPrerequisites();
+
+        for (CourseSubject course : availableCourses.values()) {
+            if (isSummer) {
+                // SUMMER RULES: Only show Failed or Dropped subjects
+                boolean hasFailedOrDropped = false;
+                for (Enrollment e : enrollments) {
+                    if (e.getStudentID().equals(student.getStudentID()) && 
+                        e.getCourseID().contains(course.getCourseSubjectID())) {
+                        
+                        String status = e.getCourseStatus(course.getCourseSubjectID());
+                        if ("FAILED".equalsIgnoreCase(status) || "DROPPED".equalsIgnoreCase(status)) {
+                            hasFailedOrDropped = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasFailedOrDropped) {
+                    addItemToAllDropdowns(course.getCourseSubjectName()); // Use Name for the ComboBox
+                }
+
+            } else {
+                // REGULAR SEMESTER: Show all courses for their current Year Level
+                // We show everything so they can see what they are missing!
+                int studentYearNum = Integer.parseInt(student.getYearLevel().replaceAll("[^0-9]", ""));
+                
+                if (course.getYearLevel() == studentYearNum) {
+                    addItemToAllDropdowns(course.getCourseSubjectName());
+                }
+            }
+        }
+    }
+
     /**
      * Clear all course dropdowns to default state.
      */
@@ -1279,14 +1142,23 @@ public class CourseTab extends JPanel {
     private void CT_LoadCoursesActionPerformed(java.awt.event.ActionEvent evt) {
         String studentID = CT_StudentID.getText().trim();
         String semesterStr = (String) CT_Semester.getSelectedItem();
+        
         if (studentID.isEmpty()) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Please enter a Student ID first!", 
-                "Validation Error", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Please enter a Student ID first!");
             return;
         }
-        // Find the student
+
+        // 1. REFRESH ENROLLMENT LIST FROM FILE
+        // This ensures that any FAILED or PASSED statuses just saved are actually seen
+        try {
+            String savePath = FilePathResolver.resolveWritablePath(new String[]{"master files/enrollment.txt", "enrollment.txt"});
+            // Use your existing loader to update the global 'enrollments' list
+            this.enrollments = enrollmentFileLoader.load(savePath); 
+        } catch (Exception e) {
+            System.err.println("Note: Could not refresh enrollment list: " + e.getMessage());
+        }
+
+        // 2. Find the student
         Student student = null;
         for (Student s : students) {
             if (s.getStudentID().equals(studentID)) {
@@ -1294,13 +1166,13 @@ public class CourseTab extends JPanel {
                 break;
             }
         }
+
         if (student == null) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Student ID not found!", 
-                "Validation Error", 
-                javax.swing.JOptionPane.WARNING_MESSAGE);
+            javax.swing.JOptionPane.showMessageDialog(this, "Student ID not found!");
             return;
         }
+
+        // 3. Load logic (now with fresh data)
         loadCoursesForStudent(student, true);
     }
     
@@ -1309,117 +1181,150 @@ public class CourseTab extends JPanel {
      * @param student The student object
      * @param showDialog Whether to show confirmation dialog after loading
      */
-    private void loadCoursesForStudent(Student student, boolean showDialog) {
-        String studentID = student.getStudentID();
-        String semesterStr = (String) CT_Semester.getSelectedItem();
-        int semester = semesterStr.equals("1st Semester") ? 1 : 2;
-        String yearLevel = student.getYearLevel();
-        int year = yearLevel.equals("1st Year") ? 1 : 2;
-        // Load courses for the student's year and semester with capacity and status info
-        java.util.List<String> courseNames = new java.util.ArrayList<>();
-        courseNames.add("-- Select Course --");
-        java.util.ArrayList<String> enrolledSubjects = student.getSubjectsEnrolled();
-        for (CourseSubject course : availableCourses.values()) {
-            if (course.getYearLevel() == year && course.getSemester() == semester) {
-                String courseID = course.getCourseSubjectID();
-                // Determine status
-                String statusPrefix = "[A] ";
-                if (enrolledSubjects != null && enrolledSubjects.contains(courseID)) {
-                    statusPrefix = "[/] ";
-                } else {
-                    // Check prerequisites
-                    java.util.ArrayList<CourseSubject> prereqs = course.getPrerequisites();
-                    if (!prereqs.isEmpty()) {
-                        boolean hasAllPrereqs = checkPrerequisites(studentID, prereqs);
-                        if (!hasAllPrereqs) {
-                            statusPrefix = "[X] ";
+        private void loadCoursesForStudent(Student student, boolean showDialog) {
+            String studentID = student.getStudentID().trim();
+            String semesterStr = (String) CT_Semester.getSelectedItem();
+            boolean isSummer = "Summer".equalsIgnoreCase(semesterStr);
+            
+            int studentYear = Integer.parseInt(student.getYearLevel().replaceAll("[^0-9]", ""));
+
+            java.util.List<String> courseNames = new java.util.ArrayList<>();
+            courseNames.add("-- Select Course --");
+
+            // 1. SCAN TOTAL HISTORY (Added .trim() and .toUpperCase() for safety)
+            for (Enrollment e : enrollments) {
+                if (e.getStudentID().trim().equalsIgnoreCase(studentID)) {
+                    String detailedStatus = e.getDetailedCourseStatuses(); 
+                    if (detailedStatus != null && !detailedStatus.isEmpty()) {
+                        String[] entries = detailedStatus.split(";");
+                        for (String entry : entries) {
+                            if (entry.contains(":")) {
+                                String[] pair = entry.split(":");
+                                // Use trim and uppercase to prevent "cs101" vs "CS101" bugs
+                                String cID = pair[0].trim().toUpperCase();
+                                String status = pair[1].trim().toUpperCase();
+                                
+                                if ("PASSED".equals(status)) {
+                                    allPassed.add(cID);
+                                    currentlyFailed.remove(cID); 
+                                } else if ("FAILED".equals(status) || "DROPPED".equals(status)) {
+                                    if (!allPassed.contains(cID)) {
+                                        currentlyFailed.add(cID);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
-                // Calculate current enrollment for this course
-                int enrolledCount = 0;
-                for (Enrollment e : enrollments) {
-                    if (e.getCourseID().equals(courseID) && 
-                        e.getStatus().equals("ENROLLED")) {
-                        enrolledCount++;
+            }
+
+            // 2. APPLY RULES
+            for (CourseSubject course : availableCourses.values()) {
+                boolean canShow = false;
+                String currentCourseID = course.getCourseSubjectID().trim().toUpperCase();
+
+                if (isSummer) {
+                    // STRICT SUMMER: If it's not in the failed set, don't show it. Period.
+                    if (currentlyFailed.contains(currentCourseID)) {
+                canShow = true;
+                    }
+                } else {
+                    // REGULAR SEMESTER: Use Year and Mapped Semester (1 or 2)
+                    String mappedSem = semesterStr.contains("1st") ? "1" : "2";
+                    
+                    if (course.getYearLevel() == studentYear && course.getSemester().equals(mappedSem)) {
+                        // Don't show if already passed
+                        if (!allPassed.contains(course.getCourseSubjectID())) {
+                            // Check Prerequisites
+                            if (AcademicUtilities.getMissingPrerequisites(studentID, course.getCourseSubjectID()).isEmpty()) {
+                                canShow = true;
+                            }
+                        }
                     }
                 }
-                // Max capacity: 3 sections * 5 students = 15
-                int maxCapacity = MAX_SECTION_CAPACITY * 3;
-                // Format course name with status and capacity indicator
-                String displayName;
-                if (enrolledCount >= maxCapacity) {
-                    displayName = statusPrefix + course.getCourseSubjectName() + " [FULL - " + enrolledCount + "/" + maxCapacity + "]";
-                } else {
-                    displayName = statusPrefix + course.getCourseSubjectName() + " (" + enrolledCount + "/" + maxCapacity + ")";
+
+                // 3. POPULATE LIST
+                if (canShow) {
+                    int enrolledCount = 0;
+                    for (Enrollment e : enrollments) {
+                        if (e.getCourseID().contains(course.getCourseSubjectID()) && "ENROLLED".equals(e.getStatus())) {
+                            enrolledCount++;
+                        }
+                    }
+                    int maxCap = MAX_SECTION_CAPACITY * 3;
+                    courseNames.add(course.getCourseSubjectID() + " (" + enrolledCount + "/" + maxCap + ")");
                 }
-                courseNames.add(displayName);
+            }
+
+            // 4. UPDATE UI
+            javax.swing.DefaultComboBoxModel<String> model = new javax.swing.DefaultComboBoxModel<>(courseNames.toArray(new String[0]));
+            CT_Course1.setModel(model);
+            CT_Course2.setModel(new javax.swing.DefaultComboBoxModel<>(courseNames.toArray(new String[0])));
+            CT_Course3.setModel(new javax.swing.DefaultComboBoxModel<>(courseNames.toArray(new String[0])));
+            CT_Course4.setModel(new javax.swing.DefaultComboBoxModel<>(courseNames.toArray(new String[0])));
+            CT_Course5.setModel(new javax.swing.DefaultComboBoxModel<>(courseNames.toArray(new String[0])));
+            
+            if (showDialog && courseNames.size() <= 1) {
+                String msg = isSummer ? "No failed subjects found to retake." : "No available courses for " + student.getYearLevel() + " " + semesterStr;
+                javax.swing.JOptionPane.showMessageDialog(this, msg);
             }
         }
-        // Update all course dropdowns
-        String[] coursesArray = courseNames.toArray(new String[0]);
-        CT_Course1.setModel(new javax.swing.DefaultComboBoxModel<>(coursesArray));
-        CT_Course2.setModel(new javax.swing.DefaultComboBoxModel<>(coursesArray));
-        CT_Course3.setModel(new javax.swing.DefaultComboBoxModel<>(coursesArray));
-        CT_Course4.setModel(new javax.swing.DefaultComboBoxModel<>(coursesArray));
-        CT_Course5.setModel(new javax.swing.DefaultComboBoxModel<>(coursesArray));
-        // Clear prerequisite status
-        CT_PrereqStatus1.setText("");
-        CT_PrereqStatus2.setText("");
-        CT_PrereqStatus3.setText("");
-        CT_PrereqStatus4.setText("");
-        CT_PrereqStatus5.setText("");
-        // Only show dialog if requested
-        if (showDialog) {
-            javax.swing.JOptionPane.showMessageDialog(this, 
-                "Loaded " + (courseNames.size() - 1) + " available courses for " + yearLevel + ", Semester " + semester, 
-                "Courses Loaded", 
-                javax.swing.JOptionPane.INFORMATION_MESSAGE);
-        }
-    }
 
+
+    private void addItemToAllDropdowns(String courseID) {
+        CT_Course1.addItem(courseID);
+        CT_Course2.addItem(courseID);
+        CT_Course3.addItem(courseID);
+        CT_Course4.addItem(courseID);
+        CT_Course5.addItem(courseID);
+    }
     private void updatePrerequisiteStatus(javax.swing.JComboBox<String> courseCombo, javax.swing.JLabel statusLabel) {
-        String selectedCourse = (String) courseCombo.getSelectedItem();
-        if (selectedCourse == null || selectedCourse.equals("-- Select Course --")) {
+        String selectedItem = (String) courseCombo.getSelectedItem();
+        
+        // 1. Reset if empty
+        if (selectedItem == null || selectedItem.equals("-- Select Course --")) {
             statusLabel.setText("");
             return;
         }
-        // Find course
-        CourseSubject course = findCourseByName(selectedCourse);
-        if (course == null) {
-            statusLabel.setText("");
-            return;
-        }
-        // Check prerequisites
-        ArrayList<CourseSubject> prereqs = course.getPrerequisites();
-        if (prereqs.isEmpty()) {
-            statusLabel.setText("/");
-            statusLabel.setForeground(new java.awt.Color(0, 255, 0));
-            statusLabel.setToolTipText("No prerequisites required");
-            return;
-        }
-        // Check if student has met prerequisites
+
+        // 2. Extract ID (Takes "CS101" from "CS101 (0/120)")
+        String courseID = selectedItem.split(" ")[0];
         String studentID = CT_StudentID.getText().trim();
+
         if (studentID.isEmpty()) {
-            statusLabel.setText("?");
-            statusLabel.setForeground(new java.awt.Color(255, 255, 0));
-            statusLabel.setToolTipText("Enter Student ID to check");
+            statusLabel.setText("ID?");
             return;
         }
-        // Use AcademicUtilities to get specific missing prerequisites
-        AcademicUtilities.loadPrerequisites();
-        java.util.List<String> missingPrereqs = AcademicUtilities.getMissingPrerequisites(studentID, course.getCourseSubjectID());
-        if (missingPrereqs.isEmpty()) {
-            statusLabel.setText("/");
-            statusLabel.setForeground(new java.awt.Color(0, 255, 0));
-            statusLabel.setToolTipText("Prerequisites met");
+
+        // 3. Check for duplicates in other slots
+        javax.swing.JComboBox[] allCombos = {CT_Course1, CT_Course2, CT_Course3, CT_Course4, CT_Course5};
+        for (javax.swing.JComboBox combo : allCombos) {
+            if (combo != courseCombo && selectedItem.equals(combo.getSelectedItem())) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Subject already selected.");
+                resetToPending(courseCombo, statusLabel);
+                return;
+            }
+        }
+
+        // 4. THE FIX: Check history against requirements
+        java.util.List<String> missing = AcademicUtilities.getMissingPrerequisites(studentID, courseID);
+
+        if (missing.isEmpty()) {
+            // Green Checkmark: Prereqs are "None" OR are found in the PASSED set
+            statusLabel.setText("✔");
+            statusLabel.setForeground(new java.awt.Color(0, 153, 0));
         } else {
+            // Red X: Prereqs were specifically found as FAILED in Index 7
             statusLabel.setText("X");
-            statusLabel.setForeground(new java.awt.Color(255, 0, 0));
-            statusLabel.setToolTipText("Missing: " + String.join(", ", missingPrereqs));
+            statusLabel.setForeground(java.awt.Color.RED);
+            
+            String error = "You must pass the following first:\n• " + String.join("\n• ", missing);
+            javax.swing.JOptionPane.showMessageDialog(this, error, "Prerequisite Error", javax.swing.JOptionPane.ERROR_MESSAGE);
+            
+            resetToPending(courseCombo, statusLabel);
         }
     }
-
+        
     private javax.swing.JPanel CT_BottomPanel;
     private javax.swing.JLabel CT_COURSE1;
     private javax.swing.JLabel CT_COURSE2;

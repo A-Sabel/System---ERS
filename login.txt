@@ -1,2 +1,4 @@
 Eli,eli@gmail.com,1234
 principal,katricegarnado65@gmail.com,09669900046
+Principal,katricegarnado65@tup.edu.ph,0539
+kat,kat,1234

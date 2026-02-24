@@ -254,76 +254,58 @@ class EnrollmentFileLoader extends BaseFileLoader {
         allEnrollments.clear();
         readFile(filePath, line -> {
             String[] parts = line.split(",");
-            // New format: studentID,courseList,yearLevel,semester,status,sectionList,academicYear,courseStatuses
             if (parts.length < 6) return;
-            String studentID = parts[0].trim();
-            String courseList = parts[1].trim();
-            String yearLevel = parts[2].trim();
-            String semester = expandSemester(parts[3].trim());
-            String status = parts[4].trim();
-            String sectionList = parts.length > 5 ? parts[5].trim() : "";
-            String academicYear = parts.length > 6 ? parts[6].trim() : AcademicUtilities.getAcademicYear();
-            String courseStatusList = parts.length > 7 ? parts[7].trim() : "";
             
-            // Parse courses and sections (using basic Java only, no APIs)
+            // ... (Keep your existing variable declarations like studentID, courseList, etc.)
+            
             String[] courses = courseList.split(";");
             String[] sections = sectionList.split(";");
-            
-            // Parse course statuses (format: "CS101:PASSED;CS102:FAILED")
-            java.util.Map<String, String> courseStatuses = new java.util.HashMap<>();
-            if (!courseStatusList.isEmpty()) {
-                String[] statusPairs = courseStatusList.split(";");
-                for (String pair : statusPairs) {
-                    String[] parts2 = pair.split(":");
-                    if (parts2.length == 2) {
-                        courseStatuses.put(parts2[0].trim(), parts2[1].trim());
-                    }
-                }
-            }
-            
-            // Create individual enrollments for each course (for compatibility with existing system)
+
+            // ... (Keep your statusPairs and courseStatuses Map logic here)
+
+            // --- REPLACE THE OLD LOOP WITH THIS ONE ---
             for (int i = 0; i < courses.length; i++) {
                 String courseID = courses[i].trim();
-                if (courseID.isEmpty()) continue;
+                if (courseID.isEmpty() || courseID.equalsIgnoreCase("NONE")) continue;
                 
                 String enrollmentID = "ENR-" + studentID + "-" + courseID;
                 
                 Enrollment enrollment = new Enrollment(enrollmentID, studentID, courseID, yearLevel, semester, status, academicYear);
                 
-                // Set section if available
                 if (i < sections.length && !sections[i].trim().isEmpty()) {
                     enrollment.setSectionID(sections[i].trim());
                 }
                 
-                // IMPORTANT: Clear the default PENDING status before setting actual status
-                // This prevents constructor-initialized PENDING from persisting
+                // 1. IMPORTANT: Clear the default PENDING status
                 enrollment.getCourseStatuses().clear();
                 
-                // Set course status from file, or default to PENDING if not found
+                // 2. APPLY the actual status from the text file
                 if (courseStatuses.containsKey(courseID)) {
-                    enrollment.setCourseStatus(courseID, courseStatuses.get(courseID));
+                    String actualStatus = courseStatuses.get(courseID);
+                    enrollment.setCourseStatus(courseID, actualStatus);
                 } else {
                     enrollment.setCourseStatus(courseID, "PENDING");
                 }
                 
                 allEnrollments.add(enrollment);
             }
+            // --- END OF REPLACEMENT ---
         });
     }
-    
-    public Collection<Enrollment> getAllEnrollments() {
-        return allEnrollments;
-    }
-    
-    public Map<String, Enrollment> getEnrollmentMap() {
-        Map<String, Enrollment> enrollmentMap = new LinkedHashMap<>();
-        for (Enrollment enrollment : allEnrollments) {
-            String key = enrollment.getStudentID() + "_" + enrollment.getCourseID();
-            enrollmentMap.put(key, enrollment);
+        
+        public Collection<Enrollment> getAllEnrollments() {
+            return allEnrollments;
         }
-        return enrollmentMap;
+        
+        public Map<String, Enrollment> getEnrollmentMap() {
+            Map<String, Enrollment> enrollmentMap = new LinkedHashMap<>();
+            for (Enrollment enrollment : allEnrollments) {
+                String key = enrollment.getStudentID() + "_" + enrollment.getCourseID();
+                enrollmentMap.put(key, enrollment);
+            }
+            return enrollmentMap;
+        }
     }
-}
 
 
 class StudentFileLoader extends BaseFileLoader {

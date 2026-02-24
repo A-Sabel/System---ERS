@@ -77,7 +77,7 @@ public class CourseSubject {
     public String getPrerequisitesString() {
         if (prerequisites.isEmpty()) {
             return "No prerequisites";
-        }
+        }   
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < prerequisites.size(); i++) {
             CourseSubject pre = prerequisites.get(i);

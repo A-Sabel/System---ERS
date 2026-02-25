@@ -1,7 +1,5 @@
 package ers.group;
 
-import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -10,28 +8,22 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.swing.JComboBox;
-import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
 
 public class StudentCourseTab extends javax.swing.JFrame {
     public static class SessionManager {
         private static String currentStudentID = null;
         private static String currentStudentName = null;
-        
         public static void setCurrentStudent(String studentID, String studentName) {
             currentStudentID = studentID;
             currentStudentName = studentName;
         }
-        
         public static String getCurrentStudentID() {
             return currentStudentID;
         }
-        
         public static String getCurrentStudentName() {
             return currentStudentName;
         }
-        
         public static void clearSession() {
             currentStudentID = null;
             currentStudentName = null;
@@ -48,17 +40,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private Marksheettab marksheettab;
     private ScoreTab scoreTab;
     private boolean isInitialized = false; 
-    private ArrayList<Schedule> schedules;
-    private Map<String, ArrayList<String>> studentCourses;
-    private static final String STUDENT_FILE = "src/ers/group/master files/student.txt";
 
-
-    /**
-     * Creates new form Student
-     */
+    // Creates new form Student
     public StudentCourseTab() {
         initComponents();
-
         students = new ArrayList<>();
         studentFileSaver = new StudentFileSaver();
         courseLoader = new CourseSubjectFileLoader();
@@ -207,7 +192,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void loadStudentTableData() {
         DefaultTableModel model = (DefaultTableModel) ST_Table.getModel();
-        model.setRowCount(0); // clear table
+        model.setRowCount(0);
 
         for (Student stud : students) {
             model.addRow(new Object[]{
@@ -218,7 +203,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 stud.getYearLevel(),
                 stud.getSection(),
                 stud.getStudentType(),
-                stud.getStatus(), // show Active/Graduate
+                stud.getStatus(),
                 stud.getGwa(),
                 stud.getEmail(),
                 stud.getPhoneNumber()
@@ -346,7 +331,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
         SMSPanel.setBackground(new java.awt.Color(0, 30, 58));
 
-        SMS.setFont(new java.awt.Font("Segoe UI", 1, 40)); // NOI18N
+        SMS.setFont(new java.awt.Font("Segoe UI", 1, 40));
         SMS.setForeground(new java.awt.Color(255, 255, 255));
         SMS.setText("Student Management System");
 
@@ -368,7 +353,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         );
 
         MainTabPanel.setBackground(new java.awt.Color(73, 118, 159));
-        MainTabPanel.setFont(new java.awt.Font("Segoe UI", 1, 20)); // NOI18N
+        MainTabPanel.setFont(new java.awt.Font("Segoe UI", 1, 20));
 
         StudentTab.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -377,56 +362,55 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 480));
 
         ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
-        ST_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_StudentID.setEditable(false);
         ST_StudentID.addActionListener(this::ST_StudentIDActionPerformed);
 
         ST_StudentName.setBackground(new java.awt.Color(146, 190, 219));
-        ST_StudentName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_StudentName.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_StudentName.addActionListener(this::ST_StudentNameActionPerformed);
 
         ST_Email.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Email.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_Email.setFont(new java.awt.Font("Segoe UI", 0, 14));
 
         ST_PhoneNumber.setBackground(new java.awt.Color(146, 190, 219));
-        ST_PhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_PhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 14));
 
         ST_FathersName.setBackground(new java.awt.Color(146, 190, 219));
-        ST_FathersName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_FathersName.setFont(new java.awt.Font("Segoe UI", 0, 14));
 
         ST_MothersName.setBackground(new java.awt.Color(146, 190, 219));
-        ST_MothersName.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_MothersName.setFont(new java.awt.Font("Segoe UI", 0, 14));
 
         ST_GuardiansPhoneNumber.setBackground(new java.awt.Color(146, 190, 219));
-        ST_GuardiansPhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
-
+        ST_GuardiansPhoneNumber.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_Address.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Address.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_Address.setFont(new java.awt.Font("Segoe UI", 0, 14));
 
         ST_Gender.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Gender.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_Gender.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_Gender.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Male", "Female" }));
 
         // Academic Information Fields
         ST_YearLevel.setBackground(new java.awt.Color(146, 190, 219));
-        ST_YearLevel.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_YearLevel.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_YearLevel.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1st Year", "2nd Year" }));
 
         ST_CurrentSemester.setBackground(new java.awt.Color(146, 190, 219));
-        ST_CurrentSemester.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_CurrentSemester.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_CurrentSemester.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2" }));
 
         ST_StudentType.setBackground(new java.awt.Color(146, 190, 219));
-        ST_StudentType.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_StudentType.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_StudentType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Regular", "Irregular" }));
 
         ST_Section.setBackground(new java.awt.Color(240, 240, 240));
-        ST_Section.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_Section.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_Section.setEditable(false);
         ST_Section.setText("(Auto-assigned)");
 
         ST_GWA.setBackground(new java.awt.Color(240, 240, 240));
-        ST_GWA.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+        ST_GWA.setFont(new java.awt.Font("Segoe UI", 0, 14));
         ST_GWA.setEditable(false);
         ST_GWA.setText("0.00");
 
@@ -490,68 +474,67 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
         });
 
-        ST_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
         ST_STUDENT_ID.setText("Student ID");
 
-        ST_STUDENT_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        ST_STUDENT_NAME.setForeground(new java.awt.Color(255, 255, 255));
+        ST_STUDENT_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_STUDENT_NAME.setText("Student Name");
 
-        ST_BIRTHDAY.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_BIRTHDAY.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
         ST_BIRTHDAY.setForeground(new java.awt.Color(255, 255, 255));
         ST_BIRTHDAY.setText("Date of Birth");
 
-        ST_GENDER.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_GENDER.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_GENDER.setForeground(new java.awt.Color(255, 255, 255));
         ST_GENDER.setText("Gender");
 
-        ST_EMAIL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_EMAIL.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
         ST_EMAIL.setForeground(new java.awt.Color(255, 255, 255));
         ST_EMAIL.setText("Email");
 
-        ST_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
         ST_PHONE_NUM.setForeground(new java.awt.Color(255, 255, 255));
         ST_PHONE_NUM.setText("Phone Number");
 
-        ST_FATHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_FATHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_FATHERS_NAME.setForeground(new java.awt.Color(255, 255, 255));
         ST_FATHERS_NAME.setText("Father's Name");
 
-        ST_MOTHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_MOTHERS_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_MOTHERS_NAME.setForeground(new java.awt.Color(255, 255, 255));
         ST_MOTHERS_NAME.setText("Mother's Name");
 
-        ST_GUARDIANS_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_GUARDIANS_PHONE_NUM.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
         ST_GUARDIANS_PHONE_NUM.setForeground(new java.awt.Color(255, 255, 255));
         ST_GUARDIANS_PHONE_NUM.setText("Guardian's Phone No.");
 
-        ST_ADDRESS.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_ADDRESS.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_ADDRESS.setForeground(new java.awt.Color(255, 255, 255));
         ST_ADDRESS.setText("Address");
 
         // Academic Information Labels
-        ST_ACADEMIC_INFO.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        ST_ACADEMIC_INFO.setFont(new java.awt.Font("Segoe UI", 1, 16));
         ST_ACADEMIC_INFO.setForeground(new java.awt.Color(189, 216, 233));
         ST_ACADEMIC_INFO.setText("Academic Information");
 
-        ST_YEAR_LEVEL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_YEAR_LEVEL.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_YEAR_LEVEL.setForeground(new java.awt.Color(255, 255, 255));
         ST_YEAR_LEVEL.setText("Year Level");
 
-        ST_CURRENT_SEMESTER.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_CURRENT_SEMESTER.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_CURRENT_SEMESTER.setForeground(new java.awt.Color(255, 255, 255));
         ST_CURRENT_SEMESTER.setText("Current Semester");
 
-        ST_STUDENT_TYPE.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_STUDENT_TYPE.setFont(new java.awt.Font("Segoe UI", 1, 14));
         ST_STUDENT_TYPE.setForeground(new java.awt.Color(255, 255, 255));
         ST_STUDENT_TYPE.setText("Student Type");
 
-        ST_SECTION.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_SECTION.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
         ST_SECTION.setForeground(new java.awt.Color(255, 255, 255));
         ST_SECTION.setText("Section");
 
-        ST_GWA_LABEL.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+        ST_GWA_LABEL.setFont(new java.awt.Font("Segoe UI", 1, 14)); 
         ST_GWA_LABEL.setForeground(new java.awt.Color(255, 255, 255));
         ST_GWA_LABEL.setText("GWA");
 
@@ -713,17 +696,17 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_SearchStudentPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
         ST_SearchStudentPanel.setPreferredSize(new java.awt.Dimension(620, 119));
 
-        ST_SEARCH_STUDENT.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_SEARCH_STUDENT.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         ST_SEARCH_STUDENT.setForeground(new java.awt.Color(255, 255, 255));
         ST_SEARCH_STUDENT.setText("Search Student");
 
         ST_Search.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_Search.setFont(new java.awt.Font("Segoe UI", 1, 24));
         ST_Search.setText("Search");
         ST_Search.addActionListener(this::ST_SearchActionPerformed);
 
         ST_Refresh.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         ST_Refresh.setText("Refresh");
         ST_Refresh.addActionListener(this::ST_RefreshActionPerformed);
 
@@ -799,27 +782,27 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_BottomPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 4, true));
 
         ST_AddNew.setBackground(new java.awt.Color(73, 118, 159));
-        ST_AddNew.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_AddNew.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         ST_AddNew.setText("Add New");
         ST_AddNew.addActionListener(this::ST_AddNewActionPerformed);
 
         ST_Update.setBackground(new java.awt.Color(73, 118, 159));
-        ST_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         ST_Update.setText("Update");
         ST_Update.addActionListener(this::ST_UpdateActionPerformed);
 
         ST_Delete.setBackground(new java.awt.Color(73, 118, 159));
-        ST_Delete.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_Delete.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         ST_Delete.setText("Delete");
         ST_Delete.addActionListener(this::ST_DeleteActionPerformed);
 
         ST_Clear.setBackground(new java.awt.Color(73, 118, 159));
-        ST_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         ST_Clear.setText("Clear");
         ST_Clear.addActionListener(this::ST_ClearActionPerformed);
 
         ST_Logout.setBackground(new java.awt.Color(73, 118, 159));
-        ST_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        ST_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24));
         ST_Logout.setText("Logout");
         ST_Logout.addActionListener(this::ST_LogoutActionPerformed); 
 
@@ -888,14 +871,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
         MainTabPanel.addChangeListener(e -> {
             // Only process tab changes after initial setup is complete
             if (!isInitialized) return;
-            
             int selectedTab = MainTabPanel.getSelectedIndex();
-            
             if (selectedTab == 0) { // Student tab
-                // Refresh student table and suggested courses when returning
                 loadStudentData();
                 loadStudentTableData();
-                
                 // Refresh suggested courses for currently selected student
                 String currentStudentID = ST_StudentID.getText().trim();
                 if (!currentStudentID.isEmpty()) {
@@ -904,18 +883,17 @@ public class StudentCourseTab extends javax.swing.JFrame {
             } 
             else if (selectedTab == 1) { // Course tab
                 courseTab.refreshStudentList();
-                courseTab.refreshSemesterSelection(); // Update semester to current
-                
+                courseTab.refreshSemesterSelection();
                 // Auto-populate student ID if coming from Save & Enroll
                 String sessionStudentID = SessionManager.getCurrentStudentID();
                 if (sessionStudentID != null && !sessionStudentID.isEmpty()) {
                     courseTab.autoPopulateStudent(sessionStudentID);
-                    SessionManager.clearSession(); // Clear after use
+                    SessionManager.clearSession();
                 }
             }
             else if (selectedTab == 2) { // Score tab
                 if (scoreTab != null) {
-                    scoreTab.refreshSemesterSelection(); // Update semester to current
+                    scoreTab.refreshSemesterSelection();
                 }
             }
             else if (selectedTab == 3) { // Marksheet tab
@@ -933,72 +911,71 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
         CT_id.setBackground(new java.awt.Color(146, 190, 219));
-        CT_id.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_id.setFont(new java.awt.Font("Segoe UI", 0, 16));
         CT_id.addActionListener(this::CT_idActionPerformed);
 
         CT_StudentID.setBackground(new java.awt.Color(146, 190, 219));
-        CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); 
         CT_StudentID.addActionListener(this::CT_StudentIDActionPerformed);
 
-        CT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
         CT_ID.setForeground(new java.awt.Color(255, 255, 255));
         CT_ID.setText("ID");
 
-        CT_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16));
         CT_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
         CT_STUDENT_ID.setText("Student ID");
 
-        CT_SEMESTER.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_SEMESTER.setFont(new java.awt.Font("Segoe UI", 1, 16));
         CT_SEMESTER.setForeground(new java.awt.Color(255, 255, 255));
         CT_SEMESTER.setText("Semester");
 
-        CT_COURSE1.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE1.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
         CT_COURSE1.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE1.setText("Course 1");
 
-        CT_COURSE2.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE2.setFont(new java.awt.Font("Segoe UI", 1, 16));
         CT_COURSE2.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE2.setText("Course 2");
 
-        CT_COURSE3.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE3.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
         CT_COURSE3.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE3.setText("Course 3");
 
-        CT_COURSE4.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
+        CT_COURSE4.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
         CT_COURSE4.setForeground(new java.awt.Color(255, 255, 255));
         CT_COURSE4.setText("Course 4");
 
-        CT_COURSE5.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        CT_COURSE5.setForeground(new java.awt.Color(255, 255, 255));
+        CT_COURSE5.setFont(new java.awt.Font("Segoe UI", 1, 16)); 
         CT_COURSE5.setText("Course 5");
 
         CT_Course1.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Course1.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course1.setFont(new java.awt.Font("Segoe UI", 0, 16));
         CT_Course1.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
         CT_Course1.setMinimumSize(new java.awt.Dimension(90, 28));
 
         CT_Course2.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Course2.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course2.setFont(new java.awt.Font("Segoe UI", 0, 16)); 
         CT_Course2.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
         CT_Course2.setMinimumSize(new java.awt.Dimension(90, 28));
 
         CT_Course3.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Course3.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course3.setFont(new java.awt.Font("Segoe UI", 0, 16)); 
         CT_Course3.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
         CT_Course3.setMinimumSize(new java.awt.Dimension(90, 28));
 
         CT_Course4.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Course4.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course4.setFont(new java.awt.Font("Segoe UI", 0, 16));
         CT_Course4.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
         CT_Course4.setMinimumSize(new java.awt.Dimension(90, 28));
 
         CT_Course5.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Course5.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Course5.setFont(new java.awt.Font("Segoe UI", 0, 16)); 
         CT_Course5.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Programming 1", "Computer Fundamentals", "Discrete Mathematics", "Introduction to IT Systems", "Ethics in Computing", "Programming 2", "Object-Oriented Programming", "Web Technologies", "Linear Algebra for Computing", "Human-Computer Interaction", "Data Structures and Algorithms", "Design and Analysis of Algorithms", "Database Management Systems", "Computer Networks", "Advanced Programming Concepts", "Operating Systems", "Compiler Design", "Information Security", "Distributed Systems", "Systems Integration Project" }));
         CT_Course5.setMinimumSize(new java.awt.Dimension(90, 28));
 
         CT_Semester.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Semester.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
+        CT_Semester.setFont(new java.awt.Font("Segoe UI", 0, 16)); 
         CT_Semester.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1st Semester", "2nd Semester" }));
 
         javax.swing.GroupLayout CT_LeftPanelLayout = new javax.swing.GroupLayout(CT_LeftPanel);
@@ -1085,7 +1062,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_SearchStudentPanel.setBackground(new java.awt.Color(0, 30, 58));
         CT_SearchStudentPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(189, 216, 233), 4, true));
 
-        CT_SEARCH_STUDENT.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_SEARCH_STUDENT.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         CT_SEARCH_STUDENT.setForeground(new java.awt.Color(255, 255, 255));
         CT_SEARCH_STUDENT.setText("Search Student");
 
@@ -1093,12 +1070,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_SearchStudent.addActionListener(this::CT_SearchStudentActionPerformed);
 
         CT_Search.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         CT_Search.setText("Search");
         CT_Search.addActionListener(this::CT_SearchActionPerformed);
 
         CT_Refresh.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24));
         CT_Refresh.setText("Refresh");
 
         javax.swing.GroupLayout CT_SearchStudentPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentPanel);
@@ -1164,24 +1141,24 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_BottomPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 4, true));
 
         CT_Save.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Save.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Save.setFont(new java.awt.Font("Segoe UI", 1, 24));
         CT_Save.setText("Save");
         CT_Save.addActionListener(this::CT_SaveActionPerformed);
 
         CT_Update.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         CT_Update.setText("Update");
 
         CT_Print.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Print.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Print.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         CT_Print.setText("Print");
 
         CT_Clear.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         CT_Clear.setText("Clear");
 
         CT_Logout.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
+        CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
         CT_Logout.setText("Logout");
         CT_Logout.addActionListener(this::CT_LogoutActionPerformed); 
 
@@ -1262,8 +1239,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         MainTabPanel.addTab("Mark Sheet", marksheettab);
 
         MainTabPanel.addTab("Schedule", new Scheduletab());
-        
-        // Admin Panel for 2-year program academic management
+
         MainTabPanel.addTab("Admin Controls", new TestingPanel());
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
@@ -1326,7 +1302,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 }
             }
         });
-        // Mark initialization as complete
+
         isInitialized = true;
     }                     
 
@@ -1507,18 +1483,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private void ST_DeleteActionPerformed(java.awt.event.ActionEvent evt) {                                         
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
         int selectedRow = ST_Table.getSelectedRow();
-
         if (selectedRow >= 0) {
-            // Get student ID from the selected row
             String studentID = model.getValueAt(selectedRow, 0).toString();
-            
-            // Remove from table
             model.removeRow(selectedRow);
-            
-            // Remove from ArrayList
             students.removeIf(s -> s.getStudentID().equals(studentID));
-            
-            // Save to file
             try {
                 studentFileSaver.save(getStudentFilePath(), students);
                 javax.swing.JOptionPane.showMessageDialog(this, 
@@ -1548,7 +1516,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-        
         // Syncing student ID
         int maxId = 0;
         for (Student s : students) {
@@ -1596,35 +1563,23 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     gwa = Double.parseDouble(gwaText);
                 }
             } catch (NumberFormatException e) {
-                gwa = 0.0; // Default to 0.0 if parsing fails
+                gwa = 0.0;
             }
             
-            // Create new Student object (constructor without ID will auto-generate)
-            // Default new students to 1st Semester
+            // Create new Student object
             Student newStudent = new Student(
                 name, age, dob, yearLevel, "1st Semester", section, studentType, status,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
-            
-            // Add to ArrayList
             students.add(newStudent);
-            
-            // Save to file
             studentFileSaver.save(getStudentFilePath(), students);
-            
-            // Refresh table
             loadStudentTableData();
-            
-            // Show success message with generated ID
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Student added successfully!\nGenerated ID: " + newStudent.getStudentID(), 
                 "Success", 
                 javax.swing.JOptionPane.INFORMATION_MESSAGE);
-            
-            // Clear form and show next available ID
             clearStudentForm();
-                
         } catch (Exception e) {
             logger.severe("Error in Add New: " + e.getMessage());
             e.printStackTrace();
@@ -1637,7 +1592,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void ST_UpdateActionPerformed(java.awt.event.ActionEvent evt) {
         int selectedRow = ST_Table.getSelectedRow();
-        
         if (selectedRow < 0) {
             javax.swing.JOptionPane.showMessageDialog(this, 
                 "Please select a student to update.", 
@@ -1645,7 +1599,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         // Validate required fields
         if (ST_StudentID.getText().trim().isEmpty() || 
             ST_StudentName.getText().trim().isEmpty()) {
@@ -1655,12 +1608,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 javax.swing.JOptionPane.WARNING_MESSAGE);
             return;
         }
-
         try {
             javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
             String originalID = model.getValueAt(selectedRow, 0).toString();
             String newID = ST_StudentID.getText().trim();
-            
             // Check if ID changed and if new ID already exists
             if (!originalID.equals(newID)) {
                 for (Student s : students) {
@@ -1673,7 +1624,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     }
                 }
             }
-            
             // Collect data from form fields
             String name = ST_StudentName.getText().trim();
             String gender = (String) ST_Gender.getSelectedItem();
@@ -1684,12 +1634,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
             String mothersName = ST_MothersName.getText().trim();
             String guardiansPhone = ST_GuardiansPhoneNumber.getText().trim();
             String status = "Active";
-            
             // Get date of birth from spinner
             java.util.Date dobDate = (java.util.Date) ST_DateOfBirth.getValue();
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
             String dob = sdf.format(dobDate);
-            
             // Calculate age from DOB
             java.util.Calendar dobCal = java.util.Calendar.getInstance();
             dobCal.setTime(dobDate);
@@ -1698,34 +1646,27 @@ public class StudentCourseTab extends javax.swing.JFrame {
             if (today.get(java.util.Calendar.DAY_OF_YEAR) < dobCal.get(java.util.Calendar.DAY_OF_YEAR)) {
                 age--;
             }
-            
             // Get academic information from form
             String yearLevel = (String) ST_YearLevel.getSelectedItem();
             String studentType = (String) ST_StudentType.getSelectedItem();
             String section = ST_Section.getText().equals("(Auto-assigned)") ? "" : ST_Section.getText();
-            
             // Preserve subjects enrolled from existing student
             java.util.ArrayList<String> subjectsEnrolled = new java.util.ArrayList<>();
             double gwa = 0.0;
-            
             for (Student s : students) {
                 if (s.getStudentID().equals(originalID)) {
                     subjectsEnrolled = s.getSubjectsEnrolled();
                     break;
                 }
             }
-            
-            // Parse GWA from field
             try {
                 String gwaText = ST_GWA.getText().trim();
                 if (!gwaText.isEmpty() && !gwaText.equals("0.00")) {
                     gwa = Double.parseDouble(gwaText);
                 }
             } catch (NumberFormatException e) {
-                gwa = 0.0; // Default to 0.0 if parsing fails
+                gwa = 0.0;
             }
-            
-            // Get current semester from existing student, default to 1st Semester
             String currentSemester = "1st Semester";
             for (Student s : students) {
                 if (s.getStudentID().equals(originalID)) {
@@ -1733,24 +1674,19 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     break;
                 }
             }
-            
             // Create updated Student object
             Student updatedStudent = new Student(
                 newID, name, age, dob, yearLevel, currentSemester, section, studentType, status,
                 subjectsEnrolled, gwa, email, phoneNumber, gender,
                 address, fathersName, mothersName, guardiansPhone
             );
-            
-            // Update in ArrayList
             for (int i = 0; i < students.size(); i++) {
                 if (students.get(i).getStudentID().equals(originalID)) {
                     students.set(i, updatedStudent);
                     break;
                 }
             }
-            // Save to file
             studentFileSaver.save(getStudentFilePath(), students);
-            // Refresh table
             loadStudentTableData();
             clearStudentForm();
             javax.swing.JOptionPane.showMessageDialog(this, 
@@ -1787,7 +1723,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         String nextID = String.format("STU-%03d", maxId + 1);
         ST_StudentID.setText(nextID);
         ST_StudentID.setEditable(false); // Make read-only for new students
-        ST_StudentID.setBackground(new java.awt.Color(240, 240, 240)); // Gray background
+        ST_StudentID.setBackground(new java.awt.Color(240, 240, 240)); 
         
         ST_StudentName.setText("");
         ST_Email.setText("");
@@ -1811,11 +1747,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
 
     private void populateStudentFormFromTable(int rowIndex) {
         try {
-            // Enable Student ID field for updates (keep read-only to prevent ID changes)
-            ST_StudentID.setEditable(false); // Keep read-only even for updates to prevent ID conflicts
+            // Enable Student ID field for updates
+            ST_StudentID.setEditable(false); 
             ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
             javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) ST_Table.getModel();
-            // Get student ID from table and find full student object
             String studentID = model.getValueAt(rowIndex, 0).toString();
             Student student = null;
             for (Student s : students) {
@@ -1834,14 +1769,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 ST_FathersName.setText(student.getFathersName() != null ? student.getFathersName() : "");
                 ST_MothersName.setText(student.getMothersName() != null ? student.getMothersName() : "");
                 ST_GuardiansPhoneNumber.setText(student.getGuardiansPhoneNumber() != null ? student.getGuardiansPhoneNumber() : "");
-                // Set gender
                 String gender = student.getGender();
                 if ("Male".equalsIgnoreCase(gender)) {
                     ST_Gender.setSelectedIndex(0);
                 } else if ("Female".equalsIgnoreCase(gender)) {
                     ST_Gender.setSelectedIndex(1);
                 }
-                // Set date of birth
                 try {
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
                     java.util.Date dob = sdf.parse(student.getDateOfBirth());
@@ -1870,7 +1803,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
                 ST_Section.setText(student.getSection() != null && !student.getSection().isEmpty() ? 
                     student.getSection() : "(Auto-assigned)");
                 ST_GWA.setText(String.format("%.2f", student.getGwa()));
-                // Refresh suggested courses with student's enrollment status
                 loadSuggestedCourses();
             }
         } catch (Exception e) {
@@ -1931,7 +1863,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
             // Get current student's ID from form
             String currentStudentID = ST_StudentID.getText().trim();
             Student currentStudent = null;
-            // Find the student object
             if (!currentStudentID.isEmpty()) {
                 for (Student s : students) {
                     if (s.getStudentID().equals(currentStudentID)) {

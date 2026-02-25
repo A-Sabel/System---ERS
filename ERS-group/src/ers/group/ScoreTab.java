@@ -44,7 +44,8 @@ public class ScoreTab extends JPanel {
     // Standard Filipino Grade Scale
     private final String[] gradeScale = {
         "1.00", "1.25", "1.50", "1.75", "2.00", 
-        "2.25", "2.50", "2.75", "3.00", "5.00"
+        "2.25", "2.50", "2.75", "3.00", "5.00",
+        "DROPPED", "INC"
     };
     
     private final String[] semesters = {"1st Semester", "2nd Semester", "Summer"};
@@ -1080,6 +1081,36 @@ public class ScoreTab extends JPanel {
             return;
         }
 
+        // 2.5 Load enrollment data to check for DROPPED/INC statuses
+        Map<String, String> courseStatuses = new HashMap<>();
+        try {
+            List<Enrollment> allEnrollments = new ArrayList<>();
+            String[] enrollmentPaths = {
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            };
+            String resolvedPath = FilePathResolver.resolveFilePath(enrollmentPaths);
+            
+            EnrollmentFileLoader loader = new EnrollmentFileLoader();
+            loader.load(resolvedPath);
+            allEnrollments.addAll(loader.getAllEnrollments());
+            
+            for (Enrollment e : allEnrollments) {
+                if (e.getStudentID().equals(id) && 
+                    e.getSemester().equals(semester) && 
+                    e.getYearLevel().equals(yearLevel)) {
+                    
+                    // Get course statuses from this enrollment
+                    Map<String, String> detailedStatuses = e.getCourseStatuses();
+                    courseStatuses.putAll(detailedStatuses);
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Error loading course statuses: " + ex.getMessage());
+        }
+
         // 3. Clear existing selections and reset all dropdowns
         for (int i = 0; i < 5; i++) {
             courseDropdowns[i].setSelectedIndex(0);
@@ -1091,7 +1122,7 @@ public class ScoreTab extends JPanel {
             courseScores[i].setBackground(new Color(146, 190, 219));
         }
 
-        // 4. Fill dropdowns with enrolled Course Names
+        // 4. Fill dropdowns with enrolled Course Names and set grade status
         for (int i = 0; i < enrolledCodes.size() && i < 5; i++) {
             String code = enrolledCodes.get(i);
             String name = courseMap.get(code); // Convert Code (CS101) to Name (Programming 1)
@@ -1110,6 +1141,15 @@ public class ScoreTab extends JPanel {
                 if (!found) {
                     System.err.println("Course name not found in dropdown: " + name);
                 }
+                
+                // Set grade dropdown based on course status (DROPPED, INC, or PENDING)
+                String status = courseStatuses.get(code);
+                if ("DROPPED".equals(status)) {
+                    courseScores[i].setSelectedItem("DROPPED");
+                } else if ("INC".equals(status)) {
+                    courseScores[i].setSelectedItem("INC");
+                }
+                // Otherwise leave as first item (PENDING or 1.00)
             } else {
                 System.err.println("Course code not found in map: " + code);
             }
@@ -1161,8 +1201,16 @@ public class ScoreTab extends JPanel {
             sb.append(nextMRK).append(",").append(id).append(",").append(compressedSem).append(",").append(year);
 
             for(int i=0;i<5;i++){
-                sb.append(",").append(getCourseCode(courseDropdowns[i].getSelectedItem().toString()));
-                sb.append(",").append(courseScores[i].getSelectedItem().toString());
+                String courseCode = getCourseCode(courseDropdowns[i].getSelectedItem().toString());
+                String gradeStr = courseScores[i].getSelectedItem().toString();
+                
+                // Only save numeric grades to marksheet - skip DROPPED/INC
+                if (gradeStr.equals("DROPPED") || gradeStr.equals("INC")) {
+                    sb.append(",NONE,0.00");
+                } else {
+                    sb.append(",").append(courseCode);
+                    sb.append(",").append(gradeStr);
+                }
             }
 
             double gpa = calculateGPA();
@@ -1179,6 +1227,9 @@ public class ScoreTab extends JPanel {
         
         // Update course statuses based on grades entered
         AcademicUtilities.updateCourseStatuses(id, sem, year);
+        
+        // Directly update enrollment statuses for DROPPED/INC courses
+        updateDroppedAndIncStatuses(id, sem, year);
         
         JOptionPane.showMessageDialog(this,"Record Saved!");
     }
@@ -1216,8 +1267,16 @@ public class ScoreTab extends JPanel {
                         sb.append(",").append(yearLevelField.getSelectedItem().toString());
                         
                         for(int i=0;i<5;i++){
-                            sb.append(",").append(getCourseCode(courseDropdowns[i].getSelectedItem().toString()));
-                            sb.append(",").append(courseScores[i].getSelectedItem().toString());
+                            String courseCode = getCourseCode(courseDropdowns[i].getSelectedItem().toString());
+                            String gradeStr = courseScores[i].getSelectedItem().toString();
+                            
+                            // Only save numeric grades to marksheet - skip DROPPED/INC
+                            if (gradeStr.equals("DROPPED") || gradeStr.equals("INC")) {
+                                sb.append(",NONE,0.00");
+                            } else {
+                                sb.append(",").append(courseCode);
+                                sb.append(",").append(gradeStr);
+                            }
                         }
                         double gpa = calculateGPA();
                         sb.append(",").append(String.format("%.2f",gpa));
@@ -1236,6 +1295,11 @@ public class ScoreTab extends JPanel {
                 
                 // Update course statuses based on grades entered
                 AcademicUtilities.updateCourseStatuses(studentID, 
+                    semesterField.getSelectedItem().toString(), 
+                    yearLevelField.getSelectedItem().toString());
+                
+                // Directly update enrollment statuses for DROPPED/INC courses
+                updateDroppedAndIncStatuses(studentID, 
                     semesterField.getSelectedItem().toString(), 
                     yearLevelField.getSelectedItem().toString());
                 
@@ -1482,8 +1546,9 @@ public class ScoreTab extends JPanel {
         double sum=0; int count=0;
         for(JComboBox<String> cb : courseScores){
             String scoreText = cb.getSelectedItem().toString();
-            // Skip PENDING scores in calculation
-            if (scoreText.equals("PENDING") || scoreText.isEmpty()) {
+            // Skip PENDING, DROPPED, and INC scores in calculation
+            if (scoreText.equals("PENDING") || scoreText.equals("DROPPED") || 
+                scoreText.equals("INC") || scoreText.isEmpty()) {
                 continue;
             }
             try { 
@@ -1526,7 +1591,7 @@ public class ScoreTab extends JPanel {
             if (gradeStr.equals("PENDING")) {
                 JOptionPane.showMessageDialog(this,
                     "Course " + (i + 1) + " still has PENDING grade.\n\n" +
-                    "Please select actual grades (1.0 - 5.0) for all courses\n" +
+                    "Please select actual grades (1.0 - 5.0) or status (DROPPED/INC)\n" +
                     "before saving this record.\n\n" +
                     "This record was auto-generated during enrollment.",
                     "Pending Grade Detected", JOptionPane.WARNING_MESSAGE);
@@ -1535,7 +1600,7 @@ public class ScoreTab extends JPanel {
             }
             
             // Since we're using a dropdown with predefined values,
-            // all selected grades are automatically valid
+            // all selected grades (1.0-5.0, DROPPED, INC) are automatically valid
             // No need for additional validation
         }
         return true;
@@ -1612,6 +1677,62 @@ public class ScoreTab extends JPanel {
                 System.err.println("Student " + studentID + " not found in student.txt");
             }
         } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Update enrollment statuses for courses marked as DROPPED or INC
+     * This directly updates enrollment.txt for courses without numeric grades
+     */
+    private void updateDroppedAndIncStatuses(String studentID, String semester, String yearLevel) {
+        try {
+            // Load all enrollments
+            List<Enrollment> allEnrollments = new ArrayList<>();
+            String[] enrollmentPaths = {
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            };
+            String resolvedPath = FilePathResolver.resolveFilePath(enrollmentPaths);
+            
+            EnrollmentFileLoader loader = new EnrollmentFileLoader();
+            loader.load(resolvedPath);
+            allEnrollments.addAll(loader.getAllEnrollments());
+            
+            boolean updated = false;
+            
+            // Check each course dropdown for DROPPED/INC status
+            for (int i = 0; i < 5; i++) {
+                String courseDropdownValue = courseDropdowns[i].getSelectedItem().toString();
+                String gradeStr = courseScores[i].getSelectedItem().toString();
+                
+                if (gradeStr.equals("DROPPED") || gradeStr.equals("INC")) {
+                    String courseCode = getCourseCode(courseDropdownValue);
+                    
+                    // Find matching enrollment and update status
+                    for (Enrollment e : allEnrollments) {
+                        if (e.getStudentID().equals(studentID) && 
+                            e.getSemester().equals(semester) && 
+                            e.getYearLevel().equals(yearLevel)) {
+                            
+                            // Update the specific course status
+                            e.updateCourseStatusFromGrade(courseCode, gradeStr);
+                            updated = true;
+                        }
+                    }
+                }
+            }
+            
+            // Save updated enrollments if any courses were marked DROPPED/INC
+            if (updated) {
+                EnrollmentFileSaver saver = new EnrollmentFileSaver();
+                saver.saveEnrollmentsByStudent(resolvedPath, allEnrollments);
+                System.out.println("Updated DROPPED/INC statuses for student " + studentID);
+            }
+        } catch (Exception e) {
+            System.err.println("Error updating DROPPED/INC statuses: " + e.getMessage());
             e.printStackTrace();
         }
     }

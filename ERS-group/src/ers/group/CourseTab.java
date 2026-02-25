@@ -1308,7 +1308,11 @@ public class CourseTab extends JPanel {
             return;
         }
 
-        // 1. REFRESH ENROLLMENT LIST FROM FILE
+        // 1. REFRESH COURSE DATA FROM FILE
+        // This ensures that any newly added courses are available in dropdowns
+        loadCourseData();
+
+        // 2. REFRESH ENROLLMENT LIST FROM FILE
         // This ensures that any FAILED or PASSED statuses just saved are actually seen
         try {
             String savePath = FilePathResolver.resolveWritablePath(new String[]{
@@ -1325,7 +1329,7 @@ public class CourseTab extends JPanel {
             System.err.println("Note: Could not refresh enrollment list: " + e.getMessage());
         }
 
-        // 2. Find the student
+        // 3. Find the student
         Student student = null;
         for (Student s : students) {
             if (s.getStudentID().equals(studentID)) {
@@ -1339,7 +1343,7 @@ public class CourseTab extends JPanel {
             return;
         }
 
-        // 3. Load logic (now with fresh data)
+        // 4. Load logic (now with fresh data)
         loadCoursesForStudent(student, true);
     }
     

@@ -204,14 +204,41 @@ public class Enrollment {
         }
     }
 
-    public void updateCourseStatusFromGrade(String courseCode, double grade) {
-        if (grade >= 1.0 && grade <= 3.0) {
-            setCourseStatus(courseCode, "PASSED");
-        } else if (grade == 5.0) {
-            setCourseStatus(courseCode, "FAILED");
-        } else {
+    /**
+     * Update course status based on grade string
+     * Handles both numeric grades (1.00-5.00) and status strings (DROPPED, INC)
+     * @param courseCode The course code
+     * @param gradeOrStatus The grade (numeric string) or status (DROPPED/INC)
+     */
+    public void updateCourseStatusFromGrade(String courseCode, String gradeOrStatus) {
+        if (gradeOrStatus.equals("DROPPED")) {
+            setCourseStatus(courseCode, "DROPPED");
+        } else if (gradeOrStatus.equals("INC")) {
             setCourseStatus(courseCode, "INC");
+        } else {
+            try {
+                double grade = Double.parseDouble(gradeOrStatus);
+                if (grade >= 1.0 && grade <= 3.0) {
+                    setCourseStatus(courseCode, "PASSED");
+                } else if (grade == 5.0) {
+                    setCourseStatus(courseCode, "FAILED");
+                } else {
+                    setCourseStatus(courseCode, "INC");
+                }
+            } catch (NumberFormatException e) {
+                // If parsing fails, default to INC
+                setCourseStatus(courseCode, "INC");
+            }
         }
+    }
+
+    /**
+     * Update course status based on numeric grade (backward compatibility)
+     * @param courseCode The course code
+     * @param grade The numeric grade
+     */
+    public void updateCourseStatusFromGrade(String courseCode, double grade) {
+        updateCourseStatusFromGrade(courseCode, String.valueOf(grade));
     }
 
 

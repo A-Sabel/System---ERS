@@ -16,6 +16,10 @@ public class ScoreTabLogic {
         double sum = 0;
         int count = 0;
         for (String g : grades) {
+            // Skip non-numeric grades (DROPPED, INC, PENDING)
+            if (g.equals("DROPPED") || g.equals("INC") || g.equals("PENDING")) {
+                continue;
+            }
             try {
                 sum += Double.parseDouble(g.trim());
                 count++;

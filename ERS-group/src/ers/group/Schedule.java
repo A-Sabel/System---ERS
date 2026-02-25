@@ -110,10 +110,11 @@ public class Schedule {
      * @param maxCapacity Maximum students per section
      * @param isLab Whether the course requires a lab room
      * @param units Number of units for the course (for schedule duration calculation)
+     * @param semester The semester (\"Summer\" enables daily intensive scheduling)
      * @return The assigned section ID (e.g., "CS101-SEC1")
      * @throws SectionFullException if all 3 sections are at capacity
      */
-    public static String assignSection(String courseID, String studentID, int maxCapacity, boolean isLab, int units) throws SectionFullException {
+    public static String assignSection(String courseID, String studentID, int maxCapacity, boolean isLab, int units, String semester) throws SectionFullException {
         try {
             // Load existing sections for this course
             Map<String, Integer> sectionEnrollmentCounts = getSectionEnrollmentCounts(courseID);
@@ -123,6 +124,11 @@ public class Schedule {
                 int currentEnrollment = sectionEnrollmentCounts.getOrDefault(sectionID, 0);
                
                 if (currentEnrollment < maxCapacity) {
+                    // Section exists and has capacity - but check if it has schedules
+                    if (!sectionHasSchedule(sectionID)) {
+                        System.out.println("Section " + sectionID + " exists but has no schedules. Creating schedules...");
+                        assignScheduleToSection(sectionID, courseID, isLab, units, studentID, semester);
+                    }
                     return sectionID;
                 }
             }
@@ -133,7 +139,7 @@ public class Schedule {
                 String newSectionID = courseID + "-SEC" + (existingSectionCount + 1);
                 // Assign schedule to new section with course units for duration calculation
                 // Pass null for studentID since we don't have it yet in assignSection
-                assignScheduleToSection(newSectionID, courseID, isLab, units, null);
+                assignScheduleToSection(newSectionID, courseID, isLab, units, null, semester);
                 return newSectionID;
             }
             // All 3 sections exist and are full
@@ -199,6 +205,11 @@ public class Schedule {
     private static final String[] DAYS = {
         "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
     };
+    
+    // Summer intensive scheduling: All 5 days for daily sessions
+    private static final String[] SUMMER_DAYS = {
+        "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"
+    };
    
     /**
      * Assigns a schedule to a new section using intelligent unit splicing and mandatory 30-minute breaks.
@@ -208,9 +219,10 @@ public class Schedule {
      * @param isLab Whether the course requires a lab room
      * @param units Number of units for the course (will be spliced across multiple sessions)
      * @param studentID The student being enrolled (used for conflict detection)
+     * @param semester The semester ("Summer" enables daily intensive scheduling)
      * @throws SchedulingConflictException if the course cannot be fully scheduled due to resource shortages
      */
-    public static void assignScheduleToSection(String sectionID, String courseID, boolean isLab, int units, String studentID) throws SchedulingConflictException {
+    public static void assignScheduleToSection(String sectionID, String courseID, boolean isLab, int units, String studentID, String semester) throws SchedulingConflictException {
         try {
             // Check if this section already has schedules assigned
             if (sectionHasSchedule(sectionID)) {
@@ -221,7 +233,7 @@ public class Schedule {
             // Get ALL existing schedules to avoid conflicts across all courses
             List<Schedule> existingSchedules = getAllSchedules();
             
-            SchedulingResult result = calculateOptimalSplices(units, existingSchedules, sectionID, courseID, isLab, studentID);
+            SchedulingResult result = calculateOptimalSplices(units, existingSchedules, sectionID, courseID, isLab, studentID, semester);
             List<ScheduleSplice> assignedSplices = result.splices;
             
             if (assignedSplices.isEmpty()) {
@@ -465,15 +477,17 @@ public class Schedule {
      * Calculates optimal splices for a course with UNIVERSITY-STYLE SCHEDULING.
      * NOW PRIORITIZES MONDAY ACROSS ALL ROOMS before moving to other days.
      * INCLUDES STUDENT CONFLICT CHECKING to prevent double-booking.
+     * SUMMER MODE: Allocates consecutive daily Mon-Fri blocks (2-3 hours each).
      * @param totalUnits Total course units to distribute
      * @param existingSchedules All existing schedules for conflict checking
      * @param sectionID The section being scheduled (e.g., "CS101-SEC1")
      * @param courseID The course being scheduled (e.g., "CS101")
      * @param isLab Whether this is a lab course
      * @param studentID The student being enrolled (for conflict detection)
+     * @param semester The semester ("Summer" enables daily intensive mode)
      * @return SchedulingResult containing splices and failure tracking
      */
-    private static SchedulingResult calculateOptimalSplices(int totalUnits, List<Schedule> existingSchedules, String sectionID, String courseID, boolean isLab, String studentID) {
+    private static SchedulingResult calculateOptimalSplices(int totalUnits, List<Schedule> existingSchedules, String sectionID, String courseID, boolean isLab, String studentID, String semester) {
         List<ScheduleSplice> assignedSplices = new ArrayList<>();
         double remainingHours = totalUnits * 1.0;
         int roomConflicts = 0;
@@ -481,11 +495,14 @@ public class Schedule {
         int studentConflicts = 0;
         String failureReason = null;
 
-        final double MAX_HOURS_PER_DAY = 7.0;
+        // Summer intensive: 4 hours/day max, daily scheduling; Regular: 7 hours/day, 3-5 day spread
+        boolean isSummer = "Summer".equalsIgnoreCase(semester);
+        final double MAX_HOURS_PER_DAY = isSummer ? 4.0 : 7.0;
+        final String[] scheduleDays = isSummer ? SUMMER_DAYS : DAYS;
         
         // Track hours scheduled per day to enforce limit
         Map<String, Double> hoursPerDay = new HashMap<>();
-        for (String day : DAYS) {
+        for (String day : scheduleDays) {
             hoursPerDay.put(day, 0.0);
         }
         // Calculate hours already scheduled for this student on each day
@@ -536,12 +553,12 @@ public class Schedule {
                 System.err.println("Warning: Could not load student's existing schedules: " + e.getMessage());
             }
         }
-        System.out.println("Calculating UNIVERSITY-STYLE splices for " + totalUnits + " units (" + remainingHours + " hours total)");
-        System.out.println("Policy: Maximum " + MAX_HOURS_PER_DAY + " hours per day to ensure 3+ day distribution");
+        System.out.println("Calculating " + (isSummer ? "SUMMER INTENSIVE" : "UNIVERSITY-STYLE") + " splices for " + totalUnits + " units (" + remainingHours + " hours total)");
+        System.out.println("Policy: Maximum " + MAX_HOURS_PER_DAY + " hours per day" + (isSummer ? " (daily Mon-Fri intensive)" : " to ensure 3+ day distribution"));
         // Log student's existing daily hours
         if (studentID != null) {
             System.out.println("Student " + studentID + " existing hours per day:");
-            for (String day : DAYS) {
+            for (String day : scheduleDays) {
                 double hours = hoursPerDay.get(day);
                 if (hours > 0) {
                     System.out.println("  " + day + ": " + hours + " hours already scheduled");
@@ -549,7 +566,7 @@ public class Schedule {
             }
         }
 
-        for (String day : DAYS) {
+        for (String day : scheduleDays) {
             if (remainingHours <= 0) break;
             double dayHoursUsed = hoursPerDay.get(day);
             double dayHoursAvailable = MAX_HOURS_PER_DAY - dayHoursUsed;
@@ -1191,7 +1208,7 @@ public class Schedule {
         try {
             String scheduleFilePath = FilePathResolver.resolveScheduleFilePath();
             File scheduleFile = new File(scheduleFilePath);
-            if (scheduleFile.exists()) {
+            if (scheduleFile.exists() && scheduleFile.length() > 0) {
                 ScheduleFileLoader loader = new ScheduleFileLoader();
                 loader.load(scheduleFilePath);
                 for (Schedule s : loader.getAllSchedules()) {
@@ -1208,13 +1225,27 @@ public class Schedule {
    
     private static void saveSchedule(Schedule schedule) {
         try {
-            String filePath = FilePathResolver.resolveScheduleFilePath();
+            String[] possiblePaths = {
+                "ERS-group/src/ers/group/master files/Schedule.txt",
+                "src/ers/group/master files/Schedule.txt",
+                "master files/Schedule.txt",
+                "Schedule.txt"
+            };
+            String filePath = FilePathResolver.resolveWritablePath(possiblePaths);
             ScheduleFileSaver saver = new ScheduleFileSaver();
             ScheduleFileLoader loader = new ScheduleFileLoader();
-            loader.load(filePath);
-            List<Schedule> allSchedules = new ArrayList<>(loader.getAllSchedules());
+            
+            // Load existingschedules (if file exists)
+            List<Schedule> allSchedules = new ArrayList<>();
+            File f = new File(filePath);
+            if (f.exists()) {
+                loader.load(filePath);
+                allSchedules = new ArrayList<>(loader.getAllSchedules());
+            }
+            
             allSchedules.add(schedule);
             saver.save(filePath, allSchedules);
+            System.out.println("Schedule saved successfully to: " + filePath);
         } catch (Exception e) {
             System.err.println("Error saving schedule: " + e.getMessage());
             e.printStackTrace();

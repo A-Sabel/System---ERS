@@ -118,11 +118,9 @@ public class SignUp extends javax.swing.JDialog {
         pack();
     }// </editor-fold>                        
 
-
-    private void PasswordActionPerformed(java.awt.event.ActionEvent evt) {                                        
-        // TODO add your handling code here:
-    }                                        
-
+    private void PasswordActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler for password field (currently unused)
+    }
 
     private void SignUpActionPerformed(java.awt.event.ActionEvent evt) {                                      
         String email = Email.getText();

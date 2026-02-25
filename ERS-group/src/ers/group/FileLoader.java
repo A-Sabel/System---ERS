@@ -256,14 +256,32 @@ class EnrollmentFileLoader extends BaseFileLoader {
             String[] parts = line.split(",");
             if (parts.length < 6) return;
             
-            // ... (Keep your existing variable declarations like studentID, courseList, etc.)
+            // Parse enrollment fields
+            String studentID = parts[0].trim();
+            String courseList = parts[1].trim();
+            String yearLevel = parts[2].trim();
+            String semester = expandSemester(parts[3].trim());
+            String status = parts[4].trim();
+            String sectionList = parts.length > 5 ? parts[5].trim() : "";
+            String academicYear = parts.length > 6 ? parts[6].trim() : "";
+            String courseStatusesStr = parts.length > 7 ? parts[7].trim() : "";
             
             String[] courses = courseList.split(";");
             String[] sections = sectionList.split(";");
 
-            // ... (Keep your statusPairs and courseStatuses Map logic here)
+            // Parse course statuses (e.g., "CS101:PASSED;CS102:FAILED")
+            Map<String, String> courseStatuses = new HashMap<>();
+            if (!courseStatusesStr.isEmpty()) {
+                String[] statusPairs = courseStatusesStr.split(";");
+                for (String pair : statusPairs) {
+                    if (pair.contains(":")) {
+                        String[] kv = pair.split(":");
+                        courseStatuses.put(kv[0].trim(), kv[1].trim());
+                    }
+                }
+            }
 
-            // --- REPLACE THE OLD LOOP WITH THIS ONE ---
+            // Create individual enrollment objects for each course
             for (int i = 0; i < courses.length; i++) {
                 String courseID = courses[i].trim();
                 if (courseID.isEmpty() || courseID.equalsIgnoreCase("NONE")) continue;

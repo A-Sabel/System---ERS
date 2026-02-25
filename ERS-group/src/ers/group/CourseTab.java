@@ -80,8 +80,16 @@ public class CourseTab extends JPanel {
             studentFileLoader = new StudentFileLoader();
             studentFileLoader.load(filePath);
             Collection<Student> allStudents = studentFileLoader.getAllStudents();
-            students = new ArrayList<>(allStudents);
-            logger.info("Loaded " + students.size() + " students from file");
+            
+            // Filter out graduated students from enrollment operations
+            students = new ArrayList<>();
+            for (Student s : allStudents) {
+                if (!"Graduate".equals(s.getStatus())) {
+                    students.add(s);
+                }
+            }
+            
+            logger.info("Loaded " + students.size() + " active students from file (excluded graduates)");
         } catch (Exception e) {
             logger.severe("Error loading student data: " + e.getMessage());
             students = new ArrayList<>();
@@ -614,12 +622,17 @@ public class CourseTab extends JPanel {
         );
     }                                        
 
-    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
-        // TODO add your handling code here:
-    }                                     
+    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler for CT_id field (currently unused)
+    }
 
-    private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        // TODO add your handling code here:
+    private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler for CT_StudentID field (currently unused)
+    }
+    
+    private void resetToPending(javax.swing.JComboBox<String> combo, javax.swing.JLabel label) {
+        combo.setSelectedIndex(0); // Reset to "-- Select Course --"
+        label.setText(""); // Clear status
     }
 
     private void CT_SaveActionPerformed(java.awt.event.ActionEvent evt) {
@@ -686,21 +699,41 @@ public class CourseTab extends JPanel {
                 for (Enrollment e : enrollments) {
                     if (e.getStudentID().equals(studentID)) {
                         String status = e.getCourseStatus(course.getCourseSubjectID());
-                        if ("FAILED".equalsIgnoreCase(status) || "DROPPED".equalsIgnoreCase(status)) {
+                        if ("FAILED".equalsIgnoreCase(status) || "DROPPED".equalsIgnoreCase(status) || "INC".equalsIgnoreCase(status)) {
                             isValidSummerSubject = true;
                             break;
                         }
                     }
                 }
                 if (!isValidSummerSubject) {
-                    validationErrors.append("- ").append(courseName).append(": Only failed/dropped allowed in Summer.\n");
+                    validationErrors.append("- ").append(courseName).append(": Only failed/dropped/incomplete courses allowed in Summer.\n");
+                    continue;
+                }
+                
+                // RETAKE LIMIT CHECK: Maximum 3 attempts per course
+                if (!AcademicUtilities.canRetakeCourse(studentID, course.getCourseSubjectID())) {
+                    int retakeCount = AcademicUtilities.getRetakeCount(studentID, course.getCourseSubjectID());
+                    validationErrors.append("- ").append(courseName).append(": Maximum 3 retakes reached (").append(retakeCount).append(" attempts).\n");
                     continue;
                 }
             }
             coursesToEnroll.add(course);
         }
 
-        if (coursesToEnroll.isEmpty()) {
+        // 4. SUMMER UNIT CAP VALIDATION (6-15 units hard limit)
+        if ("Summer".equalsIgnoreCase(semesterStr)) {
+            int totalUnits = 0;
+            for (CourseSubject course : coursesToEnroll) {
+                totalUnits += course.getUnits();
+            }
+            if (totalUnits < 3) {
+                validationErrors.append("- Summer enrollment requires at least 6 units (currently: ").append(totalUnits).append(" units).\n");
+            } else if (totalUnits > 15) {
+                validationErrors.append("- Summer enrollment cannot exceed 15 units (currently: ").append(totalUnits).append(" units).\n");
+            }
+        }
+
+        if (coursesToEnroll.isEmpty() || validationErrors.length() > 0) {
             String msg = validationErrors.length() > 0 ? "Blocked:\n" + validationErrors.toString() : "Select a course.";
             javax.swing.JOptionPane.showMessageDialog(this, msg, "Enrollment Failed", javax.swing.JOptionPane.ERROR_MESSAGE);
             return;
@@ -714,7 +747,7 @@ public class CourseTab extends JPanel {
 
         for (CourseSubject course : coursesToEnroll) {
             try {
-                String sectionID = Schedule.assignSection(course.getCourseSubjectID(), studentID, MAX_SECTION_CAPACITY, course.isLabRoom(), course.getUnits());
+                String sectionID = Schedule.assignSection(course.getCourseSubjectID(), studentID, MAX_SECTION_CAPACITY, course.isLabRoom(), course.getUnits(), semesterStr);
                 Schedule.cacheStudentSectionAssignment(studentID, sectionID);
                 
                 if (courseIDsBuilder.length() > 0) {
@@ -727,7 +760,10 @@ public class CourseTab extends JPanel {
                 
                 successCount++;
             } catch (Exception e) {
-                validationErrors.append("- ").append(course.getCourseSubjectID()).append(": ").append(e.getMessage()).append("\n");
+                String errorMsg = course.getCourseSubjectID() + ": " + e.getMessage();
+                validationErrors.append("- ").append(errorMsg).append("\n");
+                System.err.println("Schedule generation error: " + errorMsg);
+                e.printStackTrace(); // Print full stack trace for debugging
             }
         }
 
@@ -742,11 +778,27 @@ public class CourseTab extends JPanel {
                 student.getSubjectsEnrolled().addAll(coursesToEnroll.stream().map(CourseSubject::getCourseSubjectID).collect(java.util.stream.Collectors.toList()));
                 studentFileSaver.save(studentFilePath, students);
                 
-                // Save to Enrollment File
-                String savePath = FilePathResolver.resolveWritablePath(new String[]{"master files/enrollment.txt", "enrollment.txt"});
+                // Save to Enrollment File (use same paths as loading for consistency)
+                String savePath = FilePathResolver.resolveWritablePath(new String[]{
+                    "ERS-group/src/ers/group/master files/enrollment.txt",
+                    "src/ers/group/master files/enrollment.txt",
+                    "master files/enrollment.txt",
+                    "enrollment.txt"
+                });
                 enrollmentFileSaver.saveEnrollmentsByStudent(savePath, enrollments);
                 
-                javax.swing.JOptionPane.showMessageDialog(this, summary.toString() + "\nSuccessfully Enrolled!", "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
+                // Auto-generate marksheet record for grading
+                java.util.List<String> enrolledCourseIDs = coursesToEnroll.stream()
+                    .map(CourseSubject::getCourseSubjectID)
+                    .collect(java.util.stream.Collectors.toList());
+                autoGenerateMarksheetRecord(studentID, semesterStr, yearLevel, enrolledCourseIDs);
+                
+                // Show success message, but include schedule errors if any occurred
+                String finalMessage = summary.toString() + "\nSuccessfully Enrolled!";
+                if (validationErrors.length() > 0) {
+                    finalMessage += "\n\n⚠ Schedule Generation Errors:\n" + validationErrors.toString();
+                }
+                javax.swing.JOptionPane.showMessageDialog(this, finalMessage, "Success", javax.swing.JOptionPane.INFORMATION_MESSAGE);
                 
                 loadStudentData();
                 loadStudentTableData();
@@ -773,9 +825,20 @@ public class CourseTab extends JPanel {
             }
         }
         if (student != null) {
-            ArrayList<String> enrolled = student.getSubjectsEnrolled();
-            if (enrolled != null && enrolled.contains(courseID)) {
-                statusPrefix = "[/] "; // Already Enrolled/Passed
+            // Check if course is actually PASSED (not just enrolled)
+            boolean isPassed = false;
+            for (Enrollment e : enrollments) {
+                if (e.getStudentID().equals(studentID)) {
+                    String status = e.getCourseStatus(courseID);
+                    if ("PASSED".equalsIgnoreCase(status)) {
+                        isPassed = true;
+                        break;
+                    }
+                }
+            }
+            
+            if (isPassed) {
+                statusPrefix = "[/] "; // Already Passed
             } else if (!checkPrerequisites(studentID, course.getPrerequisites())) {
                 statusPrefix = "[X] "; // Blocked by Prerequisites
             }
@@ -788,11 +851,12 @@ public class CourseTab extends JPanel {
             }
         }
         int maxCapacity = MAX_SECTION_CAPACITY * 3; // Total for 3 sections
-        // 3. Return Formatted String
+        // 3. Return Formatted String with both ID and Name
+        String displayText = courseID + " - " + course.getCourseSubjectName();
         if (enrolledCount >= maxCapacity) {
-            return statusPrefix + course.getCourseSubjectName() + " [FULL - " + enrolledCount + "/" + maxCapacity + "]";
+            return statusPrefix + displayText + " [FULL - " + enrolledCount + "/" + maxCapacity + "]";
         } else {
-            return statusPrefix + course.getCourseSubjectName() + " (" + enrolledCount + "/" + maxCapacity + ")";
+            return statusPrefix + displayText + " (" + enrolledCount + "/" + maxCapacity + ")";
         }
     }
     
@@ -824,21 +888,55 @@ public class CourseTab extends JPanel {
         }
         if (student == null) return;
         String semesterStr = (String) CT_Semester.getSelectedItem();
+        boolean isSummer = "Summer".equalsIgnoreCase(semesterStr);
         int semester = semesterStr.equals("1st Semester") ? 1 : 2;
         int year = student.getYearLevel().equals("1st Year") ? 1 : 2;
+        
+        // For Summer, get courses that need retaking (latest status is FAILED/DROPPED/INC)
+        java.util.Set<String> failedCourses = new java.util.HashSet<>();
+        if (isSummer) {
+            // Track latest status for each course across all enrollments
+            java.util.Map<String, String> latestCourseStatus = new java.util.HashMap<>();
+            
+            for (Enrollment e : enrollments) {
+                if (e.getStudentID().equals(studentID)) {
+                    java.util.Map<String, String> statuses = e.getCourseStatuses();
+                    if (statuses != null) {
+                        for (java.util.Map.Entry<String, String> entry : statuses.entrySet()) {
+                            String courseID = entry.getKey().toUpperCase();
+                            String status = entry.getValue();
+                            // Update with latest status (later enrollments override earlier ones)
+                            latestCourseStatus.put(courseID, status);
+                        }
+                    }
+                }
+            }
+            
+            // Only show courses where LATEST status is FAILED/DROPPED/INC
+            for (java.util.Map.Entry<String, String> entry : latestCourseStatus.entrySet()) {
+                String status = entry.getValue();
+                if ("FAILED".equalsIgnoreCase(status) || "DROPPED".equalsIgnoreCase(status) || "INC".equalsIgnoreCase(status)) {
+                    failedCourses.add(entry.getKey());
+                }
+            }
+        }
+
         // 2. Refresh each dropdown
         for (javax.swing.JComboBox<String> targetCB : dropdowns) {
             String currentSelection = (String) targetCB.getSelectedItem();
-            // Remove listeners to prevent infinite loop during model update
             java.awt.event.ActionListener[] listeners = targetCB.getActionListeners();
             for (java.awt.event.ActionListener l : listeners) targetCB.removeActionListener(l);
             java.util.List<String> newItems = new java.util.ArrayList<>();
             newItems.add("-- Select Course --");
-            // Rebuild list
             for (CourseSubject course : availableCourses.values()) {
-                if (course.getYearLevel() == year && course.getSemester() == semester) {
+                boolean shouldShow = false;
+                if (isSummer) {
+                    shouldShow = failedCourses.contains(course.getCourseSubjectID().toUpperCase());
+                } else {
+                    shouldShow = (course.getYearLevel() == year && course.getSemester() == semester);
+                }
+                if (shouldShow) {
                     String formatted = formatCourseDisplayName(course, studentID);
-                    // Add to list if it's the current selection of THIS box OR not selected anywhere else
                     if (formatted.equals(currentSelection) || !allCurrentSelections.contains(formatted)) {
                         newItems.add(formatted);
                     }
@@ -846,7 +944,6 @@ public class CourseTab extends JPanel {
             }
             targetCB.setModel(new javax.swing.DefaultComboBoxModel<>(newItems.toArray(new String[0])));
             targetCB.setSelectedItem(currentSelection);
-            // Re-add listeners
             for (java.awt.event.ActionListener l : listeners) targetCB.addActionListener(l);
         }
     }
@@ -858,19 +955,25 @@ public class CourseTab extends JPanel {
             int closeBracket = cleanName.indexOf("]");
             cleanName = cleanName.substring(closeBracket + 1).trim();
         }
-        // Strip capacity indicator
         if (cleanName.contains(" [")) {
             cleanName = cleanName.substring(0, cleanName.indexOf(" [")).trim();
         } else if (cleanName.contains(" (")) {
             cleanName = cleanName.substring(0, cleanName.indexOf(" (")).trim();
         }
-        // Search for course by exact name match
+        String courseID = cleanName;
+        if (cleanName.contains(" - ")) {
+            courseID = cleanName.substring(0, cleanName.indexOf(" - ")).trim();
+        }
+        for (CourseSubject course : availableCourses.values()) {
+            if (course.getCourseSubjectID().trim().equals(courseID)) {
+                return course;
+            }
+        }
         for (CourseSubject course : availableCourses.values()) {
             if (course.getCourseSubjectName().trim().equals(cleanName)) {
                 return course;
             }
         }
-        // If no exact match, try case-insensitive match
         for (CourseSubject course : availableCourses.values()) {
             if (course.getCourseSubjectName().trim().equalsIgnoreCase(cleanName)) {
                 return course;
@@ -1080,9 +1183,8 @@ public class CourseTab extends JPanel {
             return;
         }
 
-        // UPDATED: Pass the currentSemester to the loader
-        // You likely need to update the signature of loadCoursesForStudent to accept the semester string
-        loadCoursesForStudent(student, currentSemester); 
+        // Load courses for the student
+        loadCoursesForStudent(student, false); 
     }
 
     private void loadFilteredCourses(Student student, boolean isSummer) {
@@ -1091,22 +1193,31 @@ public class CourseTab extends JPanel {
         // 1. Refresh prerequisites from file to ensure data is current
         AcademicUtilities.loadPrerequisites();
 
+        // SUMMER AUTO-SUGGESTIONS: Show recommended failed/INC courses
+        if (isSummer && student != null) {
+            showSummerCourseSuggestions(student.getStudentID());
+        }
+
         for (CourseSubject course : availableCourses.values()) {
             if (isSummer) {
-                // SUMMER RULES: Only show Failed or Dropped subjects
-                boolean hasFailedOrDropped = false;
+                // SUMMER RULES: Only show courses where LATEST status is FAILED/DROPPED/INC
+                // Track latest status across all enrollments
+                String latestStatus = null;
                 for (Enrollment e : enrollments) {
-                    if (e.getStudentID().equals(student.getStudentID()) && 
-                        e.getCourseID().contains(course.getCourseSubjectID())) {
-                        
+                    if (e.getStudentID().equals(student.getStudentID())) {
                         String status = e.getCourseStatus(course.getCourseSubjectID());
-                        if ("FAILED".equalsIgnoreCase(status) || "DROPPED".equalsIgnoreCase(status)) {
-                            hasFailedOrDropped = true;
-                            break;
+                        if (status != null && !status.isEmpty()) {
+                            // Later enrollments override earlier ones
+                            latestStatus = status;
                         }
                     }
                 }
-                if (hasFailedOrDropped) {
+                
+                // Only add if latest status is FAILED/DROPPED/INC (not PASSED or PENDING)
+                if (latestStatus != null && 
+                    ("FAILED".equalsIgnoreCase(latestStatus) || 
+                     "DROPPED".equalsIgnoreCase(latestStatus) || 
+                     "INC".equalsIgnoreCase(latestStatus))) {
                     addItemToAllDropdowns(course.getCourseSubjectName()); // Use Name for the ComboBox
                 }
 
@@ -1139,6 +1250,55 @@ public class CourseTab extends JPanel {
         CT_PrereqStatus5.setText("");
     }
     
+    /**
+     * Shows auto-suggestions for summer remedial courses based on failed/INC status.
+     * Displays dialog with course names, IDs, units, and status tags ([F]/[I]/[D]).
+     */
+    private void showSummerCourseSuggestions(String studentID) {
+        java.util.List<String> recommendations = AcademicUtilities.getRecommendedSummerCourses(studentID);
+        
+        if (recommendations.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, 
+                "No failed or incomplete courses found.\nStudent has no remedial requirements for summer.",
+                "Summer Suggestions", 
+                javax.swing.JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        StringBuilder message = new StringBuilder("Recommended Summer Courses (Failed/Incomplete):\n\n");
+        
+        for (String courseID : recommendations) {
+            CourseSubject course = availableCourses.get(courseID);
+            if (course != null) {
+                // Determine status tag
+                String tag = "[F]"; // Default to Failed
+                for (Enrollment e : enrollments) {
+                    if (e.getStudentID().equals(studentID)) {
+                        String status = e.getCourseStatus(courseID);
+                        if ("INC".equalsIgnoreCase(status)) {
+                            tag = "[I]";
+                        } else if ("DROPPED".equalsIgnoreCase(status)) {
+                            tag = "[D]";
+                        }
+                    }
+                }
+                message.append(tag).append(" ")
+                       .append(course.getCourseSubjectName())
+                       .append(" (").append(courseID).append(") - ")
+                       .append(course.getUnits()).append(" units\n");
+            } else {
+                message.append("[?] ").append(courseID).append(" (course data not found)\n");
+            }
+        }
+        
+        message.append("\n[F]=Failed | [I]=Incomplete | [D]=Dropped");
+        
+        javax.swing.JOptionPane.showMessageDialog(this, 
+            message.toString(),
+            "Summer Course Suggestions", 
+            javax.swing.JOptionPane.INFORMATION_MESSAGE);
+    }
+    
     private void CT_LoadCoursesActionPerformed(java.awt.event.ActionEvent evt) {
         String studentID = CT_StudentID.getText().trim();
         String semesterStr = (String) CT_Semester.getSelectedItem();
@@ -1151,9 +1311,16 @@ public class CourseTab extends JPanel {
         // 1. REFRESH ENROLLMENT LIST FROM FILE
         // This ensures that any FAILED or PASSED statuses just saved are actually seen
         try {
-            String savePath = FilePathResolver.resolveWritablePath(new String[]{"master files/enrollment.txt", "enrollment.txt"});
-            // Use your existing loader to update the global 'enrollments' list
-            this.enrollments = enrollmentFileLoader.load(savePath); 
+            String savePath = FilePathResolver.resolveWritablePath(new String[]{
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            });
+            // Use existing loader to update the global 'enrollments' list
+            EnrollmentFileLoader loader = new EnrollmentFileLoader();
+            loader.load(savePath);
+            this.enrollments = new ArrayList<>(loader.getAllEnrollments());
         } catch (Exception e) {
             System.err.println("Note: Could not refresh enrollment list: " + e.getMessage());
         }
@@ -1190,6 +1357,10 @@ public class CourseTab extends JPanel {
 
             java.util.List<String> courseNames = new java.util.ArrayList<>();
             courseNames.add("-- Select Course --");
+            
+            // Track passed and failed courses
+            java.util.Set<String> allPassed = new java.util.HashSet<>();
+            java.util.Set<String> currentlyFailed = new java.util.HashSet<>();
 
             // 1. SCAN TOTAL HISTORY (Added .trim() and .toUpperCase() for safety)
             for (Enrollment e : enrollments) {
@@ -1230,9 +1401,9 @@ public class CourseTab extends JPanel {
                     }
                 } else {
                     // REGULAR SEMESTER: Use Year and Mapped Semester (1 or 2)
-                    String mappedSem = semesterStr.contains("1st") ? "1" : "2";
+                    int mappedSem = semesterStr.contains("1st") ? 1 : 2;
                     
-                    if (course.getYearLevel() == studentYear && course.getSemester().equals(mappedSem)) {
+                    if (course.getYearLevel() == studentYear && course.getSemester() == mappedSem) {
                         // Don't show if already passed
                         if (!allPassed.contains(course.getCourseSubjectID())) {
                             // Check Prerequisites

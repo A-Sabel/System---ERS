@@ -92,14 +92,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
     
     private void loadStudentData() {
         try {
-            // 1️⃣ Find student.txt
             String[] possiblePaths = {
                 "ERS-group/src/ers/group/master files/student.txt",
                 "src/ers/group/master files/student.txt",
                 "master files/student.txt",
                 "student.txt"
             };
-
             String studentFilePath = null;
             for (String path : possiblePaths) {
                 File f = new File(path);
@@ -108,19 +106,20 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     break;
                 }
             }
-
             if (studentFilePath == null) {
                 System.err.println("student.txt not found!");
                 students = new ArrayList<>();
                 return;
             }
-
-            // 2️⃣ Load students from file
             studentFileLoader = new StudentFileLoader();
             studentFileLoader.load(studentFilePath);
-            students = new ArrayList<>(studentFileLoader.getAllStudents());
-
-            // 3️⃣ Load graduates.txt to determine status
+            Collection<Student> allStudents = studentFileLoader.getAllStudents();
+            students = new ArrayList<>();
+            for (Student s : allStudents) {
+                if (!"Graduate".equals(s.getStatus())) {
+                    students.add(s);
+                }
+            }
             Set<String> graduatedIDs = new HashSet<>();
             String[] gradPaths = {
                 "ERS-group/src/ers/group/master files/graduates.txt",
@@ -136,14 +135,13 @@ public class StudentCourseTab extends javax.swing.JFrame {
                     break;
                 }
             }
-
             if (gradFilePath != null) {
                 try (BufferedReader br = new BufferedReader(new FileReader(gradFilePath))) {
                     String line;
                     while ((line = br.readLine()) != null) {
                         String[] parts = line.split(",");
                         if (parts.length >= 1) {
-                            graduatedIDs.add(parts[0].trim()); // studentID is first column
+                            graduatedIDs.add(parts[0].trim());
                         }
                     }
                 } catch (Exception e) {
@@ -153,28 +151,29 @@ public class StudentCourseTab extends javax.swing.JFrame {
             } else {
                 System.out.println("Graduates file not found");
             }
-
-            // 4️⃣ Set status based on graduates.txt
             for (Student s : students) {
                 if (graduatedIDs.contains(s.getStudentID())) {
                     s.setStatus("Graduate");
-                } else {
+                } else if (s.getStatus() == null || s.getStatus().isEmpty()) {
                     s.setStatus("Active");
                 }
             }
-
-            // 4.5️⃣ Save updated student statuses to file
+            students.removeIf(s -> "Graduate".equals(s.getStatus()));
+            java.util.List<Student> allStudentsForSave = new java.util.ArrayList<>(studentFileLoader.getAllStudents());
+            for (Student s : allStudentsForSave) {
+                if (graduatedIDs.contains(s.getStudentID())) {
+                    s.setStatus("Graduate");
+                } else if (s.getStatus() == null || s.getStatus().isEmpty()) {
+                    s.setStatus("Active");
+                }
+            }
             try {
-                studentFileSaver.save(studentFilePath, students);
+                studentFileSaver.save(studentFilePath, allStudentsForSave);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-            // 5️⃣ Refresh table
             loadStudentTableData();
-
             System.out.println("Loaded " + students.size() + " students with status from admin decisions.");
-
         } catch (Exception e) {
             e.printStackTrace();
             students = new ArrayList<>();
@@ -1331,25 +1330,25 @@ public class StudentCourseTab extends javax.swing.JFrame {
         isInitialized = true;
     }                     
 
-    private void ST_StudentNameActionPerformed(java.awt.event.ActionEvent evt) {                                               
-        // TODO add your handling code here:
-    }                                              
-
-    private void ST_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        // TODO add your handling code here:
-    }                                            
-
-    private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                          
-        // TODO add your handling code here:
-    }                                         
-
-    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {                                      
-        // TODO add your handling code here:
-    }                                     
-
-    private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {                                             
-        // TODO add your handling code here:
-    }                                                                                                                                         
+    private void ST_StudentNameActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler (currently unused)
+    }
+    
+    private void ST_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler (currently unused)
+    }
+    
+    private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler (currently unused)
+    }
+    
+    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler (currently unused)
+    }
+    
+    private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {
+        // Event handler (currently unused)
+    }
 
     private void ST_SearchActionPerformed(java.awt.event.ActionEvent evt) {                                                
         ST_SearchStudentActionPerformed(evt);

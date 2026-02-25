@@ -111,8 +111,16 @@ public class Scheduletab extends javax.swing.JPanel {
             studentFileLoader = new StudentFileLoader();
             studentFileLoader.load(filePath);
             Collection<Student> allStudents = studentFileLoader.getAllStudents();
-            students = new ArrayList<>(allStudents);
-            logger.info("Loaded " + students.size() + " students from file");
+            
+            // Filter out graduated students from schedule display
+            students = new ArrayList<>();
+            for (Student s : allStudents) {
+                if (!"Graduate".equals(s.getStatus())) {
+                    students.add(s);
+                }
+            }
+            
+            logger.info("Loaded " + students.size() + " active students from file (excluded graduates)");
         } catch (Exception e) {
             logger.severe("Error loading student data: " + e.getMessage());
             students = new ArrayList<>();

@@ -191,9 +191,10 @@ public class TestingPanel extends JPanel {
         // Requirements label
         JLabel reqLabel = new JLabel("<html><b>Graduation Requirements (2-Year Program):</b><br>" +
                                       "• Must be 2nd Year student<br>" +
-                                      "• All courses passed (no FAILED/INC/DROPPED)<br>" +
+                                      "• All courses must have current status PASSED<br>" +
                                       "• Minimum 60 units earned<br>" +
-                                      "• GWA ≤ 3.0</html>");
+                                      "• GWA ≤ 3.0<br>" +
+                                      "<i>Note: Retaken courses allowed but disqualify from Latin Honors</i></html>");
         reqLabel.setBorder(BorderFactory.createCompoundBorder(
             BorderFactory.createLineBorder(new Color(0, 150, 136), 2),
             BorderFactory.createEmptyBorder(10, 10, 10, 10)
@@ -328,7 +329,44 @@ public class TestingPanel extends JPanel {
                 next = "2nd Semester";
                 break;
             case "2nd Semester":
-                next = "Summer";
+                // Check if any students have failed courses requiring summer remedial
+                if (hasStudentsRequiringSummer()) {
+                    int summerChoice = JOptionPane.showConfirmDialog(this,
+                        "Some students have failed/incomplete courses.\n" +
+                        "Proceed to Summer semester for remedial courses?\n\n" +
+                        "YES: Enable Summer remedial period\n" +
+                        "NO: Skip directly to 1st Semester (next academic year)",
+                        "Summer Remedial Check",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+                    
+                    if (summerChoice == JOptionPane.YES_OPTION) {
+                        next = "Summer";
+                    } else {
+                        // Skip to next academic year
+                        next = "1st Semester";
+                        String[] years = currentYear.split("-");
+                        if (years.length == 2) {
+                            int year1 = Integer.parseInt(years[0]) + 1;
+                            int year2 = Integer.parseInt(years[1]) + 1;
+                            nextAcademicYear = year1 + "-" + year2;
+                        }
+                    }
+                } else {
+                    // No failed courses - directly skip to next academic year
+                    next = "1st Semester";
+                    String[] years = currentYear.split("-");
+                    if (years.length == 2) {
+                        int year1 = Integer.parseInt(years[0]) + 1;
+                        int year2 = Integer.parseInt(years[1]) + 1;
+                        nextAcademicYear = year1 + "-" + year2;
+                    }
+                    JOptionPane.showMessageDialog(this,
+                        "No students require summer remedial.\n" +
+                        "Advancing directly to 1st Semester of next academic year.",
+                        "Summer Skipped",
+                        JOptionPane.INFORMATION_MESSAGE);
+                }
                 break;
             case "Summer":
                 next = "1st Semester";
@@ -371,11 +409,20 @@ public class TestingPanel extends JPanel {
             // Update all students' currentSemester to the new semester
             int studentsUpdated = updateAllStudentsSemester(next);
             
+            // Build duration message with summer-specific details
+            String durationMessage;
+            if ("Summer".equals(next)) {
+                durationMessage = "Duration: 6 weeks (Mon-Fri daily, 2-3 hour sessions)\n" +
+                                "Dates: " + startDate + " to " + endDate;
+            } else {
+                durationMessage = "Duration: " + startDate + " to " + endDate;
+            }
+            
             JOptionPane.showMessageDialog(this,
                 "Semester advanced successfully!\n\n" +
                 "New Semester: " + next + "\n" +
                 "Academic Year: " + nextAcademicYear + "\n" +
-                "Duration: " + startDate + " to " + endDate + "\n\n" +
+                durationMessage + "\n\n" +
                 "Students synced: " + studentsUpdated + "\n" +
                 "All schedules have been cleared.",
                 "Success",
@@ -384,6 +431,40 @@ public class TestingPanel extends JPanel {
             // Refresh the info panel to show new semester
             refreshInfoPanel();
         }
+    }
+    
+    /**
+     * Checks if any students have failed or incomplete courses requiring summer remedial.
+     * @return true if at least one student has FAILED/INC/DROPPED courses
+     */
+    private boolean hasStudentsRequiringSummer() {
+        try {
+            String enrollmentPath = FilePathResolver.resolveEnrollmentFilePath();
+            java.io.File enrollmentFile = new java.io.File(enrollmentPath);
+            if (!enrollmentFile.exists()) {
+                return false;
+            }
+            
+            EnrollmentFileLoader loader = new EnrollmentFileLoader();
+            loader.load(enrollmentPath);
+            
+            for (Enrollment e : loader.getAllEnrollments()) {
+                // Check course statuses for each enrollment
+                java.util.Map<String, String> courseStatuses = e.getCourseStatuses();
+                if (courseStatuses != null) {
+                    for (String status : courseStatuses.values()) {
+                        if ("FAILED".equalsIgnoreCase(status) || 
+                            "INC".equalsIgnoreCase(status) || 
+                            "DROPPED".equalsIgnoreCase(status)) {
+                            return true; // Found a student requiring summer
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error checking for summer requirements: " + e.getMessage());
+        }
+        return false;
     }
     
     /**

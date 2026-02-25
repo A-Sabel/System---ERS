@@ -826,8 +826,17 @@ public class ScoreTab extends JPanel {
 
             // Courses & scores start at index 4
             for (int i = 0; i < 5; i++) {
-                row[4 + i * 2] = courseMap.getOrDefault(d[4 + i * 2], d[4 + i * 2]);
-                row[5 + i * 2] = d[5 + i * 2];
+                String courseID = d[4 + i * 2];
+                String score = d[5 + i * 2];
+                
+                // Skip displaying "NONE" courses - show blank instead
+                if ("NONE".equalsIgnoreCase(courseID) || courseID.trim().isEmpty()) {
+                    row[4 + i * 2] = "";
+                    row[5 + i * 2] = "";
+                } else {
+                    row[4 + i * 2] = courseMap.getOrDefault(courseID, courseID);
+                    row[5 + i * 2] = score;
+                }
             }
 
             row[14] = d[14]; // GPA
@@ -918,8 +927,17 @@ public class ScoreTab extends JPanel {
                     
                     for(int i=0;i<5;i++){
                         // d[4+i*2] = Course, d[5+i*2] = Score
-                        row[4 + i*2] = courseMap.getOrDefault(d[4 + i*2], d[4 + i*2]);
-                        row[5 + i*2] = d[5 + i*2];
+                        String courseID = d[4 + i * 2];
+                        String score = d[5 + i * 2];
+                        
+                        // Skip displaying "NONE" courses - show blank instead
+                        if ("NONE".equalsIgnoreCase(courseID) || courseID.trim().isEmpty()) {
+                            row[4 + i * 2] = "";
+                            row[5 + i * 2] = "";
+                        } else {
+                            row[4 + i * 2] = courseMap.getOrDefault(courseID, courseID);
+                            row[5 + i * 2] = score;
+                        }
                     }
                     row[14] = d[14]; // GPA
                     
@@ -974,6 +992,11 @@ public class ScoreTab extends JPanel {
         for (int i = 0; i < 5; i++) {
             courseDropdowns[i].setSelectedIndex(0);
             courseScores[i].setSelectedIndex(0); // Default to 1.00
+            // Re-enable all dropdowns when clearing
+            courseDropdowns[i].setEnabled(true);
+            courseScores[i].setEnabled(true);
+            courseDropdowns[i].setBackground(new Color(146, 190, 219));
+            courseScores[i].setBackground(new Color(146, 190, 219));
         }
         searchIdField.setText("");
         searchSemField.setSelectedIndex(0);
@@ -1001,11 +1024,32 @@ public class ScoreTab extends JPanel {
                 Object courseValue = model.getValueAt(row, 4 + (i * 2));
                 Object scoreValue = model.getValueAt(row, 5 + (i * 2));
                 
-                if (courseValue != null && !courseValue.toString().isEmpty()) {
-                    courseDropdowns[i].setSelectedItem(courseValue.toString());
-                }
-                if (scoreValue != null && !scoreValue.toString().isEmpty()) {
-                    courseScores[i].setSelectedItem(scoreValue.toString());
+                // Check if course is empty or NONE
+                boolean isCourseEmpty = courseValue == null || 
+                                    courseValue.toString().trim().isEmpty() ||
+                                    "NONE".equalsIgnoreCase(courseValue.toString().trim());
+                
+                if (isCourseEmpty) {
+                    // Grey out/disable the dropdowns for unused course slots
+                    courseDropdowns[i].setSelectedIndex(0);
+                    courseScores[i].setSelectedIndex(0);
+                    courseDropdowns[i].setEnabled(false);
+                    courseScores[i].setEnabled(false);
+                    courseDropdowns[i].setBackground(new Color(200, 200, 200)); // Grey background
+                    courseScores[i].setBackground(new Color(200, 200, 200));
+                } else {
+                    // Enable the dropdowns for courses that exist
+                    courseDropdowns[i].setEnabled(true);
+                    courseScores[i].setEnabled(true);
+                    courseDropdowns[i].setBackground(new Color(146, 190, 219)); // Normal background
+                    courseScores[i].setBackground(new Color(146, 190, 219));
+                    
+                    if (courseValue != null && !courseValue.toString().isEmpty()) {
+                        courseDropdowns[i].setSelectedItem(courseValue.toString());
+                    }
+                    if (scoreValue != null && !scoreValue.toString().isEmpty()) {
+                        courseScores[i].setSelectedItem(scoreValue.toString());
+                    }
                 }
             }
         } catch (Exception e) {
@@ -1036,9 +1080,15 @@ public class ScoreTab extends JPanel {
             return;
         }
 
-        // 3. Clear existing selections first
+        // 3. Clear existing selections and reset all dropdowns
         for (int i = 0; i < 5; i++) {
-            courseDropdowns[i].setSelectedIndex(0); 
+            courseDropdowns[i].setSelectedIndex(0);
+            courseScores[i].setSelectedIndex(0);
+            // Initially enable all
+            courseDropdowns[i].setEnabled(true);
+            courseScores[i].setEnabled(true);
+            courseDropdowns[i].setBackground(new Color(146, 190, 219));
+            courseScores[i].setBackground(new Color(146, 190, 219));
         }
 
         // 4. Fill dropdowns with enrolled Course Names
@@ -1063,6 +1113,16 @@ public class ScoreTab extends JPanel {
             } else {
                 System.err.println("Course code not found in map: " + code);
             }
+        }
+        
+        // 5. Disable unused course slots (if student enrolled in less than 5 courses)
+        for (int i = enrolledCodes.size(); i < 5; i++) {
+            courseDropdowns[i].setSelectedIndex(0);
+            courseScores[i].setSelectedIndex(0);
+            courseDropdowns[i].setEnabled(false);
+            courseScores[i].setEnabled(false);
+            courseDropdowns[i].setBackground(new Color(200, 200, 200)); // Grey
+            courseScores[i].setBackground(new Color(200, 200, 200));
         }
         
         JOptionPane.showMessageDialog(this, "Loaded " + Math.min(enrolledCodes.size(), 5) + " subjects from enrollment records.");

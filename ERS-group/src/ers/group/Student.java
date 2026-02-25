@@ -15,15 +15,15 @@ public class Student {
     private int age;
     private final String dob;
     private String yearLevel;
-    private String currentSemester; // Track which semester the student is in
+    private String currentSemester;
     private String section;
     private String studentType;
     private ArrayList<String> subjectsEnrolled;
     private double gwa;
     private double cumulativeGWA; // Overall GWA across all semesters
     private Map<String, Double> semesterGWAs; // GWA for each semester (key: "1st Year-1st Semester")
-    private String latinHonor; // Summa Cum Laude, Magna Cum Laude, Cum Laude, or empty
-    private Set<String> completedCourses; // Set of course codes with PASSED status
+    private String latinHonor;
+    private Set<String> completedCourses;
     // contact information
     private String email;
     private String phoneNumber;

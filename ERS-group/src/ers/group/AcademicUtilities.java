@@ -95,7 +95,7 @@ public class AcademicUtilities {
                           startDate.toString() + "," + endDate.toString());
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ErrorLogger.logError("Failed to set active semester in academic calendar", e);
         }
     }
     
@@ -252,7 +252,7 @@ public class AcademicUtilities {
                 pw.println(String.join(",", parts));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ErrorLogger.logError("Failed to update student year level in file", e);
         }
         
         if (inputFile.delete()) {
@@ -473,22 +473,39 @@ public class AcademicUtilities {
         try (BufferedReader br = new BufferedReader(new FileReader(
                 FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
+            
+            // Track latest status for each course across all enrollments
+            Map<String, String> latestCourseStatus = new HashMap<>();
+            
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
                 
-                if (parts.length >= 5 && parts[0].equals(studentID)) {
-                    String status = parts[4];
-                    
-                    if ("FAILED".equals(status) || "INC".equals(status)) {
-                        String[] courses = parts[1].split(";");
-                        for (String courseID : courses) {
-                            if (!courseID.trim().isEmpty() && !recommended.contains(courseID.trim())) {
-                                recommended.add(courseID.trim());
+                if (parts.length >= 8 && parts[0].equals(studentID)) {
+                    // Parse detailed course statuses from last field (format: CS201:FAILED;CS202:PASSED)
+                    String detailedStatuses = parts[7];
+                    if (detailedStatuses != null && !detailedStatuses.isEmpty()) {
+                        String[] statusPairs = detailedStatuses.split(";");
+                        for (String pair : statusPairs) {
+                            String[] courseStat = pair.split(":");
+                            if (courseStat.length == 2) {
+                                String courseID = courseStat[0].trim();
+                                String status = courseStat[1].trim();
+                                // Update with latest status (later enrollments override)
+                                latestCourseStatus.put(courseID, status);
                             }
                         }
                     }
                 }
             }
+            
+            // Only recommend courses where LATEST status is FAILED/INC/DROPPED
+            for (Map.Entry<String, String> entry : latestCourseStatus.entrySet()) {
+                String status = entry.getValue();
+                if ("FAILED".equals(status) || "INC".equals(status) || "DROPPED".equals(status)) {
+                    recommended.add(entry.getKey());
+                }
+            }
+            
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -531,10 +548,19 @@ public class AcademicUtilities {
         
         String studentName = getStudentName(studentID);
         double gwa = getStudentGWA(studentID);
-        String honors = getLatinHonors(gwa);
+        
+        // Students with any history of FAILED/DROPPED/INC cannot receive Latin Honors
+        String honors;
+        if (hasEverFailedCourses(studentID)) {
+            honors = "NONE";
+        } else {
+            honors = getLatinHonors(gwa);
+        }
+        
         String graduationDate = LocalDate.now().toString();
         String academicYear = getAcademicYear();
         
+        // Step 1: Write to graduates.txt
         try (PrintWriter pw = new PrintWriter(new FileWriter(
                 FilePathResolver.resolveFilePath(new String[] {
                     "ERS-group/src/ers/group/master files/graduates.txt",
@@ -545,7 +571,38 @@ public class AcademicUtilities {
             pw.println(studentID + "," + studentName + "," + graduationDate + "," + 
                       String.format("%.2f", gwa) + "," + honors + "," + academicYear + ",Bachelor");
         } catch (Exception e) {
-            e.printStackTrace();
+            ErrorLogger.logError("Failed to write to graduates.txt for student: " + studentID, e);
+            return false;
+        }
+        
+        // Step 2: Update student status to "Graduate" in student.txt
+        try {
+            String studentPath = FilePathResolver.resolveStudentFilePath();
+            StudentFileLoader loader = new StudentFileLoader();
+            loader.load(studentPath);
+            List<Student> allStudents = new ArrayList<>(loader.getAllStudents());
+            
+            // Find and update the graduated student
+            boolean studentFound = false;
+            for (Student student : allStudents) {
+                if (student.getStudentID().equals(studentID)) {
+                    student.setStatus("Graduate");
+                    studentFound = true;
+                    break;
+                }
+            }
+            
+            if (!studentFound) {
+                System.err.println("Warning: Student " + studentID + " not found for status update");
+                return false;
+            }
+            
+            // Save updated student list
+            StudentFileSaver saver = new StudentFileSaver();
+            saver.save(studentPath, allStudents);
+            
+        } catch (Exception e) {
+            ErrorLogger.logError("Failed to update student status to Graduate for: " + studentID, e);
             return false;
         }
         
@@ -571,25 +628,99 @@ public class AcademicUtilities {
         return false;
     }
     
+    /**
+     * Get the actual units for a specific course from courseSubject.txt
+     */
+    private static int getCourseUnits(String courseCode) {
+        try {
+            String coursePath = FilePathResolver.resolveFilePath(new String[] {
+                "ERS-group/src/ers/group/master files/courseSubject.txt",
+                "src/ers/group/master files/courseSubject.txt",
+                "master files/courseSubject.txt",
+                "courseSubject.txt"
+            });
+            
+            CourseSubjectFileLoader loader = new CourseSubjectFileLoader();
+            loader.load(coursePath);
+            Map<String, CourseSubject> courseMap = loader.getSubjectMap();
+            
+            CourseSubject course = courseMap.get(courseCode);
+            if (course != null) {
+                return course.getUnits();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        // Default to 3 units if course not found
+        return 3;
+    }
+    
     private static int getTotalUnitsEarned(String studentID) {
-        // Would need to count units from PASSED courses
-        // For now, estimate based on passed enrollment records
-        int passedRecords = 0;
+        int totalUnits = 0;
+        
+        // Load course data once for efficiency
+        Map<String, CourseSubject> courseMap = new HashMap<>();
+        try {
+            String coursePath = FilePathResolver.resolveFilePath(new String[] {
+                "ERS-group/src/ers/group/master files/courseSubject.txt",
+                "src/ers/group/master files/courseSubject.txt",
+                "master files/courseSubject.txt",
+                "courseSubject.txt"
+            });
+            
+            CourseSubjectFileLoader loader = new CourseSubjectFileLoader();
+            loader.load(coursePath);
+            courseMap = loader.getSubjectMap();
+        } catch (Exception e) {
+            ErrorLogger.logError("Failed to load course subjects for unit calculation", e);
+        }
+        
+        // Count units from individual PASSED courses (not enrollment status)
+        // Track latest status for each course to avoid counting duplicates
+        Map<String, String> latestCourseStatus = new HashMap<>();
         
         try (BufferedReader br = new BufferedReader(new FileReader(
                 FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length >= 5 && parts[0].equals(studentID) && "PASSED".equals(parts[4])) {
-                    String[] courses = parts[1].split(";");
-                    passedRecords += courses.length;
+                if (parts.length >= 8 && parts[0].equals(studentID)) {
+                    // Parse detailed course statuses from last field
+                    String detailedStatuses = parts[7];
+                    if (detailedStatuses != null && !detailedStatuses.isEmpty()) {
+                        String[] statusPairs = detailedStatuses.split(";");
+                        for (String pair : statusPairs) {
+                            String[] courseStat = pair.split(":");
+                            if (courseStat.length == 2) {
+                                String courseID = courseStat[0].trim();
+                                String status = courseStat[1].trim();
+                                // Update with latest status (later enrollments override)
+                                latestCourseStatus.put(courseID, status);
+                            }
+                        }
+                    }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            ErrorLogger.logError("Failed to calculate total units for student: " + studentID, e);
+        }
         
-        // Assuming average 3 units per course
-        return passedRecords * 3;
+        // Count units only for courses with latest status = PASSED
+        for (Map.Entry<String, String> entry : latestCourseStatus.entrySet()) {
+            if ("PASSED".equals(entry.getValue())) {
+                String courseCode = entry.getKey();
+                CourseSubject course = courseMap.get(courseCode);
+                if (course != null) {
+                    totalUnits += course.getUnits();
+                } else {
+                    // Fallback to 3 units if course not found in courseSubject.txt
+                    totalUnits += 3;
+                }
+            }
+        }
+        
+        return totalUnits;
     }
     
     private static double getStudentGWA(String studentID) {
@@ -603,7 +734,7 @@ public class AcademicUtilities {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            ErrorLogger.logError("Failed to get student GWA for: " + studentID, e);
         }
         return 5.0;
     }
@@ -773,16 +904,87 @@ public class AcademicUtilities {
     
     /**
      * Check if student completed all semesters in year (1st & 2nd semester)
+     * Now considers course retakes - checks if ALL required courses are passed,
+     * even if originally failed and retaken in summer
      */
     private static boolean hasCompletedAllSemestersInYear(String studentID, String yearLevel) {
-        boolean completed1stSem = hasCompletedSemester(studentID, "1st Semester", yearLevel);
-        boolean completed2ndSem = hasCompletedSemester(studentID, "2nd Semester", yearLevel);
-        
-        return completed1stSem && completed2ndSem;
+        try {
+            String enrollmentPath = FilePathResolver.resolveEnrollmentFilePath();
+            
+            // Step 1: Collect all required courses for this year level (semester 1 & 2)
+            Set<String> requiredCourses = new HashSet<>();
+            BufferedReader br = new BufferedReader(new FileReader(enrollmentPath));
+            String line;
+            
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 7) {
+                    String sid = parts[0];
+                    String courseList = parts[1];
+                    String yr = parts[2];
+                    String sem = parts[3];
+                    
+                    // Collect courses from semester 1 and 2 only (not summer)
+                    if (sid.equals(studentID) && yr.equals(yearLevel) && (sem.equals("1") || sem.equals("2"))) {
+                        String[] courses = courseList.split(";");
+                        for (String course : courses) {
+                            requiredCourses.add(course.trim());
+                        }
+                    }
+                }
+            }
+            br.close();
+            
+            // If no courses found, student hasn't enrolled yet
+            if (requiredCourses.isEmpty()) {
+                return false;
+            }
+            
+            // Step 2: Check if each required course has been passed (in any enrollment)
+            Map<String, String> courseStatusMap = new HashMap<>();
+            br = new BufferedReader(new FileReader(enrollmentPath));
+            
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 8 && parts[0].equals(studentID)) {
+                    // Parse detailed course statuses from last field
+                    String detailedStatuses = parts[7];
+                    if (detailedStatuses != null && !detailedStatuses.isEmpty()) {
+                        String[] statusPairs = detailedStatuses.split(";");
+                        for (String pair : statusPairs) {
+                            String[] courseStat = pair.split(":");
+                            if (courseStat.length == 2) {
+                                String courseID = courseStat[0].trim();
+                                String status = courseStat[1].trim();
+                                
+                                // Update status (later enrollments override earlier ones)
+                                courseStatusMap.put(courseID, status);
+                            }
+                        }
+                    }
+                }
+            }
+            br.close();
+            
+            // Step 3: Verify all required courses are PASSED
+            for (String course : requiredCourses) {
+                String status = courseStatusMap.get(course);
+                if (status == null || !"PASSED".equals(status)) {
+                    return false; // Course not passed or not found
+                }
+            }
+            
+            return true; // All required courses passed
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
     
     /**
      * Check if student has no incomplete requirements (all courses PASSED)
+     * Now considers course retakes - checks latest status of each course
      */
     private static boolean hasNoIncompleteRequirements(String studentID) {
         try {
@@ -790,19 +992,77 @@ public class AcademicUtilities {
             BufferedReader br = new BufferedReader(new FileReader(enrollmentPath));
             String line;
             
+            // Track latest status for each course across all enrollments
+            Map<String, String> courseStatusMap = new HashMap<>();
+            
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length >= 5 && parts[0].equals(studentID)) {
-                    String status = parts[4];
-                    // Check for any incomplete/failed statuses
-                    if ("FAILED".equals(status) || "INC".equals(status) || "DROPPED".equals(status) || "ENROLLED".equals(status)) {
-                        br.close();
-                        return false;
+                if (parts.length >= 8 && parts[0].equals(studentID)) {
+                    // Parse detailed course statuses from last field
+                    String detailedStatuses = parts[7];
+                    if (detailedStatuses != null && !detailedStatuses.isEmpty()) {
+                        String[] statusPairs = detailedStatuses.split(";");
+                        for (String pair : statusPairs) {
+                            String[] courseStat = pair.split(":");
+                            if (courseStat.length == 2) {
+                                String courseID = courseStat[0].trim();
+                                String status = courseStat[1].trim();
+                                // Update status (later enrollments override earlier ones)
+                                courseStatusMap.put(courseID, status);
+                            }
+                        }
                     }
                 }
             }
             br.close();
-            return true;
+            
+            // Check if any course's LATEST status is not PASSED
+            for (String status : courseStatusMap.values()) {
+                if (!"PASSED".equals(status)) {
+                    return false; // Course not passed
+                }
+            }
+            
+            return true; // All courses passed
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Check if student EVER had FAILED/DROPPED/INC courses (even if retaken)
+     * Used to disqualify from Latin Honors while still allowing graduation
+     */
+    private static boolean hasEverFailedCourses(String studentID) {
+        try {
+            String enrollmentPath = FilePathResolver.resolveEnrollmentFilePath();
+            BufferedReader br = new BufferedReader(new FileReader(enrollmentPath));
+            String line;
+            
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 8 && parts[0].equals(studentID)) {
+                    // Parse detailed course statuses
+                    String detailedStatuses = parts[7];
+                    if (detailedStatuses != null && !detailedStatuses.isEmpty()) {
+                        String[] statusPairs = detailedStatuses.split(";");
+                        for (String pair : statusPairs) {
+                            String[] courseStat = pair.split(":");
+                            if (courseStat.length == 2) {
+                                String status = courseStat[1].trim();
+                                // Check if EVER had these statuses
+                                if ("FAILED".equals(status) || "DROPPED".equals(status) || "INC".equals(status)) {
+                                    br.close();
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            br.close();
+            return false;
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -928,21 +1188,26 @@ public class AcademicUtilities {
                         
                         if (eligible) {
                             double gwa = getStudentGWA(studentID);
-                            String honors = getLatinHonors(gwa);
                             String entry = studentID + " - " + studentName + " (GWA: " + String.format("%.2f", gwa) + ")";
                             
-                            switch (honors) {
-                                case "SUMMA CUM LAUDE":
-                                    summa.add(entry);
-                                    break;
-                                case "MAGNA CUM LAUDE":
-                                    magna.add(entry);
-                                    break;
-                                case "CUM LAUDE":
-                                    cumLaude.add(entry);
-                                    break;
-                                default:
-                                    regular.add(entry);
+                            // Students with any history of FAILED/DROPPED/INC cannot get Latin Honors
+                            if (hasEverFailedCourses(studentID)) {
+                                regular.add(entry + " [Retake]");
+                            } else {
+                                String honors = getLatinHonors(gwa);
+                                switch (honors) {
+                                    case "SUMMA CUM LAUDE":
+                                        summa.add(entry);
+                                        break;
+                                    case "MAGNA CUM LAUDE":
+                                        magna.add(entry);
+                                        break;
+                                    case "CUM LAUDE":
+                                        cumLaude.add(entry);
+                                        break;
+                                    default:
+                                        regular.add(entry);
+                                }
                             }
                         } else {
                             notEligible.add(studentID + " - " + studentName);

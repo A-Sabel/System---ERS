@@ -584,7 +584,7 @@ StudentID,Name,GraduationDate,GWA,LatinHonors,AcademicYear,Degree
 
 ### Summer Enrollment Special Rules
 
-1. **6-15 Unit Limit** - Different from regular semesters (18-24 units)
+1. **3-15 Unit Limit** - Different from regular semesters (18-24 units)
 2. **Failed Course Filtering** - Only courses with current FAILED/DROPPED/INC status
 3. **Latest Status Check** - System tracks latest status across all enrollments
 4. **Retaken Courses Excluded** - Courses already retaken and passed do not appear

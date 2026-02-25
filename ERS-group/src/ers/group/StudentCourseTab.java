@@ -6,7 +6,6 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import javax.swing.table.DefaultTableModel;
 
@@ -479,6 +478,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_STUDENT_ID.setText("Student ID");
 
         ST_STUDENT_NAME.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        ST_STUDENT_NAME.setForeground(new java.awt.Color(255, 255, 255));
         ST_STUDENT_NAME.setText("Student Name");
 
         ST_BIRTHDAY.setFont(new java.awt.Font("Segoe UI", 1, 14)); 

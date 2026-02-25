@@ -62,7 +62,7 @@ public class ScoreTabLogic {
         boolean updatedFlag = false;
 
         try (BufferedReader br = new BufferedReader(new FileReader(file));
-             PrintWriter pw = new PrintWriter(new FileWriter(temp))) {
+            PrintWriter pw = new PrintWriter(new FileWriter(temp))) {
 
             String line;
             while ((line = br.readLine()) != null) {

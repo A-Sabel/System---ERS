@@ -373,6 +373,22 @@ class StudentFileLoader extends BaseFileLoader {
                     status = studentType;
                     studentType = "Regular"; // default type
                 }
+                // If status field contains a GWA (numeric value), shift fields to correct positions
+                double tempGwa = 0.0;
+                boolean statusIsGwa = false;
+                try {
+                    tempGwa = Double.parseDouble(status);
+                    statusIsGwa = true;
+                } catch (NumberFormatException e) {
+                    // status is not numeric, keep as is
+                }
+                if (statusIsGwa) {
+                    // Shift: status field contains GWA, so subjects are at index 9, GWA at index 10 becomes something else
+                    // Original: parts[7]=studentType, parts[8]=GWA (as status), parts[9]=subjects, parts[10]=actual GWA
+                    // Corrected: studentType stays, status becomes "Active", subjects stay, GWA from parts[8]
+                    status = "Active"; // default status
+                    // GWA will be parsed from parts[8] instead of parts[10]
+                }
 
                 ArrayList<String> subjects = new ArrayList<>();
                 if (parts.length > 9 && !parts[9].trim().isEmpty()) {
@@ -381,7 +397,10 @@ class StudentFileLoader extends BaseFileLoader {
                 }
 
                 double gwa = 0.0;
-                if (parts.length > 10 && !parts[10].trim().isEmpty()) {
+                if (statusIsGwa) {
+                    // GWA is in the status field (parts[8])
+                    gwa = tempGwa;
+                } else if (parts.length > 10 && !parts[10].trim().isEmpty()) {
                     try { gwa = Double.parseDouble(parts[10].trim()); } catch (NumberFormatException ignored) {}
                 }
 

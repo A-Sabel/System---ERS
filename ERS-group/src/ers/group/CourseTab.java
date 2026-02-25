@@ -161,13 +161,14 @@ public class CourseTab extends JPanel {
             model.addRow(new Object[]{
                 stud.getStudentID(),
                 stud.getStudentName(),
-                stud.getAge(),
                 stud.getDateOfBirth(),
-                stud.getYearLevel(),
-                stud.getStudentType(),
-                stud.getGwa(),
+                stud.getGender(),
                 stud.getEmail(),
-                stud.getPhoneNumber()
+                stud.getPhoneNumber(),
+                stud.getFathersName(),
+                stud.getMothersName(),
+                stud.getGuardiansPhoneNumber(),
+                stud.getAddress()
             });
         }
     }
@@ -1025,13 +1026,14 @@ public class CourseTab extends JPanel {
                 model.addRow(new Object[]{
                     student.getStudentID(),
                     student.getStudentName(),
-                    student.getAge(),
                     student.getDateOfBirth(),
-                    student.getYearLevel(),
-                    student.getStudentType(),
-                    student.getGwa(),
+                    student.getGender(),
                     student.getEmail(),
-                    student.getPhoneNumber()
+                    student.getPhoneNumber(),
+                    student.getFathersName(),
+                    student.getMothersName(),
+                    student.getGuardiansPhoneNumber(),
+                    student.getAddress()
                 });
                 found = true;
             }
@@ -1216,8 +1218,8 @@ public class CourseTab extends JPanel {
                 // Only add if latest status is FAILED/DROPPED/INC (not PASSED or PENDING)
                 if (latestStatus != null && 
                     ("FAILED".equalsIgnoreCase(latestStatus) || 
-                     "DROPPED".equalsIgnoreCase(latestStatus) || 
-                     "INC".equalsIgnoreCase(latestStatus))) {
+                    "DROPPED".equalsIgnoreCase(latestStatus) || 
+                    "INC".equalsIgnoreCase(latestStatus))) {
                     addItemToAllDropdowns(course.getCourseSubjectName()); // Use Name for the ComboBox
                 }
 
@@ -1283,9 +1285,9 @@ public class CourseTab extends JPanel {
                     }
                 }
                 message.append(tag).append(" ")
-                       .append(course.getCourseSubjectName())
-                       .append(" (").append(courseID).append(") - ")
-                       .append(course.getUnits()).append(" units\n");
+                        .append(course.getCourseSubjectName())
+                        .append(" (").append(courseID).append(") - ")
+                        .append(course.getUnits()).append(" units\n");
             } else {
                 message.append("[?] ").append(courseID).append(" (course data not found)\n");
             }
@@ -1709,4 +1711,3 @@ public class CourseTab extends JPanel {
         });
     }
 }
-

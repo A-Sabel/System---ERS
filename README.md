@@ -358,16 +358,15 @@ findAvailableTeacher(courseID, day, startTime, endTime, existingSchedules)
 
 #### Business Logic
 
-- **AcademicUtilities.java** - Academic progression logic (1500+ lines)
+- **AcademicUtilities.java** - Academic progression & scheduling validation (1650+ lines)
   - Semester completion
   - Student promotion system (considers retakes)
   - Graduation processing with Latin Honors
   - Report generation
   - Course status tracking
-- **TrioValidation.java** - Conflict detection and validation
   - Student/Teacher/Room conflict detection
   - GWA-based unit limiting
-  - Travel time calculations
+  - Travel time calculations between buildings
   - Academic enrollment validation
 
 #### Scheduling Engine

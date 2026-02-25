@@ -120,6 +120,18 @@ public class FilePathResolver {
         return resolveFilePath(possiblePaths);
     }
 
+    public static String resolveLoginFilePath() {
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/login.txt",
+            "src/ers/group/master files/login.txt",
+            "master files/login.txt",
+            "login.txt",
+            "ERS-group/login.txt",
+            "../login.txt"
+        };
+        return resolveFilePath(possiblePaths);
+    }
+
     /**
      * Generic method to resolve a file path from an array of possible paths
      * Tries each path in order and returns the first one that exists

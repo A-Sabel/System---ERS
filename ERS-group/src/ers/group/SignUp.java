@@ -137,7 +137,7 @@ public class SignUp extends javax.swing.JDialog {
 
         try {
             // create a File object pointing to login.txt inside master files
-            FileWriter fw = new FileWriter("login.txt", true); // append mode
+            FileWriter fw = new FileWriter(FilePathResolver.resolveLoginFilePath(), true); // append mode
             BufferedWriter bw = new BufferedWriter(fw);
 
             bw.write(email + "," + username + "," + password);

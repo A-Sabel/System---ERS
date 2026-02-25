@@ -201,7 +201,7 @@ public class LogIn extends javax.swing.JFrame {
 
         boolean found = false;
 
-        try (BufferedReader br = new BufferedReader(new FileReader("login.txt"))) { // change path if needed
+        try (BufferedReader br = new BufferedReader(new FileReader(FilePathResolver.resolveLoginFilePath()))) {
             String line;
 
             while ((line = br.readLine()) != null) {

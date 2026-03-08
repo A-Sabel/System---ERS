@@ -1,10 +1,10 @@
-R101,Lecture Room 1,false,5
-R102,Lecture Room 2,false,5
-R103,Lecture Room 3,false,5
-R104,Lecture Room 4,false,5
-R105,Lecture Room 5,false,5
-LAB201,Computer Laboratory 1,true,5
-LAB202,Computer Laboratory 2,true,5
-LAB203,Computer Laboratory 3,true,5
-NET301,Networking Laboratory,true,5
-SYS401,Systems Laboratory,true,5
+*dgg,1>/[=L9_,JIDMf,C6H\/,q
+{oah,6>3MHF9d,N;OGg,H6LN:,k
+{tam,(I-MMF=V7H;TGl,:AFN?,k
+ flh,(N-Q?Q7V<H?FRg,:FFR1,v
+yfqi,,@8K?V7Z.S9FWh,>8QL1,{
+szuqik,|F;FRIA[I)+AAIKM?KLSd,YLT1,v
+sv$fol,wF7TGOAVI%96GIFM;YAYe,TLP?,k
+yv~fk{,lL7OGKOKO%46CW;S;TAUt,IRP:,k
+w)&mkt,w>LKGIPB:NG&5BIM;K=HV,IN^/,q
+|8%jyi,#RFH9RM^wC*ET6TJGP,>VG@,p

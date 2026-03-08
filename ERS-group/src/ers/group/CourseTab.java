@@ -104,25 +104,22 @@ public class CourseTab extends JPanel {
                 "master files/courseSubject.txt",
                 "courseSubject.txt"
             };
-            String filePath = null;
             for (String path : possiblePaths) {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
-                    filePath = path;
-                    break;
+                    logger.info("Found course data at: " + f.getAbsolutePath());
+                    courseLoader.load(f.getAbsolutePath()); // <-- FIX
+                    availableCourses = courseLoader.getSubjectMap();
+                    logger.info("Loaded " + availableCourses.size() + " courses from file");
+                    return;
                 }
             }
-            if (filePath != null) {
-                courseLoader.load(filePath);
-                availableCourses = courseLoader.getSubjectMap();
-                logger.info("Loaded " + availableCourses.size() + " courses from file");
-            }
+            logger.warning("Could not find courseSubject.txt");
         } catch (Exception e) {
             logger.severe("Error loading course data: " + e.getMessage());
         }
     }
 
-    
     private void loadEnrollmentData() {
         try {
             String[] possiblePaths = {
@@ -130,23 +127,18 @@ public class CourseTab extends JPanel {
                 "src/ers/group/master files/enrollment.txt",
                 "master files/enrollment.txt",
                 "enrollment.txt"
-            }; 
-            String filePath = null;
+            };
             for (String path : possiblePaths) {
                 java.io.File f = new java.io.File(path);
                 if (f.exists()) {
-                    filePath = path;
-                    break;
+                    logger.info("Found enrollment data at: " + f.getAbsolutePath());
+                    enrollmentLoader.load(f.getAbsolutePath()); // <-- FIX
+                    enrollments = new ArrayList<>(enrollmentLoader.getAllEnrollments());
+                    logger.info("Loaded " + enrollments.size() + " enrollments from file");
+                    return;
                 }
             }
-            if (filePath != null) {
-                enrollmentLoader.load(filePath);
-                Collection<Enrollment> allEnrollments = enrollmentLoader.getAllEnrollments();
-                enrollments = new ArrayList<>(allEnrollments);
-                logger.info("Loaded " + enrollments.size() + " enrollments from file");
-            } else {
-                enrollments = new ArrayList<>();
-            }
+            enrollments = new ArrayList<>();
         } catch (Exception e) {
             logger.severe("Error loading enrollment data: " + e.getMessage());
             enrollments = new ArrayList<>();
@@ -1325,7 +1317,8 @@ public class CourseTab extends JPanel {
             });
             // Use existing loader to update the global 'enrollments' list
             EnrollmentFileLoader loader = new EnrollmentFileLoader();
-            loader.load(savePath);
+            java.io.File ef = new java.io.File(savePath);
+            loader.load(ef.getAbsolutePath());
             this.enrollments = new ArrayList<>(loader.getAllEnrollments());
         } catch (Exception e) {
             System.err.println("Note: Could not refresh enrollment list: " + e.getMessage());
@@ -1355,6 +1348,8 @@ public class CourseTab extends JPanel {
      * @param showDialog Whether to show confirmation dialog after loading
      */
         private void loadCoursesForStudent(Student student, boolean showDialog) {
+            System.out.println("DEBUG: availableCourses size = " + availableCourses.size());
+            System.out.println("DEBUG: Course IDs loaded: " + availableCourses.keySet());
             String studentID = student.getStudentID().trim();
             String semesterStr = (String) CT_Semester.getSelectedItem();
             boolean isSummer = "Summer".equalsIgnoreCase(semesterStr);

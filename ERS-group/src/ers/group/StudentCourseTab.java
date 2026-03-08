@@ -320,7 +320,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_Clear = new javax.swing.JButton();
         CT_Logout = new javax.swing.JButton();
         ScoreTab = new javax.swing.JPanel();
-        MarkSheetTab = new javax.swing.JPanel();
+        MarkSheetTab = new javax.swing.JPanel();                                      
         ScheduleTab = new javax.swing.JPanel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);

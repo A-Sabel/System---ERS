@@ -7,7 +7,6 @@ public interface FileSaver {
 
 
 abstract class BaseFileSaver<T> implements FileSaver {
-    
     protected abstract String formatLine(T item);
     
     @Override
@@ -18,13 +17,13 @@ abstract class BaseFileSaver<T> implements FileSaver {
                 T item = (T) obj;
                 String line = formatLine(item);
                 if (line != null && !line.isEmpty()) {
-                    writer.write(line);
+                    // ENCRYPT before writing
+                    writer.write(Encryption.encrypt(line));
                     writer.newLine();
                 }
             }
         }
     }
-    
     protected void update(String filePath, java.util.List<T> data, java.util.function.Predicate<T> predicate, T updatedItem) throws java.io.IOException {
         for (int i = 0; i < data.size(); i++) {
             if (predicate.test(data.get(i))) {
@@ -34,7 +33,7 @@ abstract class BaseFileSaver<T> implements FileSaver {
         }
         save(filePath, data);
     }
-    
+
     protected void delete(String filePath, java.util.List<T> data, java.util.function.Predicate<T> predicate) throws java.io.IOException {
         data.removeIf(predicate);
         save(filePath, data);
@@ -75,7 +74,7 @@ class StudentFileSaver extends BaseFileSaver<Student> {
             for (Student student : uniqueStudents.values()) {
                 String line = formatLine(student);
                 if (line != null && !line.isEmpty()) {
-                    writer.write(line);
+                    writer.write(Encryption.encrypt(line));
                     writer.newLine();
                 }
             }
@@ -253,17 +252,18 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
     }
     
     public void saveEnrollmentsByStudent(String filePath, java.util.List<Enrollment> enrollments) throws java.io.IOException {
-        // FIRST: Read existing file to preserve PASSED/FAILED/INC statuses
-        // This prevents overwriting completed semesters with ENROLLED status
+        // 1. PRE-PROCESS: Read existing file to preserve PASSED/FAILED/INC statuses
         java.util.Map<String, String> existingStatuses = new java.util.LinkedHashMap<>();
         try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(filePath))) {
             String line;
             while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
+                // Decrypt the existing line to read its contents
+                String decryptedLine = Encryption.decrypt(line);
+                String[] parts = decryptedLine.split(",");
                 if (parts.length >= 7) {
                     String studentID = parts[0].trim();
                     String yearLevel = parts[2].trim();
-                    String semester = parts[3].trim(); // Abbrev format
+                    String semester = parts[3].trim(); 
                     String status = parts[4].trim();
                     String academicYear = parts[6].trim();
                     String periodKey = studentID + "|" + yearLevel + "|" + semester + "|" + academicYear;
@@ -271,123 +271,75 @@ class EnrollmentFileSaver extends BaseFileSaver<Enrollment> {
                 }
             }
         } catch (java.io.IOException e) {
-            // File may not exist yet, that's OK
-            logger.info("No existing enrollment file found, creating new");
+            logger.info("No existing enrollment file found or file is empty.");
         }
-        
-        // Group enrollments by enrollment period (student + semester + yearLevel + academicYear)
-        // This creates separate lines for each enrollment period instead of grouping all semesters together
+
+        // 2. GROUPING: Group by enrollment period (student + year + sem + ay)
         java.util.Map<String, java.util.List<Enrollment>> enrollmentPeriods = new java.util.LinkedHashMap<>();
-        
         for (Enrollment e : enrollments) {
-            String studentID = e.getStudentID();
-            String semester = e.getSemester();
-            String yearLevel = e.getYearLevel();
-            String academicYear = e.getAcademicYear() != null ? e.getAcademicYear() : AcademicUtilities.getAcademicYear();
+            String ay = e.getAcademicYear() != null ? e.getAcademicYear() : AcademicUtilities.getAcademicYear();
+            String periodKey = e.getStudentID() + "|" + e.getYearLevel() + "|" + e.getSemester() + "|" + ay;
             
-            // Create unique key for each enrollment period
-            String periodKey = studentID + "|" + yearLevel + "|" + semester + "|" + academicYear;
-            
-            if (!enrollmentPeriods.containsKey(periodKey)) {
-                enrollmentPeriods.put(periodKey, new java.util.ArrayList<Enrollment>());
-            }
-            enrollmentPeriods.get(periodKey).add(e);
+            enrollmentPeriods.computeIfAbsent(periodKey, k -> new java.util.ArrayList<>()).add(e);
         }
-        
-        // Validate each student's schedule spans at least 3 days (log warning but don't block)
-        java.util.Map<String, java.util.List<Enrollment>> studentEnrollments = new java.util.LinkedHashMap<>();
-        for (Enrollment e : enrollments) {
-            String studentID = e.getStudentID();
-            if (!studentEnrollments.containsKey(studentID)) {
-                studentEnrollments.put(studentID, new java.util.ArrayList<Enrollment>());
-            }
-            studentEnrollments.get(studentID).add(e);
-        }
-        
-        for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : studentEnrollments.entrySet()) {
-            String studentID = entry.getKey();
-            java.util.List<Enrollment> studentCourses = entry.getValue();
-            
-            java.util.List<String> courseIDs = new java.util.ArrayList<>();
-            for (Enrollment e : studentCourses) {
-                courseIDs.add(e.getCourseID());
-            }
-            
-            java.util.Set<String> scheduledDays = getScheduledDays(studentID, courseIDs);
-            if (scheduledDays.size() < 3) {
-                logger.warning(
-                    "SCHEDULE POLICY VIOLATION: Student " + studentID + 
-                    " has courses scheduled on only " + scheduledDays.size() + " day(s): " + 
-                    String.join(", ", scheduledDays) + 
-                    ". Minimum 3 days required per university policy."
-                );
-            }
-        }
-        
+
+        // 3. WRITING: Encrypt and save to file
         try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(filePath))) {
-            // Write one line per enrollment period (not per student)
             for (java.util.Map.Entry<String, java.util.List<Enrollment>> entry : enrollmentPeriods.entrySet()) {
-                String periodKey = entry.getKey();
                 java.util.List<Enrollment> periodCourses = entry.getValue();
-                
                 if (periodCourses.isEmpty()) continue;
-                
-                // Extract student info from first enrollment in this period
-                // IMPORTANT: Preserve completed statuses (PASSED/FAILED/INC) from file
-                Enrollment firstEnrollment = periodCourses.get(0);
-                String studentID = firstEnrollment.getStudentID();
-                String yearLevel = firstEnrollment.getYearLevel();
-                String semester = firstEnrollment.getSemester();
-                String status = firstEnrollment.getStatus();
-                String academicYear = firstEnrollment.getAcademicYear();
-                if (academicYear == null || academicYear.isEmpty()) {
-                    academicYear = AcademicUtilities.getAcademicYear();
-                }
-                
-                // Create lookup key to check existing file status
+
+                Enrollment first = periodCourses.get(0);
+                String studentID = first.getStudentID();
+                String yearLevel = first.getYearLevel();
+                String semester = first.getSemester();
+                String status = first.getStatus();
+                String academicYear = first.getAcademicYear() != null ? first.getAcademicYear() : AcademicUtilities.getAcademicYear();
+
+                // Status Priority Logic
                 String lookupKey = studentID + "|" + yearLevel + "|" + compressSemester(semester) + "|" + academicYear;
-                
-                // PRIORITY 1: Use status from existing file if it's a completed status (set by processEndOfSemester)
                 if (existingStatuses.containsKey(lookupKey)) {
                     String fileStatus = existingStatuses.get(lookupKey);
-                    if ("PASSED".equals(fileStatus) || "FAILED".equals(fileStatus) || "INC".equals(fileStatus)) {
+                    if (java.util.Arrays.asList("PASSED", "FAILED", "INC").contains(fileStatus)) {
                         status = fileStatus;
-                        logger.info("Preserving completed status from file: " + lookupKey + " = " + status);
                     }
                 }
-                
-                // PRIORITY 2: Check if any in-memory enrollment has completed status (from recent updates)
                 if ("ENROLLED".equals(status)) {
                     for (Enrollment e : periodCourses) {
-                        if ("PASSED".equals(e.getStatus()) || "FAILED".equals(e.getStatus()) || "INC".equals(e.getStatus())) {
+                        if (java.util.Arrays.asList("PASSED", "FAILED", "INC").contains(e.getStatus())) {
                             status = e.getStatus();
-                            break; // Completed status takes priority over ENROLLED
+                            break;
                         }
                     }
                 }
-                
-                // Build course list and section list
-                java.util.List<String> courses = new java.util.ArrayList<>();
-                java.util.List<String> sections = new java.util.ArrayList<>();
+
+                // Build lists for the CSV columns
+                java.util.List<String> courseIDs = new java.util.ArrayList<>();
+                java.util.List<String> sectionIDs = new java.util.ArrayList<>();
                 java.util.List<String> courseStatusPairs = new java.util.ArrayList<>();
-                
+
                 for (Enrollment e : periodCourses) {
-                    courses.add(e.getCourseID());
-                    sections.add(e.getSectionID() != null ? e.getSectionID() : "");
-                    
-                    // Save course statuses if available
+                    courseIDs.add(e.getCourseID());
+                    sectionIDs.add(e.getSectionID() != null ? e.getSectionID() : "");
                     if (e.getCourseStatuses() != null && !e.getCourseStatuses().isEmpty()) {
-                        String courseStatus = e.getCourseStatus(e.getCourseID());
-                        courseStatusPairs.add(e.getCourseID() + ":" + courseStatus);
+                        courseStatusPairs.add(e.getCourseID() + ":" + e.getCourseStatus(e.getCourseID()));
                     }
                 }
-                
-                // Format: studentID,courseList,yearLevel,semester,status,sectionList,academicYear,courseStatuses
-                String courseList = String.join(";", courses);
-                String sectionList = String.join(";", sections);
-                String courseStatusList = String.join(";", courseStatusPairs);
-                
-                writer.println(studentID + "," + courseList + "," + yearLevel + "," + compressSemester(semester) + "," + status + "," + sectionList + "," + academicYear + "," + courseStatusList);
+
+                // Construct the final plain-text line
+                String plainLine = String.join(",",
+                    studentID,
+                    String.join(";", courseIDs),
+                    yearLevel,
+                    compressSemester(semester),
+                    status,
+                    String.join(";", sectionIDs),
+                    academicYear,
+                    String.join(";", courseStatusPairs)
+                );
+
+                // ENCRYPT and WRITE
+                writer.println(Encryption.encrypt(plainLine));
             }
         }
     }

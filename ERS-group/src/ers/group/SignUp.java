@@ -82,26 +82,25 @@ public class SignUp extends javax.swing.JDialog {
                     .addComponent(EmailLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 143, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(38, Short.MAX_VALUE))
         );
-        MainPanelLayout.setVerticalGroup(
-            MainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(MainPanelLayout.createSequentialGroup()
-                .addContainerGap(43, Short.MAX_VALUE)
-                .addComponent(EmailLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Username, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(26, 26, 26)
-                .addComponent(UsernameLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Email, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(29, 29, 29)
-                .addComponent(PasswordLabel)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(Password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(40, 40, 40)
-                .addComponent(SignUp, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(30, 30, 30))
-        );
-
+    MainPanelLayout.setVerticalGroup(
+        MainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+        .addGroup(MainPanelLayout.createSequentialGroup()
+            .addContainerGap(43, Short.MAX_VALUE)
+            .addComponent(EmailLabel) // Email Label
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(Email, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE) // Email Field
+            .addGap(26, 26, 26)
+            .addComponent(UsernameLabel) // Username Label
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(Username, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE) // Username Field
+            .addGap(29, 29, 29)
+            .addComponent(PasswordLabel) // Password Label
+            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+            .addComponent(Password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE) // Password Field
+            .addGap(40, 40, 40)
+            .addComponent(SignUp, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGap(30, 30, 30))
+    );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -122,10 +121,10 @@ public class SignUp extends javax.swing.JDialog {
         // Event handler for password field (currently unused)
     }
 
-    private void SignUpActionPerformed(java.awt.event.ActionEvent evt) {                                      
-        String email = Email.getText();
-        String username = Username.getText();
-        String password = new String(Password.getPassword());
+    private void SignUpActionPerformed(java.awt.event.ActionEvent evt) {                                             
+        String email = Email.getText().trim();
+        String username = Username.getText().trim();
+        String password = new String(Password.getPassword()).trim();
 
         if (email.isEmpty() || username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this,
@@ -136,30 +135,34 @@ public class SignUp extends javax.swing.JDialog {
         }
 
         try {
-            // create a File object pointing to login.txt inside master files
-            FileWriter fw = new FileWriter(FilePathResolver.resolveLoginFilePath(), true); // append mode
-            BufferedWriter bw = new BufferedWriter(fw);
+            // Prepare the plain text line
+            String plainLine = email + "," + username + "," + password;
+            
+            // 1. ENCRYPT the data string
+            String encryptedLine = Encryption.encrypt(plainLine);
 
-            bw.write(email + "," + username + "," + password);
-            bw.newLine();
-            bw.close();
+            // 2. Write the encrypted string to the file
+            try (BufferedWriter bw = new BufferedWriter(new FileWriter(FilePathResolver.resolveLoginFilePath(), true))) {
+                bw.write(encryptedLine);
+                bw.newLine();
+            }
 
-            JOptionPane.showMessageDialog(this,
-                "Admin account created successfully!");
+            JOptionPane.showMessageDialog(this, "Admin account created successfully!");
 
-            // open main system
+            // Open main system
             new StudentCourseTab().setVisible(true);
             this.dispose();
 
-            // close the login window
+            // Close the login window
             if (loginFrame != null) {
                 loginFrame.dispose();
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(java.util.logging.Level.SEVERE, "Error saving user", e);
+            JOptionPane.showMessageDialog(this, "Error saving account data.");
         }
-    }                                      
+    }                                    
 
     // Variables declaration - do not modify                    
     private javax.swing.JPanel MainPanel;

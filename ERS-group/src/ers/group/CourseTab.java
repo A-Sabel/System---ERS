@@ -21,6 +21,7 @@ public class CourseTab extends JPanel {
     private ArrayList<Enrollment> enrollments;
     private Map<String, CourseSubject> availableCourses;
     private static final int MAX_SECTION_CAPACITY = 5;
+    private static final int MAX_STUDENTS_PER_COURSE = MAX_SECTION_CAPACITY * 3; // 15 students total
 
     public CourseTab() {
         initComponents();
@@ -721,7 +722,24 @@ public class CourseTab extends JPanel {
             coursesToEnroll.add(course);
         }
 
-        // 4. SUMMER UNIT CAP VALIDATION (6-15 units hard limit)
+        // 4. COURSE CAPACITY VALIDATION (15 students maximum per course)
+        for (CourseSubject course : new ArrayList<>(coursesToEnroll)) {
+            int enrolledCount = 0;
+            String courseID = course.getCourseSubjectID();
+            for (Enrollment e : enrollments) {
+                if (e.getCourseID().equals(courseID) && "ENROLLED".equals(e.getStatus())) {
+                    enrolledCount++;
+                }
+            }
+            if (enrolledCount >= MAX_STUDENTS_PER_COURSE) {
+                validationErrors.append("- ").append(course.getCourseSubjectName())
+                    .append(": Course is at maximum capacity (").append(enrolledCount)
+                    .append("/").append(MAX_STUDENTS_PER_COURSE).append(" students).\n");
+                coursesToEnroll.remove(course);
+            }
+        }
+
+        // 5. SUMMER UNIT CAP VALIDATION (6-15 units hard limit)
         if ("Summer".equalsIgnoreCase(semesterStr)) {
             int totalUnits = 0;
             for (CourseSubject course : coursesToEnroll) {
@@ -740,7 +758,7 @@ public class CourseTab extends JPanel {
             return;
         }
 
-        // 5. THE ENROLLMENT PHASE (Unified Record)
+        // 6. THE ENROLLMENT PHASE (Unified Record)
         int successCount = 0;
         StringBuilder courseIDsBuilder = new StringBuilder();
         StringBuilder sectionsBuilder = new StringBuilder();
@@ -760,6 +778,11 @@ public class CourseTab extends JPanel {
                 summary.append(course.getCourseSubjectID()).append(" (").append(sectionID).append(")\n");
                 
                 successCount++;
+            } catch (Schedule.SectionFullException e) {
+                // Specific handling for course at capacity
+                String errorMsg = course.getCourseSubjectName() + ": Course is full (" + MAX_STUDENTS_PER_COURSE + " students enrolled)";
+                validationErrors.append("- ").append(errorMsg).append("\n");
+                System.err.println("Section full: " + errorMsg);
             } catch (Exception e) {
                 String errorMsg = course.getCourseSubjectID() + ": " + e.getMessage();
                 validationErrors.append("- ").append(errorMsg).append("\n");
@@ -768,7 +791,7 @@ public class CourseTab extends JPanel {
             }
         }
 
-        // 6. FINAL SAVE AND REFRESH
+        // 7. FINAL SAVE AND REFRESH
         if (successCount > 0) {
             try {
                 Enrollment newEnrollment = new Enrollment(Enrollment.generateEnrollmentID(), studentID, courseIDsBuilder.toString(), yearLevel, semesterStr, "ENROLLED");

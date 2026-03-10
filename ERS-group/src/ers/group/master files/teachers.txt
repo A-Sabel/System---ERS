@@ -1,9 +1,9 @@
-T-001,Alice Santos,CS101;CS201;CS305
-T-002,Ben Cruz,CS102;CS205;CS104
-T-003,Carla Reyes,CS103;CS204
-T-004,Daniel Lopez,CS202;CS301;CS302
-T-005,Elena Navarro,CS203;CS303
-T-006,Francis Dela Cruz,CS304;CS403;CS404
-T-007,Grace Lim,CS401;CS405
-T-008,Henry Tan,CS202;CS402
-T-009,Irene Velasco,CS105;CS304
+,`gfu,y8P+?S3;INFA,x0eky;l0[nb;y=k_m
+'`ctk,!1PGxTJZ,}(gYu;t.ms^;{+dgj
+9e[vZ,|5RF<Y)3OBH,~<Zl\;"%hyl
+$ebcg,);M5G4U.DP@O,y|ual;~7\hh;v+itj
+ sWih,%F@H8M$>K=[<L,l2cf|;{#kbf
+(qina,(:7P8INTz/P3Z~V?S,z'jfx;{~zWl;v3mjm
++Zelk,#[+@/^}@W,{#lbd;v8mn`
+6Teql,(@CICc&<J,'|jge;z*xh]
+;Ticx,#M?E3U3:HJ=@9,"%gym;r,ecg

@@ -8,9 +8,8 @@ package ers.group;
 
 
 import java.io.*;
-import java.util.*;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.util.*;
 public interface FileLoader {
     void load(String filePath);
 }
@@ -33,16 +32,13 @@ abstract class BaseFileLoader implements FileLoader {
                 return;
             }
 
-            String decrypted = Encryption.decrypt(encrypted);
-
-            if (decrypted == null || decrypted.trim().isEmpty()) {
-                System.out.println("DEBUG: Decryption returned empty for file: " + filePath);
-                return;
-            }
-
-            String[] lines = decrypted.split("\\r?\\n");
-            for (String line : lines) {
-                if (line.trim().isEmpty()) continue;
+            // Decrypt per-line so each line's keyIndex starts at 0,
+            // matching how FileSaver/SignUp encrypt (one line at a time).
+            String[] encLines = encrypted.split("\\r?\\n");
+            for (String encLine : encLines) {
+                if (encLine.trim().isEmpty()) continue;
+                String line = Encryption.decrypt(encLine);
+                if (line == null || line.trim().isEmpty()) continue;
                 processor.processLine(line);
             }
 
@@ -372,7 +368,7 @@ class StudentFileLoader extends BaseFileLoader {
             String[] parts = line.split(",", -1); 
             try {
                 String id = parts.length > 0 ? parts[0].trim() : "";
-                if (id.isEmpty()) return;
+                if (id.isEmpty() || !id.startsWith("STU-")) return;
 
                 String name = parts.length > 1 ? parts[1].trim() : "";
                 int age = 0;
@@ -435,6 +431,7 @@ class MarksheetFileLoader extends BaseFileLoader {
     
     @Override
     public void load(String filePath) {
+        allMarksheets.clear(); // Clear before re-loading to prevent duplicates
         readFile(filePath, line -> {
             try {
                 String[] parts = line.split(",");

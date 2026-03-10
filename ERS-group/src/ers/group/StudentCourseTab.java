@@ -899,7 +899,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
             else if (selectedTab == 3) { // Marksheet tab
                 // Refresh marksheet data when switching to this tab
                 if (marksheettab != null) {
-                    marksheettab.loadMarksheetTableData();
+                    marksheettab.loadMarksheetData();
                 }
             }
         });
@@ -1521,8 +1521,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
         // Syncing student ID
         int maxId = 0;
         for (Student s : students) {
-            int idNum = Integer.parseInt(s.getStudentID().replace("STU-", ""));
-            if (idNum > maxId) maxId = idNum;
+            try {
+                int idNum = Integer.parseInt(s.getStudentID().replace("STU-", "").trim());
+                if (idNum > maxId) maxId = idNum;
+            } catch (NumberFormatException ex) {
+                logger.warning("Skipping student with invalid ID format: " + s.getStudentID());
+            }
         }
         Student.setNextIdNum(maxId); 
         
@@ -1938,8 +1942,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
         // Syncing student ID
         int maxId = 0;
         for (Student s : students) {
-            int idNum = Integer.parseInt(s.getStudentID().replace("STU-", ""));
-            if (idNum > maxId) maxId = idNum;
+            try {
+                int idNum = Integer.parseInt(s.getStudentID().replace("STU-", "").trim());
+                if (idNum > maxId) maxId = idNum;
+            } catch (NumberFormatException ex) {
+                logger.warning("Skipping student with invalid ID format: " + s.getStudentID());
+            }
         }
         Student.setNextIdNum(maxId);
         try {

@@ -1593,8 +1593,12 @@ public class CourseTab extends JPanel {
             if (!java.nio.file.Files.exists(path)) {
                 java.nio.file.Files.createFile(path);
             }
-            // Read existing records
-            java.util.List<String> lines = java.nio.file.Files.readAllLines(path);
+            // Read existing records (decrypt each line for processing)
+            java.util.List<String> rawLines = java.nio.file.Files.readAllLines(path);
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            for (String raw : rawLines) {
+                lines.add(raw.trim().isEmpty() ? raw : Encryption.decrypt(raw));
+            }
             
             // Compress semester for file storage
             String compressedSemester = compressSemester(semester);
@@ -1632,10 +1636,10 @@ public class CourseTab extends JPanel {
                       .append(",").append("PENDING"); // Placeholder score
             }
             record.append(",0.00"); // GPA placeholder
-            // Append to file
+            // Append to file (encrypt the record before writing)
             try (java.io.BufferedWriter writer = new java.io.BufferedWriter(
                     new java.io.FileWriter(filePath, true))) {
-                writer.write(record.toString());
+                writer.write(Encryption.encrypt(record.toString()));
                 writer.newLine();
             }
             logger.info("Auto-generated marksheet record: " + mrkID + " for student " + studentID + 

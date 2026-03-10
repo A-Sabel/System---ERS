@@ -11,7 +11,8 @@ public class generateMasterFiles {
         int keyIndex = 0;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c == ',' || c == '|' || c == '\n' || c == '\r' || c == ';') {
+            // Keep newlines/carriage returns as-is (they're outside our encryption range)
+            if (c == '\n' || c == '\r') {
                 sb.append(c);
             } else {
                 int shift = (KEY1.charAt(keyIndex % KEY1.length()) + KEY2.charAt(keyIndex % KEY2.length())) % 95;
@@ -23,7 +24,20 @@ public class generateMasterFiles {
     }
 
     public static void main(String[] args) throws Exception {
-        String dir = "ERS-group/src/ers/group/master files/";
+        // Resolve the master files directory from any working directory
+        String[] possibleDirs = {
+            "ers/group/master files/",
+            "ERS-group/src/ers/group/master files/",
+            "src/ers/group/master files/",
+            "master files/"
+        };
+        String dir = possibleDirs[0];
+        for (String d : possibleDirs) {
+            if (new File(d).exists()) {
+                dir = d;
+                break;
+            }
+        }
 
         String courses =
             "CS101,Programming 1,5,5,true,NONE,1,1\n" +
@@ -70,18 +84,22 @@ public class generateMasterFiles {
             "NET301,Networking Laboratory,true,5\n" +
             "SYS401,Systems Laboratory,true,5";
 
-        writeEncrypted(dir + "courseSubjects.txt", courses);
-        writeEncrypted(dir + "teacher.txt", teachers);
-        writeEncrypted(dir + "room.txt", rooms);
+        writeEncrypted(dir + "courseSubject.txt", courses);
+        writeEncrypted(dir + "Teachers.txt", teachers);
+        writeEncrypted(dir + "Rooms.txt", rooms);
         System.out.println("All master files generated successfully!");
     }
 
     static void writeEncrypted(String path, String plaintext) throws Exception {
         File f = new File(path);
-        PrintWriter pw = new PrintWriter(
-            new OutputStreamWriter(new FileOutputStream(f), "UTF-8"));
-        pw.print(encrypt(plaintext));
-        pw.close();
+        // Encrypt per-line so FileLoader (which decrypts per-line) can read correctly
+        try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(f), "UTF-8"))) {
+            for (String line : plaintext.split("\n")) {
+                if (!line.isEmpty()) {
+                    pw.println(encrypt(line));
+                }
+            }
+        }
         System.out.println("Written: " + f.getAbsolutePath());
     }
 }

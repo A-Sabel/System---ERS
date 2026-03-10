@@ -10,7 +10,8 @@ public class Encryption {
         int keyIndex = 0;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c == ',' || c == '|' || c == '\n' || c == '\r' || c == ';') {
+            // Keep newlines/carriage returns as-is (they're outside our encryption range)
+            if (c == '\n' || c == '\r') {
                 sb.append(c);
             } else {
                 int shift = (KEY1.charAt(keyIndex % KEY1.length()) + KEY2.charAt(keyIndex % KEY2.length())) % 95;
@@ -27,7 +28,8 @@ public class Encryption {
         int keyIndex = 0;
         for (int i = 0; i < text.length(); i++) {
             char c = text.charAt(i);
-            if (c == ',' || c == '|' || c == '\n' || c == '\r' || c == ';') {
+            // Keep newlines/carriage returns as-is
+            if (c == '\n' || c == '\r') {
                 sb.append(c);
             } else {
                 int shift = (KEY1.charAt(keyIndex % KEY1.length()) + KEY2.charAt(keyIndex % KEY2.length())) % 95;

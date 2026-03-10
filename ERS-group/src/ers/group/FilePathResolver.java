@@ -133,6 +133,38 @@ public class FilePathResolver {
     }
 
     /**
+     * Resolve the path to graduates.txt
+     * @return The first existing path, or the default path if none exist
+     */
+    public static String resolveGraduatesFilePath() {
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/graduates.txt",
+            "src/ers/group/master files/graduates.txt",
+            "master files/graduates.txt",
+            "graduates.txt",
+            "ERS-group/graduates.txt",
+            "../graduates.txt"
+        };
+        return resolveFilePath(possiblePaths);
+    }
+
+    /**
+     * Resolve the path to academic_calendar.txt
+     * @return The first existing path, or the default path if none exist
+     */
+    public static String resolveAcademicCalendarFilePath() {
+        String[] possiblePaths = {
+            "ERS-group/src/ers/group/master files/academic_calendar.txt",
+            "src/ers/group/master files/academic_calendar.txt",
+            "master files/academic_calendar.txt",
+            "academic_calendar.txt",
+            "ERS-group/academic_calendar.txt",
+            "../academic_calendar.txt"
+        };
+        return resolveFilePath(possiblePaths);
+    }
+
+    /**
      * Generic method to resolve a file path from an array of possible paths
      * Tries each path in order and returns the first one that exists
      * 

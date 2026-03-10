@@ -99,7 +99,7 @@ public class Marksheettab extends javax.swing.JPanel {
         return courseNameMap.getOrDefault(courseID, courseID);
     }
 
-    private void loadMarksheetData() {
+    public void loadMarksheetData() {
         try {
             String[] possiblePaths = {
                 "ERS-group/src/ers/group/master files/marksheet.txt",
@@ -218,6 +218,7 @@ public class Marksheettab extends javax.swing.JPanel {
         try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if (d.length < 15) continue;
 
@@ -239,6 +240,7 @@ public class Marksheettab extends javax.swing.JPanel {
         try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if (d.length < 15) continue;
 
@@ -266,6 +268,7 @@ public class Marksheettab extends javax.swing.JPanel {
         try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if (d.length < 15) continue;
 
@@ -896,6 +899,7 @@ public class Marksheettab extends javax.swing.JPanel {
             try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader(enrollmentPath))) {
                 String line;
                 while ((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] d = line.split(",");
                     if (d.length < 5) continue;
                     

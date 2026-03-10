@@ -144,6 +144,7 @@ public class ScoreTab extends JPanel {
             try (BufferedReader br = new BufferedReader(new FileReader(enrollFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] parts = line.split(",");
                     if (parts.length >= 5) {
                         String studentID = parts[0];
@@ -180,6 +181,7 @@ public class ScoreTab extends JPanel {
                 try (BufferedReader br = new BufferedReader(new FileReader(studentFile))) {
                     String line;
                     while ((line = br.readLine()) != null) {
+                        line = Encryption.decrypt(line);
                         String[] parts = line.split(",", -1); // Use -1 to keep trailing empty strings
                         // Format: ID, Name, Age, DOB, YearLevel, Semester, Section, StudentType, Status, ...
                         if (parts.length >= 9) {
@@ -221,6 +223,7 @@ public class ScoreTab extends JPanel {
             try (BufferedReader br = new BufferedReader(new FileReader(enrollmentPath))) {
                 String line;
                 while ((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] parts = line.split(",");
                     if (parts.length >= 5) {
                         // Format: StudentID, CourseList, YearLevel, Semester, Status, SectionList, AcademicYear
@@ -337,6 +340,7 @@ public class ScoreTab extends JPanel {
             try (BufferedReader br = new BufferedReader(new FileReader(studentFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] parts = line.split(",");
                     if (parts.length > 0 && parts[0].trim().equals(studentID)) {
                         return true;
@@ -367,6 +371,7 @@ public class ScoreTab extends JPanel {
             try (BufferedReader br = new BufferedReader(new FileReader(studentFile))) {
                 String line;
                 while ((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] parts = line.split(",");
                     // Student format: ID, Name, Age, DOB, YearLevel, Section, StudentType, SubjectsEnrolled, GWA...
                     // Index:          0    1     2    3      4         5         6            7            8
@@ -807,6 +812,7 @@ public class ScoreTab extends JPanel {
         String line;
 
         while ((line = br.readLine()) != null) {
+            line = Encryption.decrypt(line);
             String[] d = line.split(",");
             if (d.length < 15) continue;
 
@@ -890,6 +896,7 @@ public class ScoreTab extends JPanel {
             String line;
             int matchCount = 0;
             while((line = br.readLine())!=null){
+                line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if(d.length < 15) continue;
                 
@@ -1215,7 +1222,7 @@ public class ScoreTab extends JPanel {
 
             double gpa = calculateGPA();
             sb.append(",").append(String.format("%.2f",gpa));
-            pw.println(sb.toString());
+            pw.println(Encryption.encrypt(sb.toString()));
         } catch(Exception e){ e.printStackTrace(); }
         
         // Reload enrollment data to refresh any changes
@@ -1253,9 +1260,10 @@ public class ScoreTab extends JPanel {
                 String line;
                 String compressedSem = compressSemester(semesterField.getSelectedItem().toString());
                 while((line=br.readLine())!=null){
+                    line = Encryption.decrypt(line);
                     String[] d = line.split(",");
                     if(d.length < 15){
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                         continue;
                     }
                     if(d[1].equals(studentIdField.getText().trim()) &&
@@ -1280,10 +1288,10 @@ public class ScoreTab extends JPanel {
                         }
                         double gpa = calculateGPA();
                         sb.append(",").append(String.format("%.2f",gpa));
-                        pw.println(sb.toString());
+                        pw.println(Encryption.encrypt(sb.toString()));
                         updated = true;
                     } else {
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                     }
                 }
             }
@@ -1357,9 +1365,10 @@ public class ScoreTab extends JPanel {
 
                 String line;
                 while((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] d = line.split(",");
                     if(d.length < 15) {
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                         continue;
                     }
                     
@@ -1371,7 +1380,7 @@ public class ScoreTab extends JPanel {
                         continue; // Don't write this line to temp file
                     }
                     
-                    pw.println(line);
+                    pw.println(Encryption.encrypt(line));
                 }
             }
             
@@ -1456,9 +1465,10 @@ public class ScoreTab extends JPanel {
                 
                 String line;
                 while((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] d = line.split(",");
                     if(d.length < 6) {
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                         continue;
                     }
                     
@@ -1469,10 +1479,10 @@ public class ScoreTab extends JPanel {
                        d[2].equals(yearLevel)) {
                         // Update status to DROPPED
                         String academicYear = d.length > 6 ? d[6] : AcademicUtilities.getAcademicYear();
-                        pw.println(d[0] + "," + d[1] + "," + d[2] + "," + d[3] + ",DROPPED," + d[5] + "," + academicYear);
+                        pw.println(Encryption.encrypt(d[0] + "," + d[1] + "," + d[2] + "," + d[3] + ",DROPPED," + d[5] + "," + academicYear));
                         updated = true;
                     } else {
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                     }
                 }
             }
@@ -1509,6 +1519,7 @@ public class ScoreTab extends JPanel {
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))){
             String line;
             while((line=br.readLine())!=null){
+                line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if(d.length>0){
                     String mrk = d[0].replace("MRK-","");
@@ -1531,6 +1542,7 @@ public class ScoreTab extends JPanel {
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
             String line;
             while((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if(d.length >= 4 && d[1].equals(studentID) && d[2].equals(compressedSem) && d[3].equals(yearLevel)) {
                     return true;
@@ -1617,6 +1629,7 @@ public class ScoreTab extends JPanel {
         try(BufferedReader br = new BufferedReader(new FileReader(getMarksheetPath()))) {
             String line;
             while((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if(parts.length >= 14 && parts[1].equals(studentID)) {
                     // Last field is the semester GPA
@@ -1655,15 +1668,16 @@ public class ScoreTab extends JPanel {
                 
                 String line;
                 while((line = br.readLine()) != null) {
+                    line = Encryption.decrypt(line);
                     String[] parts = line.split(",", -1);
                     // Student format: ID, Name, Age, DOB, YearLevel, Section, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
                     if(parts.length >= 16 && parts[0].equals(studentID)) {
                         // Update the GWA field (index 8)
                         parts[8] = String.format("%.2f", overallGWA);
-                        pw.println(String.join(",", parts));
+                        pw.println(Encryption.encrypt(String.join(",", parts)));
                         updated = true;
                     } else {
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                     }
                 }
             }

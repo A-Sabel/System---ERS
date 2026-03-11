@@ -198,9 +198,7 @@ public class CourseTab extends JPanel {
 
     private void initComponents() {
         CT_LeftPanel = new javax.swing.JPanel();
-        CT_id = new javax.swing.JTextField();
         CT_StudentID = new javax.swing.JTextField();
-        CT_ID = new javax.swing.JLabel();
         CT_STUDENT_ID = new javax.swing.JLabel();
         CT_SEMESTER = new javax.swing.JLabel();
         CT_COURSE1 = new javax.swing.JLabel();
@@ -258,11 +256,6 @@ public class CourseTab extends JPanel {
         CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
-        CT_id.setBackground(new java.awt.Color(200, 200, 200)); // gray = read-only / auto-generated
-        CT_id.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
-        CT_id.setEditable(false);
-        CT_id.setToolTipText("Auto-generated enrollment ID — cannot be edited");
-
         CT_StudentID.setBackground(new java.awt.Color(146, 190, 219));
         CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
         CT_StudentID.addActionListener(this::CT_StudentIDActionPerformed);
@@ -272,10 +265,6 @@ public class CourseTab extends JPanel {
             public void removeUpdate(javax.swing.event.DocumentEvent e) { autoLoadCoursesIfValid(); }
             public void insertUpdate(javax.swing.event.DocumentEvent e) { autoLoadCoursesIfValid(); }
         });
-
-        CT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        CT_ID.setForeground(new java.awt.Color(255, 255, 255));
-        CT_ID.setText("ID");
 
         CT_STUDENT_ID.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
         CT_STUDENT_ID.setForeground(new java.awt.Color(255, 255, 255));
@@ -397,10 +386,6 @@ public class CourseTab extends JPanel {
             .addGroup(CT_LeftPanelLayout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(CT_LeftPanelLayout.createSequentialGroup()
-                        .addComponent(CT_ID, javax.swing.GroupLayout.PREFERRED_SIZE, 102, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(CT_id, javax.swing.GroupLayout.PREFERRED_SIZE, 363, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, CT_LeftPanelLayout.createSequentialGroup()
                         .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(CT_COURSE5)
@@ -444,10 +429,6 @@ public class CourseTab extends JPanel {
                 .addGap(32, 32, 32)
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(CT_LeftPanelLayout.createSequentialGroup()
-                        .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(CT_id, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(CT_ID))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(CT_StudentID, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(CT_STUDENT_ID))
@@ -646,10 +627,6 @@ public class CourseTab extends JPanel {
                 .addContainerGap())
         );
     }                                        
-
-    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {
-        // Event handler for CT_id field (currently unused)
-    }
 
     private void CT_StudentIDActionPerformed(java.awt.event.ActionEvent evt) {
         // Event handler for CT_StudentID field (currently unused)
@@ -1087,7 +1064,6 @@ public class CourseTab extends JPanel {
     }
 
     private void clearCourseForm() {
-        CT_id.setText("");
         CT_StudentID.setText("");
         CT_Semester.setSelectedIndex(0);
         CT_Course1.setSelectedIndex(0);
@@ -1533,7 +1509,6 @@ public class CourseTab extends JPanel {
     private javax.swing.JComboBox<String> CT_Course3;
     private javax.swing.JComboBox<String> CT_Course4;
     private javax.swing.JComboBox<String> CT_Course5;
-    private javax.swing.JLabel CT_ID;
     private javax.swing.JPanel CT_LeftPanel;
     private StyledButton CT_Logout;
     private StyledButton CT_Print;
@@ -1551,7 +1526,6 @@ public class CourseTab extends JPanel {
     private javax.swing.JTable CT_Table;
     private javax.swing.JScrollPane CT_TableScrollPane;
     private StyledButton CT_Update;
-    private javax.swing.JTextField CT_id;
     private StyledButton CT_LoadCourses;
     private javax.swing.JLabel CT_PrereqStatus1;
     private javax.swing.JLabel CT_PrereqStatus2;
@@ -1724,7 +1698,7 @@ public class CourseTab extends JPanel {
     }
     
     private void setupFocusRings() {
-        addFocusRing(CT_id); addFocusRing(CT_StudentID); addFocusRing(CT_SearchStudent);
+        addFocusRing(CT_StudentID); addFocusRing(CT_SearchStudent);
     }
 
     private void addFocusRing(javax.swing.JTextField field) {

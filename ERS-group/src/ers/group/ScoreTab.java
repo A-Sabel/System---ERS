@@ -749,7 +749,7 @@ public class ScoreTab extends JPanel {
         updateBtn.setForeground(Color.WHITE);
         deleteBtn = new StyledButton("Delete", new Color(180, 50, 50), new Color(140, 30, 30));
         deleteBtn.setForeground(Color.WHITE);
-        droppedBtn = new StyledButton("Mark as ...", new Color(73, 118, 159), new Color(53, 93, 134));
+        droppedBtn = new StyledButton("Drop", new Color(73, 118, 159), new Color(53, 93, 134));
         droppedBtn.setForeground(Color.WHITE);
         saveBtn.addActionListener(e -> saveRecord());
         clearBtn.addActionListener(e -> clearFields());

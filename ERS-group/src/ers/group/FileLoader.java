@@ -25,7 +25,13 @@ abstract class BaseFileLoader implements FileLoader {
                 return;
             }
 
-            String encrypted = new String(Files.readAllBytes(file.toPath()));
+            // Use UTF-8 explicitly so the BOM (EF BB BF) always decodes as \uFEFF on all JDKs/OS
+            String encrypted = new String(Files.readAllBytes(file.toPath()), java.nio.charset.StandardCharsets.UTF_8);
+
+            // Strip UTF-8 BOM if present
+            if (encrypted.startsWith("\uFEFF")) {
+                encrypted = encrypted.substring(1);
+            }
 
             if (encrypted.trim().isEmpty()) {
                 System.out.println("DEBUG: File is empty: " + filePath);

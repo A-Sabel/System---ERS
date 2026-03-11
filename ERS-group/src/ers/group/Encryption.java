@@ -24,6 +24,12 @@ public class Encryption {
 
     public static String decrypt(String text) {
         if (text == null) return "";
+        // Strip BOM: as \uFEFF (UTF-8 charset) or as raw bytes \u00EF\u00BB\u00BF (windows-1252 charset)
+        if (!text.isEmpty() && text.charAt(0) == '\uFEFF') {
+            text = text.substring(1);
+        } else if (text.length() >= 3 && text.charAt(0) == '\u00EF' && text.charAt(1) == '\u00BB' && text.charAt(2) == '\u00BF') {
+            text = text.substring(3);
+        }
         StringBuilder sb = new StringBuilder();
         int keyIndex = 0;
         for (int i = 0; i < text.length(); i++) {

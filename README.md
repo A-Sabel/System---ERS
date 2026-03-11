@@ -343,52 +343,59 @@ findAvailableTeacher(courseID, day, startTime, endTime, existingSchedules)
 
 #### Main Application
 
-- **StudentCourseTab.java** - Main application window with tabbed interface
-- **TestingPanel.java** - Admin controls for academic progression (434 lines)
+- **StudentCourseTab.java** - Main application window with tabbed interface; hosts `SessionManager` (static logged-in user) and `StyledButton` (custom gradient button)
+- **LogIn.java** - Authentication frame with password visibility toggle; entry point via `main()`; reads/writes `login.txt`
+- **SignUp.java** - Account creation dialog with email/username/password validation; appends to `login.txt`; auto-opens main app on success
+- **TestingPanel.java** - Admin controls panel with four tabs: Semester Management, Year Promotion, Graduation, and Reports
 
-#### Data Management
+#### Data Models
 
-- **Student.java** - Student entity with demographic and academic data
-- **Enrollment.java** - Enrollment records with per-course status tracking
-- **CourseSubject.java** - Course definitions with units and prerequisites
-- **Marksheet.java** - Grade records and GWA calculations
-- **Teachers.java** - Faculty information
-- **Rooms.java** - Facility information
-- **Section.java** - Section entity
+- **Student.java** - Comprehensive student entity: personal info, year level, enrollment list, per-semester GWA, cumulative GWA, Latin honors, auto-generated ID (STU-XXX)
+- **Enrollment.java** - Enrollment record with per-course status map (`PASSED`, `FAILED`, `INC`, `DROPPED`, `PENDING`); supports retake tracking via multiple records
+- **CourseSubject.java** - Course definition: units, lab flag, year/semester placement, prerequisite list, room-fit check
+- **Marksheet.java** - Lightweight grade record: student ID, school year, semester, 5 subject–mark pairs
+- **Teachers.java** - Faculty entity: qualified subject list, assigned schedules, `canTeachSubject()` check
+- **Rooms.java** - Facility entity: capacity, lab flag, availability, special-room assignments (NET301, SYS401, etc.)
+- **Section.java** - Section entity with enrollment cap, enrolled student list; `generateSections()` auto-creates multiple sections from capacity
+- **Schedule.java** - Full schedule entry (room, day, start/end time, teacher); contains nested `ScheduleSplice`, `SchedulingResult`, and custom exceptions; drives intelligent multi-day unit splicing, resource availability, and conflict detection
+- **ScoreTabRecord.java** - Lightweight marksheet record (MRK-XXX ID, 5 course–grade pairs, GPA, pass flags); serialises to CSV via `toFileString()`
 
 #### Business Logic
 
-- **AcademicUtilities.java** - Academic progression & scheduling validation (1650+ lines)
-  - Semester completion
-  - Student promotion system (considers retakes)
-  - Graduation processing with Latin Honors
-  - Report generation
-  - Course status tracking
-  - Student/Teacher/Room conflict detection
-  - GWA-based unit limiting
-  - Travel time calculations between buildings
-  - Academic enrollment validation
+- **AcademicUtilities.java** - Central academic rules engine (1650+ lines)
+  - Reads/writes `academic_calendar.txt` for current semester and academic year
+  - `processEndOfSemester()` — converts ENROLLED → PASSED/FAILED based on grades
+  - Prerequisite caching and `getMissingPrerequisites()`
+  - `canRetakeCourse()` / `getRetakeCount()` / `getRecommendedSummerCourses()`
+  - `isEligibleForGraduation()` / `processGraduation()` — writes to `graduates.txt`
+  - `getLatinHonors()` — GWA-based honors with retake disqualification
+  - Student/Teacher/Room triple-conflict detection
+  - GWA-based unit-limit enforcement (15–24 units)
+  - Travel-time calculations between buildings
+- **ScoreTabLogic.java** - Marksheet file operations: `save()`, `search()`, `update()` (via temp file), `loadAll()`; `calculateGPA()` skips DROPPED/INC/PENDING entries
 
 #### Scheduling Engine
 
-- **Schedule.java** - Intelligent scheduling with conflict detection (1200+ lines)
-  - Optimal splice calculation
-  - Resource availability checking
-  - Mandatory break enforcement
-  - Travel time integration
-- **Scheduletab.java** - Schedule visualization with continuous blocks
+- **Schedule.java** _(also listed above)_ - `assignSection()` / `assignScheduleToSection()` static entry points; `calculateOptimalSplices()` distributes units across weekdays (max 3 h/day, min 1 h); enforces mandatory 30-minute breaks; supports summer intensive daily scheduling; auto-creates up to 3 sections per course
+- **Scheduletab.java** - Visual schedule panel: 30-minute grid (08:00–18:00), color-coded course blocks, custom `ScheduleCellRenderer` for merged cells, conflict highlighting
 
 #### File I/O
 
-- **FileLoader.java** (and subclasses) - Load data from text files
-- **FileSaver.java** (and subclasses) - Save data to text files
-- **FilePathResolver.java** - Cross-platform path resolution
+- **FileLoader.java** (and subclasses) - Per-line decryption loaders for each data type: `StudentFileLoader`, `EnrollmentFileLoader`, `CourseSubjectFileLoader`, `MarksheetFileLoader`, `ScheduleFileLoader`, `TeacherFileLoader`, `RoomFileLoader`, `SectionFileLoader`; handles UTF-8 BOM and semester abbreviation expansion
+- **FileSaver.java** (and subclasses) - Per-line encryption writers with deduplication; `EnrollmentFileSaver` groups by student–semester–year; semester format compressed to `1`/`2`/`3` on disk
+- **FilePathResolver.java** - Cross-platform path resolver: tries multiple candidate paths, returns first existing file; `resolveWritablePath()` handles directory creation for new files
+
+#### Security & Utilities
+
+- **Encryption.java** - Dual-key Vigenère cipher (`COMPUTER` + `SCIENCE` keys) over 95-character ASCII range; preserves newlines; strips UTF-8 BOM; used by all FileLoader/FileSaver classes
+- **ErrorLogger.java** - Centralised logger: `logError()`, `logWarning()`, `logInfo()`, `clearLog()`; writes to `ers_error.log` with timestamps; falls back to console on I/O failure
+- **generateMasterFiles.java** - One-time bootstrap utility: generates and encrypts `courseSubject.txt`, `teachers.txt`, `rooms.txt` with a hardcoded CS curriculum (CS101–CS405), teacher qualifications, and room specialisations
 
 #### UI Components
 
-- **ScoreTab.java** - Grade entry with auto-fill and validation
-- **CourseTab.java** - Course enrollment with summer remedial support
-- **Marksheettab.java** - Academic record viewing
+- **CourseTab.java** - Course enrollment panel: 5 combo-box course selectors with real-time prerequisite status labels, summer remedial filtering, auto-populate on student ID entry; reads `student.txt`, `courseSubject.txt`, `enrollment.txt`
+- **ScoreTab.java** - Grade entry panel: auto-fill enrolled subjects, grade validation (1.00–5.00, INC, DROPPED), GWA calculation, update existing marksheet records; reads `courseSubject.txt`, `enrollment.txt`, `student.txt`; reads/writes `marksheet.txt`
+- **Marksheettab.java** - Academic record viewer: table with GWA column, status-based filter (All/Active/Graduate), search by student ID/year/semester; reads `marksheet.txt`, `student.txt`, `courseSubject.txt`, `enrollment.txt`
 
 ### Compilation
 
@@ -610,7 +617,11 @@ StudentID,Name,GraduationDate,GWA,LatinHonors,AcademicYear,Degree
 
 ## 🔄 Recent Updates
 
-### Latest Enhancements (February 2026)
+### March 2026
+
+✅ **Documentation Refresh** - README updated to fully document all 25 source classes (Encryption, ErrorLogger, generateMasterFiles, LogIn, SignUp, ScoreTabLogic, ScoreTabRecord)
+
+### February 2026
 
 ✅ **Course Retake Support** - Track latest status for each course across enrollments  
 ✅ **Summer Remedial Filtering** - Only show courses with current FAILED/DROPPED/INC status  
@@ -632,7 +643,9 @@ This project is developed for university requirements. Use at your own discretio
 
 ## 👥 Contributors
 
-Developed by:
+Developed by: Andrea Ysabela San Andres, Katrice Joy Garnado
+            Cyrene Fedoc, Elicxia Geighniel Mistica, Francheska Ortiz
+Technological University of the Philippines
 Repository: [github.com/A-Sabel/System---ERS](https://github.com/A-Sabel/System---ERS)
 
 ---

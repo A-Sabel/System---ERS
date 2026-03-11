@@ -7,6 +7,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.GradientPaint;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.geom.RoundRectangle2D;
+import javax.swing.JButton;
 import javax.swing.table.DefaultTableModel;
 
 public class StudentCourseTab extends javax.swing.JFrame {
@@ -28,7 +41,53 @@ public class StudentCourseTab extends javax.swing.JFrame {
             currentStudentName = null;
         }
     }
-    
+
+    public static class StyledButton extends JButton {
+        private Color colorTop;
+        private Color colorBottom;
+        private final Color borderColor = new Color(50, 50, 50);
+        private boolean isHovered = false;
+        private boolean isPressed = false;
+        public StyledButton(String text) {
+            this(text, new Color(154, 192, 226), new Color(110, 158, 203));
+        }
+        public StyledButton(String text, Color top, Color bot) {
+            super(text);
+            this.colorTop = top;
+            this.colorBottom = bot;
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBorderPainted(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setFont(new Font("Segoe UI", Font.BOLD, 24));
+            setForeground(new Color(10, 10, 10));
+            setPreferredSize(new Dimension(160, 60));
+            addMouseListener(new MouseAdapter() {
+                @Override public void mouseEntered(MouseEvent e) { isHovered = true; repaint(); }
+                @Override public void mouseExited(MouseEvent e) { isHovered = false; isPressed = false; repaint(); }
+                @Override public void mousePressed(MouseEvent e) { isPressed = true; repaint(); }
+                @Override public void mouseReleased(MouseEvent e) { isPressed = false; repaint(); }
+            });
+        }
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int w = getWidth(), h = getHeight();
+            Color top = isPressed ? colorBottom : (isHovered ? colorTop.brighter() : colorTop);
+            Color bottom = isPressed ? colorTop : (isHovered ? colorBottom.brighter() : colorBottom);
+            g2.setPaint(new GradientPaint(0, 0, top, 0, h, bottom));
+            g2.fill(new RoundRectangle2D.Double(0, 0, w, h, 12, 12));
+            g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 120), 0, h * 0.6f, new Color(255, 255, 255, 0)));
+            g2.fill(new RoundRectangle2D.Double(2, 2, w - 4, h - 4, 10, 10));
+            g2.setColor(borderColor);
+            g2.setStroke(new BasicStroke(2.0f));
+            g2.draw(new RoundRectangle2D.Double(1, 1, w - 2, h - 2, 12, 12));
+            g2.dispose();
+            super.paintComponent(g);
+        }
+    }
+
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(StudentCourseTab.class.getName());
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
@@ -45,7 +104,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         initComponents();
         setupRequiredAsterisks();
         setupSearchPlaceholders();
-        setupButtonHovers();
         setupFocusRings();
         setupStatusBar();
         students = new ArrayList<>();
@@ -284,7 +342,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_SuggestedCoursesPanel = new javax.swing.JPanel();
         ST_SuggestedCoursesScrollPane = new javax.swing.JScrollPane();
         ST_SuggestedCoursesList = new javax.swing.JList<>();
-        ST_SaveAndEnroll = new javax.swing.JButton();
+        ST_SaveAndEnroll = new StyledButton("Save & Enroll →", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
         ST_STUDENT_ID = new javax.swing.JLabel();
         ST_STUDENT_NAME = new javax.swing.JLabel();
         ST_BIRTHDAY = new javax.swing.JLabel();
@@ -318,8 +376,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_RightPanel = new javax.swing.JPanel();
         ST_SearchStudentPanel = new javax.swing.JPanel();
         ST_SEARCH_STUDENT = new javax.swing.JLabel();
-        ST_Search = new javax.swing.JButton();
-        ST_Refresh = new javax.swing.JButton();
+        ST_Search = new StyledButton("Search");
+        ST_Refresh = new StyledButton("Refresh");
         ST_SearchStudent = new javax.swing.JTextField();
         ST_TableScrollPane = new javax.swing.JScrollPane();
         ST_Table = new javax.swing.JTable() {
@@ -341,11 +399,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
         };
         ST_BottomPanel = new javax.swing.JPanel();
-        ST_AddNew = new javax.swing.JButton();
-        ST_Update = new javax.swing.JButton();
-        ST_Delete = new javax.swing.JButton();
-        ST_Clear = new javax.swing.JButton();
-        ST_Logout = new javax.swing.JButton();
+        ST_AddNew = new StyledButton("Add New", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        ST_Update = new StyledButton("Update", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        ST_Delete = new StyledButton("Delete", new java.awt.Color(180, 50, 50), new java.awt.Color(140, 30, 30));
+        ST_Clear = new StyledButton("Clear", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        ST_Logout = new StyledButton("Logout", new java.awt.Color(40, 55, 75), new java.awt.Color(25, 38, 55));
         CourseTab = new javax.swing.JPanel();
         CT_LeftPanel = new javax.swing.JPanel();
         CT_id = new javax.swing.JTextField();
@@ -368,8 +426,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_SearchStudentPanel = new javax.swing.JPanel();
         CT_SEARCH_STUDENT = new javax.swing.JLabel();
         CT_SearchStudent = new javax.swing.JTextField();
-        CT_Search = new javax.swing.JButton();
-        CT_Refresh = new javax.swing.JButton();
+        CT_Search = new StyledButton("Search");
+        CT_Refresh = new StyledButton("Refresh");
         CT_TableScrollPane = new javax.swing.JScrollPane();
         CT_Table = new javax.swing.JTable() {
             @Override
@@ -390,11 +448,11 @@ public class StudentCourseTab extends javax.swing.JFrame {
             }
         };
         CT_BottomPanel = new javax.swing.JPanel();
-        CT_Save = new javax.swing.JButton();
-        CT_Update = new javax.swing.JButton();
-        CT_Print = new javax.swing.JButton();
-        CT_Clear = new javax.swing.JButton();
-        CT_Logout = new javax.swing.JButton();
+        CT_Save = new StyledButton("Save", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Update = new StyledButton("Update", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Print = new StyledButton("Print", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Clear = new StyledButton("Clear", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Logout = new StyledButton("Logout", new java.awt.Color(40, 55, 75), new java.awt.Color(25, 38, 55));
         ScoreTab = new javax.swing.JPanel();
         MarkSheetTab = new javax.swing.JPanel();                                      
         ScheduleTab = new javax.swing.JPanel();
@@ -512,10 +570,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         });
         ST_SuggestedCoursesScrollPane.setViewportView(ST_SuggestedCoursesList);
 
-        ST_SaveAndEnroll.setBackground(new java.awt.Color(73, 118, 159));
-        ST_SaveAndEnroll.setFont(new java.awt.Font("Segoe UI", 1, 16));
         ST_SaveAndEnroll.setForeground(new java.awt.Color(255, 255, 255));
-        ST_SaveAndEnroll.setText("Save & Enroll →");
         ST_SaveAndEnroll.addActionListener(this::ST_SaveAndEnrollActionPerformed);
 
         javax.swing.GroupLayout ST_SuggestedCoursesPanelLayout = new javax.swing.GroupLayout(ST_SuggestedCoursesPanel);
@@ -779,14 +834,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_SEARCH_STUDENT.setForeground(new java.awt.Color(255, 255, 255));
         ST_SEARCH_STUDENT.setText("Search Student");
 
-        ST_Search.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Search.setFont(new java.awt.Font("Segoe UI", 1, 24));
-        ST_Search.setText("Search");
         ST_Search.addActionListener(this::ST_SearchActionPerformed);
 
-        ST_Refresh.setBackground(new java.awt.Color(146, 190, 219));
-        ST_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        ST_Refresh.setText("Refresh");
         ST_Refresh.addActionListener(this::ST_RefreshActionPerformed);
 
         ST_SearchStudent.setBackground(new java.awt.Color(146, 190, 219));
@@ -861,35 +910,23 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_BottomPanel.setBackground(new java.awt.Color(0, 30, 58));
         ST_BottomPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 4, true));
 
-        ST_AddNew.setBackground(new java.awt.Color(73, 118, 159));
-        ST_AddNew.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        ST_AddNew.setText("Add New");
+        ST_AddNew.setForeground(new java.awt.Color(255, 255, 255));
         ST_AddNew.setToolTipText("Save a new student record");
         ST_AddNew.addActionListener(this::ST_AddNewActionPerformed);
 
-        ST_Update.setBackground(new java.awt.Color(73, 118, 159));
-        ST_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        ST_Update.setText("Update");
+        ST_Update.setForeground(new java.awt.Color(255, 255, 255));
         ST_Update.setToolTipText("Update the selected student's information");
         ST_Update.addActionListener(this::ST_UpdateActionPerformed);
 
-        ST_Delete.setBackground(new java.awt.Color(180, 50, 50));
         ST_Delete.setForeground(new java.awt.Color(255, 255, 255));
-        ST_Delete.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        ST_Delete.setText("Delete");
         ST_Delete.setToolTipText("Delete the selected student — cannot be undone");
         ST_Delete.addActionListener(this::ST_DeleteActionPerformed);
 
-        ST_Clear.setBackground(new java.awt.Color(73, 118, 159));
-        ST_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        ST_Clear.setText("Clear");
+        ST_Clear.setForeground(new java.awt.Color(255, 255, 255));
         ST_Clear.setToolTipText("Clear all input fields");
         ST_Clear.addActionListener(this::ST_ClearActionPerformed);
 
-        ST_Logout.setBackground(new java.awt.Color(40, 55, 75));
         ST_Logout.setForeground(new java.awt.Color(255, 255, 255));
-        ST_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24));
-        ST_Logout.setText("Logout");
         ST_Logout.setToolTipText("Logout and return to sign in");
         ST_Logout.addActionListener(this::ST_LogoutActionPerformed); 
 
@@ -1156,14 +1193,9 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_SearchStudent.setBackground(new java.awt.Color(146, 190, 219));
         CT_SearchStudent.addActionListener(this::CT_SearchStudentActionPerformed);
 
-        CT_Search.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        CT_Search.setText("Search");
         CT_Search.addActionListener(this::CT_SearchActionPerformed);
 
-        CT_Refresh.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24));
-        CT_Refresh.setText("Refresh");
+        CT_Refresh.addActionListener(this::CT_RefreshActionPerformed);
 
         javax.swing.GroupLayout CT_SearchStudentPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentPanel);
         CT_SearchStudentPanel.setLayout(CT_SearchStudentPanelLayout);
@@ -1228,31 +1260,20 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_BottomPanel.setBackground(new java.awt.Color(0, 30, 58));
         CT_BottomPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 4, true));
 
-        CT_Save.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Save.setFont(new java.awt.Font("Segoe UI", 1, 24));
-        CT_Save.setText("Save");
+        CT_Save.setForeground(new java.awt.Color(255, 255, 255));
         CT_Save.setToolTipText("Save enrollment record for this student");
         CT_Save.addActionListener(this::CT_SaveActionPerformed);
 
-        CT_Update.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        CT_Update.setText("Update");
+        CT_Update.setForeground(new java.awt.Color(255, 255, 255));
         CT_Update.setToolTipText("Update the selected enrollment record");
 
-        CT_Print.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Print.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        CT_Print.setText("Print");
+        CT_Print.setForeground(new java.awt.Color(255, 255, 255));
         CT_Print.setToolTipText("Print enrollment details");
 
-        CT_Clear.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        CT_Clear.setText("Clear");
+        CT_Clear.setForeground(new java.awt.Color(255, 255, 255));
         CT_Clear.setToolTipText("Clear the enrollment form");
 
-        CT_Logout.setBackground(new java.awt.Color(40, 55, 75));
         CT_Logout.setForeground(new java.awt.Color(255, 255, 255));
-        CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); 
-        CT_Logout.setText("Logout");
         CT_Logout.setToolTipText("Logout and return to sign in");
         CT_Logout.addActionListener(this::CT_LogoutActionPerformed); 
 
@@ -2082,7 +2103,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JLabel CT_COURSE3;
     private javax.swing.JLabel CT_COURSE4;
     private javax.swing.JLabel CT_COURSE5;
-    private javax.swing.JButton CT_Clear;
+    private StyledButton CT_Clear;
     private javax.swing.JComboBox<String> CT_Course1;
     private javax.swing.JComboBox<String> CT_Course2;
     private javax.swing.JComboBox<String> CT_Course3;
@@ -2090,22 +2111,22 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> CT_Course5;
     private javax.swing.JLabel CT_ID;
     private javax.swing.JPanel CT_LeftPanel;
-    private javax.swing.JButton CT_Logout;
-    private javax.swing.JButton CT_Print;
-    private javax.swing.JButton CT_Refresh;
+    private StyledButton CT_Logout;
+    private StyledButton CT_Print;
+    private StyledButton CT_Refresh;
     private javax.swing.JPanel CT_RightPanel;
     private javax.swing.JLabel CT_SEARCH_STUDENT;
     private javax.swing.JLabel CT_SEMESTER;
     private javax.swing.JLabel CT_STUDENT_ID;
-    private javax.swing.JButton CT_Save;
-    private javax.swing.JButton CT_Search;
+    private StyledButton CT_Save;
+    private StyledButton CT_Search;
     private javax.swing.JTextField CT_SearchStudent;
     private javax.swing.JPanel CT_SearchStudentPanel;
     private javax.swing.JComboBox<String> CT_Semester;
     private javax.swing.JTextField CT_StudentID;
     private javax.swing.JTable CT_Table;
     private javax.swing.JScrollPane CT_TableScrollPane;
-    private javax.swing.JButton CT_Update;
+    private StyledButton CT_Update;
     private javax.swing.JTextField CT_id;
     private javax.swing.JPanel CourseTab;
     private javax.swing.JPanel MainPanel;
@@ -2115,12 +2136,12 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JLabel SMS;
     private javax.swing.JPanel SMSPanel;
     private javax.swing.JLabel ST_ADDRESS;
-    private javax.swing.JButton ST_AddNew;
+    private StyledButton ST_AddNew;
     private javax.swing.JTextField ST_Address;
     private javax.swing.JLabel ST_BIRTHDAY;
     private javax.swing.JPanel ST_BottomPanel;
-    private javax.swing.JButton ST_Clear;
-    private javax.swing.JButton ST_Delete;
+    private StyledButton ST_Clear;
+    private StyledButton ST_Delete;
     private javax.swing.JLabel ST_EMAIL;
     private javax.swing.JTextField ST_Email;
     private javax.swing.JLabel ST_FATHERS_NAME;
@@ -2130,24 +2151,24 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JComboBox<String> ST_Gender;
     private javax.swing.JTextField ST_GuardiansPhoneNumber;
     private javax.swing.JPanel ST_LeftPanel;
-    private javax.swing.JButton ST_Logout;
+    private StyledButton ST_Logout;
     private javax.swing.JLabel ST_MOTHERS_NAME;
     private javax.swing.JTextField ST_MothersName;
     private javax.swing.JLabel ST_PHONE_NUM;
     private javax.swing.JTextField ST_PhoneNumber;
-    private javax.swing.JButton ST_Refresh;
+    private StyledButton ST_Refresh;
     private javax.swing.JPanel ST_RightPanel;
     private javax.swing.JLabel ST_SEARCH_STUDENT;
     private javax.swing.JLabel ST_STUDENT_ID;
     private javax.swing.JLabel ST_STUDENT_NAME;
-    private javax.swing.JButton ST_Search;
+    private StyledButton ST_Search;
     private javax.swing.JTextField ST_SearchStudent;
     private javax.swing.JPanel ST_SearchStudentPanel;
     private javax.swing.JTextField ST_StudentID;
     private javax.swing.JTextField ST_StudentName;
     private javax.swing.JTable ST_Table;
     private javax.swing.JScrollPane ST_TableScrollPane;
-    private javax.swing.JButton ST_Update;
+    private StyledButton ST_Update;
     private javax.swing.JPanel ScheduleTab;
     private javax.swing.JPanel ScoreTab;
     private javax.swing.JPanel StudentTab;
@@ -2169,7 +2190,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
     private javax.swing.JPanel ST_SuggestedCoursesPanel;
     private javax.swing.JScrollPane ST_SuggestedCoursesScrollPane;
     private javax.swing.JList<String> ST_SuggestedCoursesList;
-    private javax.swing.JButton ST_SaveAndEnroll;
+    private StyledButton ST_SaveAndEnroll;
     
     private void setupSearchPlaceholders() {
         addSearchPlaceholder(ST_SearchStudent, "Search by ID or Name...");
@@ -2217,22 +2238,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
         } catch (Exception e) {
             logger.warning("Could not set current semester: " + e.getMessage());
         }
-    }
-
-    // ── Hover helpers ──────────────────────────────────────────────────
-    private void setupButtonHovers() {
-        addHover(ST_AddNew); addHover(ST_Update); addHover(ST_Clear);
-        addHover(ST_Search); addHover(ST_Refresh);
-        addHover(CT_Save); addHover(CT_Update); addHover(CT_Print); addHover(CT_Clear);
-        addHover(CT_Search); addHover(CT_Refresh);
-    }
-
-    private void addHover(javax.swing.JButton btn) {
-        java.awt.Color orig = btn.getBackground();
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(orig.darker()); }
-            public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(orig); }
-        });
     }
 
     // ── Focus-ring helpers ─────────────────────────────────────────────

@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.table.DefaultTableModel;
+import ers.group.StudentCourseTab.StyledButton;
 
 /**
  *
@@ -663,20 +664,20 @@ public class Scheduletab extends javax.swing.JPanel {
         scheduleFiltersPanel = new javax.swing.JPanel();
         semesterIDLabel = new javax.swing.JLabel();
         studentSearchField = new javax.swing.JTextField();
-        searchStudentButton = new javax.swing.JButton();
+        searchStudentButton = new StyledButton("Search");
         semesterSearchField = new javax.swing.JTextField();
         studentIDLabel = new javax.swing.JLabel();
-        searchSemesterButton = new javax.swing.JButton();
+        searchSemesterButton = new StyledButton("Search");
         monthYearPanel = new javax.swing.JPanel();
         monthComboBox = new javax.swing.JComboBox<>();
         yearSpinner = new javax.swing.JSpinner();
         monthYearDisplayLabel = new javax.swing.JLabel();
-        refreshButton = new javax.swing.JButton();
+        refreshButton = new StyledButton("Refresh");
         jScrollPane2 = new javax.swing.JScrollPane();
         Scheduletable = new javax.swing.JTable();
         buttonPanel = new javax.swing.JPanel();
-        printbutton = new javax.swing.JButton();
-        logoutbutton = new javax.swing.JButton();
+        printbutton = new StyledButton("Print", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        logoutbutton = new StyledButton("Logout", new java.awt.Color(40, 55, 75), new java.awt.Color(25, 38, 55));
 
 
         mainPanel.setBackground(new java.awt.Color(31, 58, 95));
@@ -819,9 +820,6 @@ public class Scheduletab extends javax.swing.JPanel {
         });
 
 
-        searchStudentButton.setBackground(new java.awt.Color(189, 216, 233));
-        searchStudentButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        searchStudentButton.setText("Search");
         searchStudentButton.addActionListener(this::searchStudentButtonActionPerformed);
 
 
@@ -850,9 +848,6 @@ public class Scheduletab extends javax.swing.JPanel {
         studentIDLabel.setText("Student ID");
 
 
-        searchSemesterButton.setBackground(new java.awt.Color(189, 216, 233));
-        searchSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        searchSemesterButton.setText("Search");
         searchSemesterButton.addActionListener(this::searchSemesterButtonActionPerformed);
 
 
@@ -925,15 +920,9 @@ public class Scheduletab extends javax.swing.JPanel {
         buttonPanel.setBackground(new java.awt.Color(0, 30, 58));
         buttonPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
 
-        printbutton.setBackground(new java.awt.Color(73, 118, 159));
-        printbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        printbutton.setText("Print");
-        printbutton.setForeground(new java.awt.Color(0, 0, 0));
+        printbutton.setForeground(new java.awt.Color(255, 255, 255));
         printbutton.addActionListener(this::printbuttonActionPerformed);
 
-        logoutbutton.setBackground(new java.awt.Color(40, 55, 75));
-        logoutbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        logoutbutton.setText("Logout");
         logoutbutton.setForeground(new java.awt.Color(255, 255, 255));
         logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
 
@@ -964,9 +953,6 @@ public class Scheduletab extends javax.swing.JPanel {
         monthYearDisplayLabel.setText("January 2026");
 
 
-        refreshButton.setBackground(new java.awt.Color(189, 216, 233));
-        refreshButton.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
-        refreshButton.setText("Refresh");
         refreshButton.addActionListener(this::refreshButtonActionPerformed);
 
 
@@ -1626,13 +1612,13 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     // Variables declaration - do not modify                    
     private javax.swing.JPanel Marksheet;
     private javax.swing.JComboBox<String> monthComboBox;
-    private javax.swing.JButton refreshButton;
+    private StyledButton refreshButton;
     private javax.swing.JPanel Schedule;
     private javax.swing.JTable Scheduletable;
-    private javax.swing.JButton searchSemesterButton;
+    private StyledButton searchSemesterButton;
     private javax.swing.JTextField studentSearchField;
     private javax.swing.JTextField semesterSearchField;
-    private javax.swing.JButton searchStudentButton;
+    private StyledButton searchStudentButton;
     private javax.swing.JLabel semesterIDLabel;
     private javax.swing.JLabel studentIDLabel;
     private javax.swing.JSpinner yearSpinner;
@@ -1658,7 +1644,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private javax.swing.JPanel score;
     private javax.swing.JPanel student;
     private javax.swing.JPanel buttonPanel;
-    private javax.swing.JButton logoutbutton;
-    private javax.swing.JButton printbutton;
+    private StyledButton logoutbutton;
+    private StyledButton printbutton;
     // End of variables declaration                  
 }

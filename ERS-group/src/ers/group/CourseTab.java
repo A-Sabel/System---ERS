@@ -7,6 +7,7 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
+import ers.group.StudentCourseTab.StyledButton;
 
 public class CourseTab extends JPanel {
 
@@ -25,7 +26,6 @@ public class CourseTab extends JPanel {
 
     public CourseTab() {
         initComponents();
-        setupHovers();
         setupFocusRings();
         students = new ArrayList<>();
         enrollments = new ArrayList<>();
@@ -214,7 +214,7 @@ public class CourseTab extends JPanel {
         CT_Course4 = new javax.swing.JComboBox<>();
         CT_Course5 = new javax.swing.JComboBox<>();
         CT_Semester = new javax.swing.JComboBox<>();
-        CT_LoadCourses = new javax.swing.JButton();
+        CT_LoadCourses = new StyledButton("Load Available Courses", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
         CT_PrereqStatus1 = new javax.swing.JLabel();
         CT_PrereqStatus2 = new javax.swing.JLabel();
         CT_PrereqStatus3 = new javax.swing.JLabel();
@@ -224,8 +224,8 @@ public class CourseTab extends JPanel {
         CT_SearchStudentPanel = new javax.swing.JPanel();
         CT_SEARCH_STUDENT = new javax.swing.JLabel();
         CT_SearchStudent = new javax.swing.JTextField();
-        CT_Search = new javax.swing.JButton();
-        CT_Refresh = new javax.swing.JButton();
+        CT_Search = new StyledButton("Search");
+        CT_Refresh = new StyledButton("Refresh");
         CT_TableScrollPane = new javax.swing.JScrollPane();
         CT_Table = new javax.swing.JTable() {
             @Override
@@ -246,11 +246,11 @@ public class CourseTab extends JPanel {
             }
         };
         CT_BottomPanel = new javax.swing.JPanel();
-        CT_Save = new javax.swing.JButton();
-        CT_Update = new javax.swing.JButton();
-        CT_Print = new javax.swing.JButton();
-        CT_Clear = new javax.swing.JButton();
-        CT_Logout = new javax.swing.JButton();
+        CT_Save = new StyledButton("Save", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Update = new StyledButton("Update", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Print = new StyledButton("Print", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Clear = new StyledButton("Clear", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        CT_Logout = new StyledButton("Logout", new java.awt.Color(40, 55, 75), new java.awt.Color(25, 38, 55));
 
         this.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -356,10 +356,7 @@ public class CourseTab extends JPanel {
         CT_Semester.addActionListener(e -> autoLoadCoursesIfValid());
 
         // Load Courses Button
-        CT_LoadCourses.setBackground(new java.awt.Color(73, 118, 159));
-        CT_LoadCourses.setFont(new java.awt.Font("Segoe UI", 1, 14));
         CT_LoadCourses.setForeground(new java.awt.Color(255, 255, 255));
-        CT_LoadCourses.setText("Load Available Courses");
         CT_LoadCourses.addActionListener(this::CT_LoadCoursesActionPerformed);
 
         // Prerequisite Status Labels
@@ -498,14 +495,8 @@ public class CourseTab extends JPanel {
         CT_SearchStudent.setBackground(new java.awt.Color(146, 190, 219));
         CT_SearchStudent.addActionListener(this::CT_SearchStudentActionPerformed);
 
-        CT_Search.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Search.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Search.setText("Search");
         CT_Search.addActionListener(this::CT_SearchActionPerformed);
 
-        CT_Refresh.setBackground(new java.awt.Color(146, 190, 219));
-        CT_Refresh.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Refresh.setText("Refresh");
         CT_Refresh.addActionListener(this::CT_RefreshActionPerformed);
 
         javax.swing.GroupLayout CT_SearchStudentPanelLayout = new javax.swing.GroupLayout(CT_SearchStudentPanel);
@@ -583,28 +574,17 @@ public class CourseTab extends JPanel {
         CT_BottomPanel.setBackground(new java.awt.Color(0, 30, 58));
         CT_BottomPanel.setBorder(new javax.swing.border.LineBorder(new java.awt.Color(0, 0, 0), 4, true));
 
-        CT_Save.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Save.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Save.setText("Save");
+        CT_Save.setForeground(new java.awt.Color(255, 255, 255));
         CT_Save.addActionListener(this::CT_SaveActionPerformed);
 
-        CT_Update.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Update.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Update.setText("Update");
+        CT_Update.setForeground(new java.awt.Color(255, 255, 255));
 
-        CT_Print.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Print.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Print.setText("Print");
+        CT_Print.setForeground(new java.awt.Color(255, 255, 255));
 
-        CT_Clear.setBackground(new java.awt.Color(73, 118, 159));
-        CT_Clear.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Clear.setText("Clear");
+        CT_Clear.setForeground(new java.awt.Color(255, 255, 255));
         CT_Clear.addActionListener(this::CT_ClearActionPerformed);
 
-        CT_Logout.setBackground(new java.awt.Color(40, 55, 75));
         CT_Logout.setForeground(new java.awt.Color(255, 255, 255));
-        CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        CT_Logout.setText("Logout");
         CT_Logout.addActionListener(this::CT_LogoutActionPerformed); 
 
         javax.swing.GroupLayout CT_BottomPanelLayout = new javax.swing.GroupLayout(CT_BottomPanel);
@@ -1544,7 +1524,7 @@ public class CourseTab extends JPanel {
     private javax.swing.JLabel CT_COURSE3;
     private javax.swing.JLabel CT_COURSE4;
     private javax.swing.JLabel CT_COURSE5;
-    private javax.swing.JButton CT_Clear;
+    private StyledButton CT_Clear;
     private javax.swing.JComboBox<String> CT_Course1;
     private javax.swing.JComboBox<String> CT_Course2;
     private javax.swing.JComboBox<String> CT_Course3;
@@ -1552,24 +1532,24 @@ public class CourseTab extends JPanel {
     private javax.swing.JComboBox<String> CT_Course5;
     private javax.swing.JLabel CT_ID;
     private javax.swing.JPanel CT_LeftPanel;
-    private javax.swing.JButton CT_Logout;
-    private javax.swing.JButton CT_Print;
-    private javax.swing.JButton CT_Refresh;
+    private StyledButton CT_Logout;
+    private StyledButton CT_Print;
+    private StyledButton CT_Refresh;
     private javax.swing.JPanel CT_RightPanel;
     private javax.swing.JLabel CT_SEARCH_STUDENT;
     private javax.swing.JLabel CT_SEMESTER;
     private javax.swing.JLabel CT_STUDENT_ID;
-    private javax.swing.JButton CT_Save;
-    private javax.swing.JButton CT_Search;
+    private StyledButton CT_Save;
+    private StyledButton CT_Search;
     private javax.swing.JTextField CT_SearchStudent;
     private javax.swing.JPanel CT_SearchStudentPanel;
     private javax.swing.JComboBox<String> CT_Semester;
     private javax.swing.JTextField CT_StudentID;
     private javax.swing.JTable CT_Table;
     private javax.swing.JScrollPane CT_TableScrollPane;
-    private javax.swing.JButton CT_Update;
+    private StyledButton CT_Update;
     private javax.swing.JTextField CT_id;
-    private javax.swing.JButton CT_LoadCourses;
+    private StyledButton CT_LoadCourses;
     private javax.swing.JLabel CT_PrereqStatus1;
     private javax.swing.JLabel CT_PrereqStatus2;
     private javax.swing.JLabel CT_PrereqStatus3;
@@ -1740,19 +1720,6 @@ public class CourseTab extends JPanel {
         setCurrentActiveSemester();
     }
     
-    private void setupHovers() {
-        addHover(CT_LoadCourses); addHover(CT_Search); addHover(CT_Refresh);
-        addHover(CT_Save); addHover(CT_Update); addHover(CT_Print); addHover(CT_Clear);
-    }
-
-    private void addHover(javax.swing.JButton btn) {
-        java.awt.Color orig = btn.getBackground();
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(orig.darker()); }
-            public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(orig); }
-        });
-    }
-
     private void setupFocusRings() {
         addFocusRing(CT_id); addFocusRing(CT_StudentID); addFocusRing(CT_SearchStudent);
     }

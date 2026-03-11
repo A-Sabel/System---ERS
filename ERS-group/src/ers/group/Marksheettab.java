@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
+import ers.group.StudentCourseTab.StyledButton;
 
 
 /**
@@ -60,7 +61,6 @@ public class Marksheettab extends javax.swing.JPanel {
         studentFileLoader = new StudentFileLoader();
         studentMap = new java.util.HashMap<>();
         initComponents();
-        setupHovers();
         addFocusRing(SearchbarID);
         loadStudentData();
         loadCourseData();
@@ -351,16 +351,16 @@ public class Marksheettab extends javax.swing.JPanel {
         StudentIDPanel = new javax.swing.JPanel();
         StudentID = new javax.swing.JLabel();
         SearchbarID = new javax.swing.JTextField();
-        Searchbutton = new javax.swing.JButton();
+        Searchbutton = new StyledButton("Search", new java.awt.Color(189, 216, 233), new java.awt.Color(150, 170, 195));
         jPanel5 = new javax.swing.JPanel();
         GWA = new javax.swing.JLabel();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         scoretable = new javax.swing.JTable();
         jPanel2 = new javax.swing.JPanel();
-        printbutton = new javax.swing.JButton();
-        clearbutton = new javax.swing.JButton();
-        logoutbutton = new javax.swing.JButton();
+        printbutton = new StyledButton("Print", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        clearbutton = new StyledButton("Clear", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
+        logoutbutton = new StyledButton("Logout", new java.awt.Color(40, 55, 75), new java.awt.Color(25, 38, 55));
 
         Background.setBackground(new java.awt.Color(31, 58, 95));
 
@@ -393,9 +393,6 @@ public class Marksheettab extends javax.swing.JPanel {
             }
         });
 
-        Searchbutton.setBackground(new java.awt.Color(189, 216, 233));
-        Searchbutton.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
-        Searchbutton.setText("Search");
         Searchbutton.setForeground(new java.awt.Color(0, 0, 0));
         Searchbutton.addActionListener(this::SearchbuttonActionPerformed);
 
@@ -532,35 +529,20 @@ public class Marksheettab extends javax.swing.JPanel {
         jPanel2.setBackground(new java.awt.Color(0, 30, 58));
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 30, 58), 3));
 
-        printbutton.setBackground(new java.awt.Color(73, 118, 159));
-        printbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        printbutton.setText("Print");
         printbutton.setForeground(new java.awt.Color(255, 255, 255));
         printbutton.addActionListener(this::printbuttonActionPerformed);
 
-        clearbutton.setBackground(new java.awt.Color(73, 118, 159));
-        clearbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        clearbutton.setText("Clear");
         clearbutton.setForeground(new java.awt.Color(255, 255, 255));
         clearbutton.addActionListener(this::clearbuttonActionPerformed);
 
-        logoutbutton.setBackground(new java.awt.Color(40, 55, 75));
-        logoutbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
-        logoutbutton.setText("Logout");
         logoutbutton.setForeground(new java.awt.Color(255, 255, 255));
         logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
 
-        javax.swing.JButton torButton = new javax.swing.JButton();
-        torButton.setBackground(new java.awt.Color(73, 118, 159));
-        torButton.setFont(new java.awt.Font("Segoe UI", 1, 24));
-        torButton.setText("TOR");
+        StyledButton torButton = new StyledButton("TOR", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
         torButton.setForeground(new java.awt.Color(255, 255, 255));
         torButton.addActionListener(this::torButtonActionPerformed);
 
-        javax.swing.JButton yearSemesterButton = new javax.swing.JButton();
-        yearSemesterButton.setBackground(new java.awt.Color(73, 118, 159));
-        yearSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 24));
-        yearSemesterButton.setText("Year / Semester");
+        StyledButton yearSemesterButton = new StyledButton("Year / Semester", new java.awt.Color(73, 118, 159), new java.awt.Color(53, 93, 134));
         yearSemesterButton.setForeground(new java.awt.Color(255, 255, 255));
         yearSemesterButton.addActionListener(this::yearSemesterButtonActionPerformed);
 
@@ -1010,18 +992,6 @@ public class Marksheettab extends javax.swing.JPanel {
         });
     }
 
-    private void setupHovers() {
-        addHover(Searchbutton); addHover(printbutton); addHover(clearbutton);
-    }
-
-    private void addHover(javax.swing.JButton btn) {
-        java.awt.Color orig = btn.getBackground();
-        btn.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(orig.darker()); }
-            public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(orig); }
-        });
-    }
-
     private void addFocusRing(javax.swing.JTextField field) {
         javax.swing.border.Border def = field.getBorder();
         field.addFocusListener(new java.awt.event.FocusAdapter() {
@@ -1039,17 +1009,17 @@ public class Marksheettab extends javax.swing.JPanel {
     private javax.swing.JPanel Background;
     private javax.swing.JLabel GWA;
     private javax.swing.JTextField SearchbarID;
-    private javax.swing.JButton Searchbutton;
+    private StyledButton Searchbutton;
     private javax.swing.JLabel StudentID;
     private javax.swing.JPanel StudentIDPanel;
-    private javax.swing.JButton clearbutton;
+    private StyledButton clearbutton;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel15;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton logoutbutton;
-    private javax.swing.JButton printbutton;
+    private StyledButton logoutbutton;
+    private StyledButton printbutton;
     private javax.swing.JTable scoretable;
     // End of variables declaration                  
 }

@@ -646,6 +646,7 @@ This project is developed for university requirements. Use at your own discretio
 Developed by: Andrea Ysabela San Andres, Katrice Joy Garnado
             Cyrene Fedoc, Elicxia Geighniel Mistica, Francheska Ortiz
 Technological University of the Philippines
+
 Repository: [github.com/A-Sabel/System---ERS](https://github.com/A-Sabel/System---ERS)
 
 ---

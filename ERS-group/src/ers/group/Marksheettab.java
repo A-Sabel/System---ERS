@@ -328,16 +328,12 @@ public class Marksheettab extends javax.swing.JPanel {
         }
     }
     
-    // Helper to add a row from file data array
     private void addFileRowToModel(javax.swing.table.DefaultTableModel model, String[] d) {
-        // Expecting file format: [0]=MRK ID, [1]=StudentID, [2]=Semester, [3]=YearLevel, [4]=Course1, [5]=Score1, ... [13]=Score5, [14]=GWA
         Object[] row = new Object[16];
         row[0] = d[0]; // MRK ID
-        row[1] = d[1]; // Student ID (keep plain for other logic)
+        row[1] = d[1]; // Student ID
         row[2] = d[2]; // Semester
         row[3] = d[3]; // Year Level
-
-        // Determine status (prefer Student.status, then studentType)
         String status = "UNKNOWN";
         Student st = studentMap.get(d[1]);
         if (st != null) {
@@ -369,13 +365,6 @@ public class Marksheettab extends javax.swing.JPanel {
         }
         model.addRow(row);
     }
-
-    /* Original code removed for clarity
-    if (!found) {
-        JOptionPane.showMessageDialog(this, "Student, Year Level, or Semester not found!", "Search Result", JOptionPane.INFORMATION_MESSAGE);
-        GWA.setText("GWA: --");
-    }
-    */
 
     @SuppressWarnings("unchecked")
     private void initComponents() {
@@ -1246,8 +1235,6 @@ public class Marksheettab extends javax.swing.JPanel {
                     line = Encryption.decrypt(line);
                     String[] d = line.split(",");
                     if (d.length < 5) continue;
-                    
-                    // Format: StudentID, CourseList, YearLevel, Semester, Status, SectionList, AcademicYear
                     if (d[0].equals(studentID) && d[3].equals(semester) && d[2].equals(yearLevel)) {
                         return d[4]; // Return status
                     }
@@ -1259,9 +1246,6 @@ public class Marksheettab extends javax.swing.JPanel {
         return "UNKNOWN"; // Default if not found
     }
 
-    /**
-     * Custom TableCellRenderer to color-code enrollment status
-     */
     static class StatusColorRenderer extends javax.swing.table.DefaultTableCellRenderer {
         @Override
         public java.awt.Component getTableCellRendererComponent(javax.swing.JTable table, Object value,

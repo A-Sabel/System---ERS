@@ -162,7 +162,6 @@ public class Marksheettab extends javax.swing.JPanel {
 
     /**
      * Load all marksheet data from file into the table
-     * Made public to allow refreshing from tab change events
      */
     public void loadMarksheetTableData() {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
@@ -170,11 +169,8 @@ public class Marksheettab extends javax.swing.JPanel {
         for (Marksheet m : marksheets) {
             String[] subjects = m.getSubjects();
             double[] marks = m.getMarks();
-
-            // Compute semester and year/schoolYear
             String semester = m.getSemester();
             String yearLevel = m.getSchoolYear();
-
             // Try to enrich with Student object if available
             Student student = studentMap.get(m.getStudentID());
             if (student != null) {
@@ -182,8 +178,6 @@ public class Marksheettab extends javax.swing.JPanel {
                     yearLevel = student.getYearLevel();
                 }
             }
-
-            // Determine status (prefer Student.status when available, fall back to studentType)
             String status = "UNKNOWN";
             if (student != null) {
                 if (student.getStatus() != null && !student.getStatus().isEmpty()) {
@@ -195,11 +189,10 @@ public class Marksheettab extends javax.swing.JPanel {
             if (status.equals("UNKNOWN")) {
                 status = getEnrollmentStatus(m.getStudentID(), semester, yearLevel);
             }
-
             // Apply status filter
             if (selectedStatusFilter != null && !"All".equalsIgnoreCase(selectedStatusFilter)) {
                 if (status == null || !status.toLowerCase().contains(selectedStatusFilter.toLowerCase())) {
-                    continue; // skip this marksheet as it doesn't match filter
+                    continue;
                 }
             }
 
@@ -216,12 +209,11 @@ public class Marksheettab extends javax.swing.JPanel {
 
             Object[] row = new Object[16];
             row[0] = "MRK-" + (marksheets.indexOf(m) + 1); // ID
-            row[1] = m.getStudentID(); // keep Student ID in column 1 (used by TOR and other logic)
+            row[1] = m.getStudentID(); // Student ID
             row[2] = semester; // Semester
             row[3] = yearLevel; // Year Level / School Year
             row[4] = status; // Status
-
-            // Course and score columns start at index 5
+            // Course and score columns
             for (int i = 0; i < 5; i++) {
                 String courseID = (subjects != null && subjects.length > i && subjects[i] != null) ? subjects[i] : "";
                 int courseIndex = 5 + (i * 2);
@@ -249,7 +241,6 @@ public class Marksheettab extends javax.swing.JPanel {
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0);
         boolean found = false;
-        
         // 1. Try Match by Student ID
         try (BufferedReader br = new BufferedReader(new FileReader(marksheetFilePath))) {
             String line;
@@ -262,13 +253,12 @@ public class Marksheettab extends javax.swing.JPanel {
                     addFileRowToModel(model, d);
                     GWA.setText("GWA: " + d[14]);
                     found = true;
-                    break; // Stop after finding the student ID match
+                    break;
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
 
         if (found) return;
-
         // If not found by ID, try by year level (case-insensitive, partial match allowed)
         int yearLevelCount = 0;
         double totalGwa = 0.0;
@@ -279,8 +269,6 @@ public class Marksheettab extends javax.swing.JPanel {
                 line = Encryption.decrypt(line);
                 String[] d = line.split(",");
                 if (d.length < 15) continue;
-
-                // Index 3 is Year Level
                 if (d[3].toLowerCase().contains(searchText.toLowerCase())) {
                     addFileRowToModel(model, d);
                     try {
@@ -291,13 +279,12 @@ public class Marksheettab extends javax.swing.JPanel {
                 }
             }
         } catch (Exception e) { e.printStackTrace(); }
-
         if (found && yearLevelCount > 0) {
             GWA.setText("GWA: " + String.format("%.2f", totalGwa / yearLevelCount));
             return;
         }
 
-    // If not found by ID or year level, try by semester (case-insensitive, partial match allowed)
+    // If not found by ID or year level, try by semester
         int semesterCount = 0;
         totalGwa = 0.0;
         
@@ -360,7 +347,7 @@ public class Marksheettab extends javax.swing.JPanel {
         // Apply status filter before adding
         if (selectedStatusFilter != null && !"All".equalsIgnoreCase(selectedStatusFilter)) {
             if (status == null || !status.toLowerCase().contains(selectedStatusFilter.toLowerCase())) {
-                return; // skip adding this row
+                return;
             }
         }
         model.addRow(row);
@@ -666,6 +653,8 @@ public class Marksheettab extends javax.swing.JPanel {
                     "Print Rating Slip", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        loadStudentData();
+        loadSectionData();
         java.util.List<PrintSlipData> slips = buildSlipsFromTable();
         if (slips.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Could not build slip data.",
@@ -703,6 +692,8 @@ public class Marksheettab extends javax.swing.JPanel {
                     "Print TOR", JOptionPane.WARNING_MESSAGE);
             return;
         }
+        loadStudentData();
+        loadSectionData();
         java.util.List<PrintSlipData> allSlips = buildSlipsFromTable();
         if (allSlips.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Could not build TOR data.",
@@ -824,7 +815,6 @@ public class Marksheettab extends javax.swing.JPanel {
             logger.warning("Could not load teachers file: " + e.getMessage());
         }
 
-        // Secondary: Schedule.txt overrides with whoever is actually scheduled for a course.
         try {
             String[] schedulePaths = {
                 "ERS-group/src/ers/group/master files/Schedule.txt",
@@ -861,16 +851,14 @@ public class Marksheettab extends javax.swing.JPanel {
         fm = g2.getFontMetrics();
         g2.drawString(SCHOOL_NAME, x + (w - fm.stringWidth(SCHOOL_NAME)) / 2, y);
         y += 20;
-
         // Document title
         g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 13));
         fm = g2.getFontMetrics();
         g2.drawString(docTitle, x + (w - fm.stringWidth(docTitle)) / 2, y);
         y += 8;
-
         // Heavy rule
         g2.fillRect(x, y, w, 2);
-        return y + 16; // return Y position for content below letterhead
+        return y + 16;
     }
 
     private void drawRatingSlip(java.awt.Graphics2D g2, float pageWidth, PrintSlipData slip) {
@@ -880,9 +868,7 @@ public class Marksheettab extends javax.swing.JPanel {
         final int LH     = 20;
         int w = (int) pageWidth - MARGIN * 2;
         int x = MARGIN;
-
         int y = drawLetterhead(g2, x, w, "STUDENT'S RATING SLIP");
-
         // Student info block
         String[] lbls = {"Student Name", "Student ID  ", "Year Level  ", "Section     ", "Semester    "};
         String[] vals = {
@@ -901,7 +887,7 @@ public class Marksheettab extends javax.swing.JPanel {
         g2.drawLine(x, y, x + w, y);
         y += LH;
 
-        // Table header  (Subject 42% | Teacher 32% | Units 10% | Grade 16%)
+        // Table header
         int[] colW = {(int)(w * 0.42f), (int)(w * 0.32f), (int)(w * 0.10f), (int)(w * 0.16f)};
         String[] hdrs = {"Subject / Course", "Teacher / Instructor", "Units", "Grade"};
         g2.setColor(new java.awt.Color(210, 230, 245));
@@ -913,8 +899,7 @@ public class Marksheettab extends javax.swing.JPanel {
         y += 4;
         g2.drawLine(x, y, x + w, y);
         y += LH;
-
-        // Course rows (at least 5 rows shown)
+        // Course rows
         g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 11));
         int drawn = 0;
         for (String[] row : slip.courseRows) {
@@ -930,8 +915,7 @@ public class Marksheettab extends javax.swing.JPanel {
 
         g2.drawLine(x, y, x + w, y);
         y += LH;
-
-        // GWA (right-aligned)
+        // GWA
         g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 12));
         java.awt.FontMetrics fm = g2.getFontMetrics();
         String gwaStr = "General Weighted Average (GWA) :  " + slip.gwa;
@@ -980,7 +964,6 @@ public class Marksheettab extends javax.swing.JPanel {
         g2.drawLine(x, y, x + w, y);
         y += LH;
 
-        // Column widths: Subject 38% | Teacher 31% | Units 10% | Grade 21%
         int[] colW = {(int)(w * 0.38f), (int)(w * 0.31f), (int)(w * 0.10f), (int)(w * 0.21f)};
         String[] hdrs = {"Subject / Course", "Teacher / Instructor", "Units", "Grade"};
 
@@ -988,7 +971,6 @@ public class Marksheettab extends javax.swing.JPanel {
         int    gwaCount = 0;
 
         for (PrintSlipData slip : slips) {
-            // Semester heading in navy
             y += 2;
             g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 11));
             g2.setColor(new java.awt.Color(10, 50, 110));
@@ -997,7 +979,6 @@ public class Marksheettab extends javax.swing.JPanel {
             y += 4;
             g2.drawLine(x, y, x + w, y);
             y += LH - 2;
-
             // Table header with blue-tinted background
             g2.setColor(new java.awt.Color(210, 230, 245));
             g2.fillRect(x, y - LH + 4, w, LH);
@@ -1008,7 +989,6 @@ public class Marksheettab extends javax.swing.JPanel {
             y += 4;
             g2.drawLine(x, y, x + w, y);
             y += LH - 2;
-
             // Course rows
             g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 10));
             for (String[] row : slip.courseRows) {
@@ -1019,8 +999,7 @@ public class Marksheettab extends javax.swing.JPanel {
                 g2.drawString(row[3], cx, y);
                 y += LH;
             }
-
-            // Semester GWA (right-aligned)
+            // Semester GWA
             g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 10));
             java.awt.FontMetrics fm = g2.getFontMetrics();
             String semGwa = "Semester GWA :  " + slip.gwa;
@@ -1028,12 +1007,10 @@ public class Marksheettab extends javax.swing.JPanel {
             y += LH + 4;
             g2.drawLine(x, y, x + w, y);
             y += LH;
-
             try { totalGwa += Double.parseDouble(slip.gwa); gwaCount++; }
             catch (NumberFormatException ignored) {}
         }
-
-        // Overall GWA (right-aligned)
+        // Overall GWA
         y += 4;
         g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 12));
         java.awt.FontMetrics fm2 = g2.getFontMetrics();
@@ -1042,7 +1019,6 @@ public class Marksheettab extends javax.swing.JPanel {
                 : "Overall GWA :  N/A";
         g2.drawString(ov, x + w - fm2.stringWidth(ov), y);
         y += LH * 2 + 10;
-
         // Signature lines
         g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 10));
         int sigW = (int)(w * 0.35f);
@@ -1056,7 +1032,6 @@ public class Marksheettab extends javax.swing.JPanel {
         g2.fillRect(x, y, w, 2);
     }
 
-    // Clip text that is too wide for its column; appends "..." if cut
     private String truncate(java.awt.Graphics2D g2, String text, int maxWidth) {
         java.awt.FontMetrics fm = g2.getFontMetrics();
         if (fm.stringWidth(text) <= maxWidth) return text;
@@ -1068,25 +1043,17 @@ public class Marksheettab extends javax.swing.JPanel {
 
     private void yearSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
         try {
-            // Create report grouped by year level and semester
             java.util.Map<String, java.util.Map<String, java.util.List<Marksheet>>> yearSemesterMap = new java.util.LinkedHashMap<>();
-
             javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
-
             // Group data by year level and semester
             for (int row = 0; row < model.getRowCount(); row++) {
                 String semester = (String) model.getValueAt(row, 2);
                 String yearLevel = (String) model.getValueAt(row, 3);
-
                 if (yearLevel == null || yearLevel.isEmpty()) continue;
                 if (semester == null || semester.isEmpty()) continue;
-
-                // No semester filter (removed) — include all semesters
-
                 yearSemesterMap.putIfAbsent(yearLevel, new java.util.LinkedHashMap<>());
                 java.util.Map<String, java.util.List<Marksheet>> semesterMap = yearSemesterMap.get(yearLevel);
                 semesterMap.putIfAbsent(semester, new java.util.ArrayList<>());
-
                 String studentID = (String) model.getValueAt(row, 1);
                 for (Marksheet m : marksheets) {
                     if (m.getStudentID().equals(studentID) && m.getSemester().equalsIgnoreCase(semester)) {
@@ -1099,8 +1066,6 @@ public class Marksheettab extends javax.swing.JPanel {
                 JOptionPane.showMessageDialog(this, "No data to generate year/semester report!", "Print Year/Semester", JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-
-            // Create report table
             javax.swing.table.DefaultTableModel reportModel = new javax.swing.table.DefaultTableModel(
                 new String[]{"Year Level", "Semester", "Student Count", "Average Grade", "Total Courses"}, 0
             );
@@ -1108,11 +1073,9 @@ public class Marksheettab extends javax.swing.JPanel {
             for (String year : yearSemesterMap.keySet()) {
                 for (String semester : yearSemesterMap.get(year).keySet()) {
                     java.util.List<Marksheet> marksheetList = yearSemesterMap.get(year).get(semester);
-                    
                     double totalGrade = 0.0;
                     int courseCount = 0;
                     java.util.Set<String> studentSet = new java.util.HashSet<>();
-
                     for (Marksheet m : marksheetList) {
                         studentSet.add(m.getStudentID());
                         double[] marks = m.getMarks();
@@ -1123,9 +1086,7 @@ public class Marksheettab extends javax.swing.JPanel {
                             }
                         }
                     }
-
                     double avgGrade = courseCount > 0 ? totalGrade / courseCount : 0.0;
-
                     reportModel.addRow(new Object[]{
                         year,
                         semester,
@@ -1136,12 +1097,9 @@ public class Marksheettab extends javax.swing.JPanel {
                 }
             }
 
-            // Create temporary table for report
             javax.swing.JTable reportTable = new javax.swing.JTable(reportModel);
             reportTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-
             String reportTitle = "Year and Semester Report";
-
             boolean complete = reportTable.print(
                     javax.swing.JTable.PrintMode.FIT_WIDTH,
                     new java.text.MessageFormat(reportTitle),
@@ -1153,7 +1111,6 @@ public class Marksheettab extends javax.swing.JPanel {
             } else {
                 JOptionPane.showMessageDialog(this, "Year/Semester report printing cancelled.");
             }
-
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this,
                     "Year/Semester Print failed: " + e.getMessage(),
@@ -1163,11 +1120,8 @@ public class Marksheettab extends javax.swing.JPanel {
     }
 
     private void clearbuttonActionPerformed(java.awt.event.ActionEvent evt) {
-        // Clear search bar
         SearchbarID.setText("");
-        // Reset GWA label
         GWA.setText("GWA: --");
-        // Clear table rows (do not reload data)
         javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
         model.setRowCount(0);
     }
@@ -1183,29 +1137,22 @@ public class Marksheettab extends javax.swing.JPanel {
     if (choice == javax.swing.JOptionPane.YES_OPTION) {
         java.awt.Window window = javax.swing.SwingUtilities.getWindowAncestor(this);
         if (window != null) {
-            window.dispose(); // close parent window
+            window.dispose();
         }
     }
 }
 
-    /**
-     * Highlight selected row and populate search field
-     */
     private void highlightSelectedRow(int row) {
         try {
             javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
-            
             // Get student ID from selected row
             Object studentIDObj = model.getValueAt(row, 1);
             if (studentIDObj != null) {
                 String studentID = studentIDObj.toString();
-                // Extract just the ID if it contains name (format: "Name (ID)")
                 if (studentID.contains("(") && studentID.contains(")")) {
                     studentID = studentID.substring(studentID.lastIndexOf("(") + 1, studentID.lastIndexOf(")"));
                 }
                 SearchbarID.setText(studentID);
-                
-                // Optionally show a message with row details
                 String semester = model.getValueAt(row, 2).toString();
                 String yearLevel = model.getValueAt(row, 3).toString();
                 String status = model.getValueAt(row, 4).toString();
@@ -1216,9 +1163,6 @@ public class Marksheettab extends javax.swing.JPanel {
         }
     }
     
-    /**
-     * Look up the enrollment status for a student in a given semester and year level
-     */
     private String getEnrollmentStatus(String studentID, String semester, String yearLevel) {
         try {
             String[] enrollmentPaths = {
@@ -1236,14 +1180,14 @@ public class Marksheettab extends javax.swing.JPanel {
                     String[] d = line.split(",");
                     if (d.length < 5) continue;
                     if (d[0].equals(studentID) && d[3].equals(semester) && d[2].equals(yearLevel)) {
-                        return d[4]; // Return status
+                        return d[4];
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return "UNKNOWN"; // Default if not found
+        return "UNKNOWN"; 
     }
 
     static class StatusColorRenderer extends javax.swing.table.DefaultTableCellRenderer {
@@ -1256,23 +1200,23 @@ public class Marksheettab extends javax.swing.JPanel {
                 String status = value.toString();
                 switch (status.toUpperCase()) {
                     case "PASSED":
-                        c.setBackground(new java.awt.Color(144, 238, 144)); // Light green
+                        c.setBackground(new java.awt.Color(144, 238, 144));
                         c.setForeground(java.awt.Color.BLACK);
                         break;
                     case "FAILED":
-                        c.setBackground(new java.awt.Color(255, 99, 71)); // Tomato red
+                        c.setBackground(new java.awt.Color(255, 99, 71));
                         c.setForeground(java.awt.Color.WHITE);
                         break;
                     case "INC":
-                        c.setBackground(new java.awt.Color(255, 255, 102)); // Light yellow
+                        c.setBackground(new java.awt.Color(255, 255, 102));
                         c.setForeground(java.awt.Color.BLACK);
                         break;
                     case "DROPPED":
-                        c.setBackground(new java.awt.Color(169, 169, 169)); // Dark gray
+                        c.setBackground(new java.awt.Color(169, 169, 169));
                         c.setForeground(java.awt.Color.WHITE);
                         break;
                     case "ENROLLED":
-                        c.setBackground(new java.awt.Color(173, 216, 230)); // Light blue
+                        c.setBackground(new java.awt.Color(173, 216, 230));
                         c.setForeground(java.awt.Color.BLACK);
                         break;
                     default:
@@ -1326,7 +1270,7 @@ public class Marksheettab extends javax.swing.JPanel {
         });
     }
 
-    // Variables declaration - do not modify                    
+    // Variables declaration                    
     private javax.swing.JPanel Background;
     private javax.swing.JLabel GWA;
     private javax.swing.JTextField SearchbarID;
@@ -1341,6 +1285,5 @@ public class Marksheettab extends javax.swing.JPanel {
     private javax.swing.JScrollPane jScrollPane1;
     private StyledButton logoutbutton;
     private StyledButton printbutton;
-    private javax.swing.JTable scoretable;
-    // End of variables declaration                  
+    private javax.swing.JTable scoretable;                
 }

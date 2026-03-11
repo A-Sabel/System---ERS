@@ -60,6 +60,8 @@ public class Marksheettab extends javax.swing.JPanel {
         studentFileLoader = new StudentFileLoader();
         studentMap = new java.util.HashMap<>();
         initComponents();
+        setupHovers();
+        addFocusRing(SearchbarID);
         loadStudentData();
         loadCourseData();
         loadMarksheetData();
@@ -202,6 +204,7 @@ public class Marksheettab extends javax.swing.JPanel {
 
     private void SearchbuttonActionPerformed(java.awt.event.ActionEvent evt) {
         String searchText = SearchbarID.getText().trim();
+        if (searchText.equals("Search by ID or Name...")) searchText = "";
         if (searchText.isEmpty()) {
             loadMarksheetTableData();
             GWA.setText("GWA: --");
@@ -372,6 +375,23 @@ public class Marksheettab extends javax.swing.JPanel {
         StudentID.setText("Student ID");
 
         SearchbarID.setBackground(new java.awt.Color(146, 190, 219));
+        SearchbarID.setToolTipText("Search by Student ID or Name");
+        SearchbarID.addActionListener(this::SearchbuttonActionPerformed);
+        SearchbarID.setText("Search by ID or Name...");
+        SearchbarID.setForeground(java.awt.Color.GRAY);
+        SearchbarID.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (SearchbarID.getText().equals("Search by ID or Name...")) {
+                    SearchbarID.setText(""); SearchbarID.setForeground(java.awt.Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (SearchbarID.getText().isEmpty()) {
+                    SearchbarID.setForeground(java.awt.Color.GRAY);
+                    SearchbarID.setText("Search by ID or Name...");
+                }
+            }
+        });
 
         Searchbutton.setBackground(new java.awt.Color(189, 216, 233));
         Searchbutton.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -519,10 +539,10 @@ public class Marksheettab extends javax.swing.JPanel {
         clearbutton.setForeground(new java.awt.Color(0, 0, 0));
         clearbutton.addActionListener(this::clearbuttonActionPerformed);
 
-        logoutbutton.setBackground(new java.awt.Color(73, 118, 159));
+        logoutbutton.setBackground(new java.awt.Color(40, 55, 75));
         logoutbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         logoutbutton.setText("Logout");
-        logoutbutton.setForeground(new java.awt.Color(0, 0, 0));
+        logoutbutton.setForeground(new java.awt.Color(255, 255, 255));
         logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
 
         javax.swing.JButton torButton = new javax.swing.JButton();
@@ -982,6 +1002,31 @@ public class Marksheettab extends javax.swing.JPanel {
             frame.pack();
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);
+        });
+    }
+
+    private void setupHovers() {
+        addHover(Searchbutton); addHover(printbutton); addHover(clearbutton);
+    }
+
+    private void addHover(javax.swing.JButton btn) {
+        java.awt.Color orig = btn.getBackground();
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(orig.darker()); }
+            public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(orig); }
+        });
+    }
+
+    private void addFocusRing(javax.swing.JTextField field) {
+        javax.swing.border.Border def = field.getBorder();
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                field.setBorder(javax.swing.BorderFactory.createLineBorder(
+                    new java.awt.Color(66, 133, 244), 2));
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                field.setBorder(def);
+            }
         });
     }
 

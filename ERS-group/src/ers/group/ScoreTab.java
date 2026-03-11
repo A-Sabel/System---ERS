@@ -495,15 +495,21 @@ public class ScoreTab extends JPanel {
 
     // Custom Button Class
     class StyledButton extends JButton {
-        private final Color colorTop = new Color(154, 192, 226);
-        private final Color colorBottom = new Color(110, 158, 203);
+        private Color colorTop;
+        private Color colorBottom;
         private final Color borderColor = new Color(50, 50, 50);
 
         private boolean isHovered = false;
         private boolean isPressed = false;
 
         public StyledButton(String text) {
+            this(text, new Color(154, 192, 226), new Color(110, 158, 203));
+        }
+
+        public StyledButton(String text, Color top, Color bot) {
             super(text);
+            this.colorTop = top;
+            this.colorBottom = bot;
             setContentAreaFilled(false);
             setFocusPainted(false);
             setBorderPainted(false);
@@ -650,6 +656,24 @@ public class ScoreTab extends JPanel {
         search.setBackground(new Color(0, 30, 58));
         search.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
         searchIdField = makeField(120);
+        searchIdField.setToolTipText("Search by Student ID");
+        searchIdField.addActionListener(e -> searchRecord());
+        final String SCORE_ID_PH = "Student ID...";
+        searchIdField.setText(SCORE_ID_PH);
+        searchIdField.setForeground(java.awt.Color.GRAY);
+        searchIdField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (searchIdField.getText().equals(SCORE_ID_PH)) {
+                    searchIdField.setText(""); searchIdField.setForeground(java.awt.Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (searchIdField.getText().isEmpty()) {
+                    searchIdField.setForeground(java.awt.Color.GRAY);
+                    searchIdField.setText(SCORE_ID_PH);
+                }
+            }
+        });
         searchSemField = new JComboBox<>(semesters);
         searchSemField.setPreferredSize(new Dimension(120, 32));
         searchYearField = new JComboBox<>(yearLevels);
@@ -772,7 +796,8 @@ public class ScoreTab extends JPanel {
         saveBtn = new StyledButton("Save");
         clearBtn = new StyledButton("Clear");
         updateBtn = new StyledButton("Update");
-        deleteBtn = new StyledButton("Delete");
+        deleteBtn = new StyledButton("Delete", new Color(180, 50, 50), new Color(140, 30, 30));
+        deleteBtn.setForeground(Color.WHITE);
         droppedBtn = new StyledButton("Mark as Dropped");
         saveBtn.addActionListener(e -> saveRecord());
         clearBtn.addActionListener(e -> clearFields());
@@ -868,6 +893,7 @@ public class ScoreTab extends JPanel {
 
     private void searchRecord() {
         String id = searchIdField.getText().trim();
+        if (id.equals("Student ID...")) id = "";
         String sem = searchSemField.getSelectedItem().toString();
         String year = searchYearField.getSelectedItem().toString();
         
@@ -1670,10 +1696,10 @@ public class ScoreTab extends JPanel {
                 while((line = br.readLine()) != null) {
                     line = Encryption.decrypt(line);
                     String[] parts = line.split(",", -1);
-                    // Student format: ID, Name, Age, DOB, YearLevel, Section, StudentType, SubjectsEnrolled, GWA, Email, PhoneNumber, Gender, Address, FathersName, MothersName, GuardiansPhoneNumber
-                    if(parts.length >= 16 && parts[0].equals(studentID)) {
-                        // Update the GWA field (index 8)
-                        parts[8] = String.format("%.2f", overallGWA);
+                    // Student format: ID, Name, Age, DOB, YearLevel, Semester, Section, StudentType, Status, Subjects, GWA, Email, Phone, Gender, Address, FathersName, MothersName, GuardiansPhone
+                    if(parts.length >= 11 && parts[0].equals(studentID)) {
+                        // Update the GWA field (index 10)
+                        parts[10] = String.format("%.2f", overallGWA);
                         pw.println(Encryption.encrypt(String.join(",", parts)));
                         updated = true;
                     } else {

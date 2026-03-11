@@ -25,6 +25,8 @@ public class CourseTab extends JPanel {
 
     public CourseTab() {
         initComponents();
+        setupHovers();
+        setupFocusRings();
         students = new ArrayList<>();
         enrollments = new ArrayList<>();
         availableCourses = new HashMap<>();
@@ -149,20 +151,48 @@ public class CourseTab extends JPanel {
     private void loadStudentTableData() {
         DefaultTableModel model = (DefaultTableModel) CT_Table.getModel();
         model.setRowCount(0);
-        // Add student data to table
         for (Student stud : students) {
+            String courses = stud.getSubjectsEnrolled() != null && !stud.getSubjectsEnrolled().isEmpty()
+                ? String.join(", ", stud.getSubjectsEnrolled()) : "(none)";
             model.addRow(new Object[]{
                 stud.getStudentID(),
                 stud.getStudentName(),
-                stud.getDateOfBirth(),
-                stud.getGender(),
-                stud.getEmail(),
-                stud.getPhoneNumber(),
-                stud.getFathersName(),
-                stud.getMothersName(),
-                stud.getGuardiansPhoneNumber(),
-                stud.getAddress()
+                stud.getYearLevel(),
+                stud.getCurrentSemester(),
+                courses,
+                stud.getSection(),
+                stud.getStatus()
             });
+        }
+    }
+
+    public void searchStudent(String query) {
+        DefaultTableModel model = (DefaultTableModel) CT_Table.getModel();
+        model.setRowCount(0);
+        if (query.isEmpty()) {
+            loadStudentTableData();
+            return;
+        }
+        boolean found = false;
+        for (Student student : students) {
+            if (student.getStudentID().equalsIgnoreCase(query) ||
+                student.getStudentName().toLowerCase().contains(query.toLowerCase())) {
+                String courses = student.getSubjectsEnrolled() != null && !student.getSubjectsEnrolled().isEmpty()
+                    ? String.join(", ", student.getSubjectsEnrolled()) : "(none)";
+                model.addRow(new Object[]{
+                    student.getStudentID(),
+                    student.getStudentName(),
+                    student.getYearLevel(),
+                    student.getCurrentSemester(),
+                    courses,
+                    student.getSection(),
+                    student.getStatus()
+                });
+                found = true;
+            }
+        }
+        if (!found) {
+            javax.swing.JOptionPane.showMessageDialog(null, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -197,7 +227,24 @@ public class CourseTab extends JPanel {
         CT_Search = new javax.swing.JButton();
         CT_Refresh = new javax.swing.JButton();
         CT_TableScrollPane = new javax.swing.JScrollPane();
-        CT_Table = new javax.swing.JTable();
+        CT_Table = new javax.swing.JTable() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                super.paintComponent(g);
+                if (getRowCount() == 0) {
+                    java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                    g2.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING, java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                    g2.setColor(new java.awt.Color(160, 160, 160));
+                    g2.setFont(new java.awt.Font("Segoe UI", java.awt.Font.ITALIC, 14));
+                    java.awt.FontMetrics fm = g2.getFontMetrics();
+                    String msg = "No records found.";
+                    int x = (getWidth() - fm.stringWidth(msg)) / 2;
+                    int y = Math.max(60, getHeight() / 2);
+                    g2.drawString(msg, x, y);
+                    g2.dispose();
+                }
+            }
+        };
         CT_BottomPanel = new javax.swing.JPanel();
         CT_Save = new javax.swing.JButton();
         CT_Update = new javax.swing.JButton();
@@ -494,7 +541,7 @@ public class CourseTab extends JPanel {
 
             },
             new String [] {
-                "Student ID", "Student Name", "Date of Birth", "Gender", "Email", "Phone Number", "Father's Name", "Mother's Name", "Guardian's Phone No.", "Address"
+                "Student ID", "Student Name", "Year Level", "Semester", "Enrolled Courses", "Section", "Status"
             }
         ));
         
@@ -554,7 +601,8 @@ public class CourseTab extends JPanel {
         CT_Clear.setText("Clear");
         CT_Clear.addActionListener(this::CT_ClearActionPerformed);
 
-        CT_Logout.setBackground(new java.awt.Color(73, 118, 159));
+        CT_Logout.setBackground(new java.awt.Color(40, 55, 75));
+        CT_Logout.setForeground(new java.awt.Color(255, 255, 255));
         CT_Logout.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         CT_Logout.setText("Logout");
         CT_Logout.addActionListener(this::CT_LogoutActionPerformed); 
@@ -1024,38 +1072,8 @@ public class CourseTab extends JPanel {
         CT_SearchStudentActionPerformed(evt);
     }
 
-    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {                                                 
-        String searchName = CT_SearchStudent.getText().trim();
-        DefaultTableModel model = (DefaultTableModel) CT_Table.getModel();
-        model.setRowCount(0); // Clear the table first
-        if (searchName.isEmpty()) {
-            // If search field is empty, reload all students
-            loadStudentTableData();
-            return;
-        }
-        boolean found = false;
-        // Search by ID or Name
-        for (Student student : students) {
-            if (student.getStudentID().equalsIgnoreCase(searchName) ||
-                student.getStudentName().toLowerCase().contains(searchName.toLowerCase())) {
-                model.addRow(new Object[]{
-                    student.getStudentID(),
-                    student.getStudentName(),
-                    student.getDateOfBirth(),
-                    student.getGender(),
-                    student.getEmail(),
-                    student.getPhoneNumber(),
-                    student.getFathersName(),
-                    student.getMothersName(),
-                    student.getGuardiansPhoneNumber(),
-                    student.getAddress()
-                });
-                found = true;
-            }
-        }
-        if (!found) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Student not found!", "Search Result", javax.swing.JOptionPane.INFORMATION_MESSAGE);
-        }
+    private void CT_SearchStudentActionPerformed(java.awt.event.ActionEvent evt) {
+        searchStudent(CT_SearchStudent.getText().trim());
     }
 
     private void CT_RefreshActionPerformed(java.awt.event.ActionEvent evt) {                                           
@@ -1722,6 +1740,36 @@ public class CourseTab extends JPanel {
         setCurrentActiveSemester();
     }
     
+    private void setupHovers() {
+        addHover(CT_LoadCourses); addHover(CT_Search); addHover(CT_Refresh);
+        addHover(CT_Save); addHover(CT_Update); addHover(CT_Print); addHover(CT_Clear);
+    }
+
+    private void addHover(javax.swing.JButton btn) {
+        java.awt.Color orig = btn.getBackground();
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(orig.darker()); }
+            public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(orig); }
+        });
+    }
+
+    private void setupFocusRings() {
+        addFocusRing(CT_id); addFocusRing(CT_StudentID); addFocusRing(CT_SearchStudent);
+    }
+
+    private void addFocusRing(javax.swing.JTextField field) {
+        javax.swing.border.Border def = field.getBorder();
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                field.setBorder(javax.swing.BorderFactory.createLineBorder(
+                    new java.awt.Color(66, 133, 244), 2));
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                field.setBorder(def);
+            }
+        });
+    }
+
     public static void main(String[] args) {
         javax.swing.SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Course Tab Test");

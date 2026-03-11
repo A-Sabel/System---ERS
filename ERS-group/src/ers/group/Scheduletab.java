@@ -26,6 +26,9 @@ public class Scheduletab extends javax.swing.JPanel {
      */
     public Scheduletab() {
         initComponents();
+        setupHovers();
+        addFocusRing(studentSearchField);
+        addFocusRing(semesterSearchField);
        
         // Initialize data
         students = new ArrayList<>();
@@ -627,6 +630,7 @@ public class Scheduletab extends javax.swing.JPanel {
         
         // If a student was already being viewed, refresh their specific view
         String currentID = studentSearchField.getText().trim();
+        if (currentID.equals("Student ID...")) currentID = "";
         if (!currentID.isEmpty()) {
             searchStudentButtonActionPerformed(null);
         }
@@ -796,6 +800,23 @@ public class Scheduletab extends javax.swing.JPanel {
 
 
         studentSearchField.setBackground(new java.awt.Color(146, 190, 219));
+        studentSearchField.setToolTipText("Enter Student ID to search");
+        studentSearchField.addActionListener(this::searchStudentButtonActionPerformed);
+        studentSearchField.setText("Student ID...");
+        studentSearchField.setForeground(java.awt.Color.GRAY);
+        studentSearchField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (studentSearchField.getText().equals("Student ID...")) {
+                    studentSearchField.setText(""); studentSearchField.setForeground(java.awt.Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (studentSearchField.getText().isEmpty()) {
+                    studentSearchField.setForeground(java.awt.Color.GRAY);
+                    studentSearchField.setText("Student ID...");
+                }
+            }
+        });
 
 
         searchStudentButton.setBackground(new java.awt.Color(189, 216, 233));
@@ -805,6 +826,23 @@ public class Scheduletab extends javax.swing.JPanel {
 
 
         semesterSearchField.setBackground(new java.awt.Color(146, 190, 219));
+        semesterSearchField.setToolTipText("Enter Section ID (e.g. CS101-SEC1)");
+        semesterSearchField.addActionListener(this::searchSemesterButtonActionPerformed);
+        semesterSearchField.setText("Section ID...");
+        semesterSearchField.setForeground(java.awt.Color.GRAY);
+        semesterSearchField.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (semesterSearchField.getText().equals("Section ID...")) {
+                    semesterSearchField.setText(""); semesterSearchField.setForeground(java.awt.Color.BLACK);
+                }
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (semesterSearchField.getText().isEmpty()) {
+                    semesterSearchField.setForeground(java.awt.Color.GRAY);
+                    semesterSearchField.setText("Section ID...");
+                }
+            }
+        });
 
 
         studentIDLabel.setFont(new java.awt.Font("Segoe UI", 1, 16)); // NOI18N
@@ -893,10 +931,10 @@ public class Scheduletab extends javax.swing.JPanel {
         printbutton.setForeground(new java.awt.Color(0, 0, 0));
         printbutton.addActionListener(this::printbuttonActionPerformed);
 
-        logoutbutton.setBackground(new java.awt.Color(73, 118, 159));
+        logoutbutton.setBackground(new java.awt.Color(40, 55, 75));
         logoutbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         logoutbutton.setText("Logout");
-        logoutbutton.setForeground(new java.awt.Color(0, 0, 0));
+        logoutbutton.setForeground(new java.awt.Color(255, 255, 255));
         logoutbutton.addActionListener(this::logoutbuttonActionPerformed);
 
         javax.swing.GroupLayout buttonPanelLayout = new javax.swing.GroupLayout(buttonPanel);
@@ -1153,6 +1191,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
    
     private void searchStudentButtonActionPerformed(java.awt.event.ActionEvent evt) {
         String searchID = studentSearchField.getText().trim();
+        if (searchID.equals("Student ID...")) searchID = "";
         if (searchID.isEmpty()) {
             loadStudentTableData();
             semesterSearchField.setText("");
@@ -1211,10 +1250,12 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
     private void searchSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {
         // Check if section is directly entered in semester search field
         String sectionID = semesterSearchField.getText().trim();
+        if (sectionID.equals("Section ID...")) sectionID = "";
         
         // If section field is empty, try to get it from student search
         if (sectionID.isEmpty()) {
             String currentStudentID = studentSearchField.getText().trim();
+            if (currentStudentID.equals("Student ID...")) currentStudentID = "";
             
             if (currentStudentID.isEmpty()) {
                 javax.swing.JOptionPane.showMessageDialog(this,
@@ -1552,6 +1593,32 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
             frame.setLocationRelativeTo(null);
             frame.setResizable(true);
             frame.setVisible(true);
+        });
+    }
+
+    private void setupHovers() {
+        addHover(searchStudentButton); addHover(searchSemesterButton);
+        addHover(refreshButton); addHover(printbutton);
+    }
+
+    private void addHover(javax.swing.JButton btn) {
+        java.awt.Color orig = btn.getBackground();
+        btn.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent e) { btn.setBackground(orig.darker()); }
+            public void mouseExited(java.awt.event.MouseEvent e)  { btn.setBackground(orig); }
+        });
+    }
+
+    private void addFocusRing(javax.swing.JTextField field) {
+        javax.swing.border.Border def = field.getBorder();
+        field.addFocusListener(new java.awt.event.FocusAdapter() {
+            public void focusGained(java.awt.event.FocusEvent e) {
+                field.setBorder(javax.swing.BorderFactory.createLineBorder(
+                    new java.awt.Color(66, 133, 244), 2));
+            }
+            public void focusLost(java.awt.event.FocusEvent e) {
+                field.setBorder(def);
+            }
         });
     }
 

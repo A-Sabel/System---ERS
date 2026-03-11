@@ -15,6 +15,47 @@ public class SignUp extends javax.swing.JDialog {
         super(parent, modal);
         this.loginFrame = (JFrame) parent;
         initComponents();
+        setupFieldValidation();
+    }
+
+    private void setupFieldValidation() {
+        final javax.swing.border.Border DEF = javax.swing.BorderFactory.createLineBorder(new java.awt.Color(220, 220, 220), 1);
+        final javax.swing.border.Border OK  = javax.swing.BorderFactory.createLineBorder(new java.awt.Color(34, 139, 34), 2);
+        final javax.swing.border.Border BAD = javax.swing.BorderFactory.createLineBorder(new java.awt.Color(200, 50, 50), 2);
+        Email.setBorder(javax.swing.BorderFactory.createCompoundBorder(DEF, javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 4)));
+        Username.setBorder(javax.swing.BorderFactory.createCompoundBorder(DEF, javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 4)));
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            if (PasswdWrap != null) PasswdWrap.setBorder(DEF);
+        });
+        Email.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void update() {
+                String v = Email.getText().trim();
+                javax.swing.border.Border b = v.isEmpty() ? DEF : (v.contains("@") && v.contains(".") ? OK : BAD);
+                Email.setBorder(javax.swing.BorderFactory.createCompoundBorder(b, javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 4)));
+            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        });
+        Username.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void update() {
+                javax.swing.border.Border b = Username.getText().trim().isEmpty() ? DEF : OK;
+                Username.setBorder(javax.swing.BorderFactory.createCompoundBorder(b, javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 4)));
+            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        });
+        Password.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            private void update() {
+                String p = new String(Password.getPassword()).trim();
+                javax.swing.border.Border b = p.isEmpty() ? DEF : (p.length() >= 6 ? OK : BAD);
+                if (PasswdWrap != null) PasswdWrap.setBorder(b);
+            }
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { update(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { update(); }
+        });
     }                        
 
     private void initComponents() {
@@ -42,9 +83,45 @@ public class SignUp extends javax.swing.JDialog {
         Password.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
         Password.addActionListener(this::PasswordActionPerformed);
 
+        ShowPasswd = new javax.swing.JButton() {
+            @Override
+            protected void paintComponent(java.awt.Graphics g) {
+                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
+                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING, java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(getBackground());
+                g2.fillRect(0, 0, getWidth(), getHeight());
+                int cx = getWidth() / 2, cy = getHeight() / 2;
+                boolean vis = Password.getEchoChar() == (char)0;
+                g2.setColor(new java.awt.Color(150, 150, 150));
+                g2.setStroke(new java.awt.BasicStroke(1.6f));
+                g2.drawOval(cx - 8, cy - 5, 16, 10);
+                g2.fillOval(cx - 3, cy - 3, 6, 6);
+                if (vis) {
+                    g2.setStroke(new java.awt.BasicStroke(2.0f));
+                    g2.drawLine(cx - 10, cy + 8, cx + 10, cy - 8);
+                }
+                g2.dispose();
+            }
+        };
+        ShowPasswd.setPreferredSize(new java.awt.Dimension(34, 0));
+        ShowPasswd.setBackground(java.awt.Color.WHITE);
+        ShowPasswd.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        ShowPasswd.setContentAreaFilled(false);
+        ShowPasswd.setFocusPainted(false);
+        ShowPasswd.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
+        ShowPasswd.setToolTipText("Show / hide password");
+        ShowPasswd.addActionListener(e -> {
+            Password.setEchoChar(Password.getEchoChar() != (char)0 ? (char)0 : '\u2022');
+            ShowPasswd.repaint();
+        });
+        PasswdWrap = new javax.swing.JPanel(new java.awt.BorderLayout(0, 0));
+        PasswdWrap.setBackground(java.awt.Color.WHITE);
+        Password.setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 4, 1, 0));
+        PasswdWrap.add(Password, java.awt.BorderLayout.CENTER);
+        PasswdWrap.add(ShowPasswd, java.awt.BorderLayout.EAST);
 
         SignUp.setBackground(new java.awt.Color(31, 58, 95));
-        SignUp.setFont(new java.awt.Font("Segoe UI", 1, 15)); // NOI18N
+        SignUp.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         SignUp.setForeground(new java.awt.Color(255, 255, 255));
         SignUp.setText("Sign Up");
         SignUp.addActionListener(this::SignUpActionPerformed);
@@ -52,17 +129,17 @@ public class SignUp extends javax.swing.JDialog {
 
         UsernameLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         UsernameLabel.setForeground(new java.awt.Color(77, 142, 162));
-        UsernameLabel.setText("Username:");
+        UsernameLabel.setText("<html>Username: <font color='red'>*</font></html>");
 
 
         PasswordLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         PasswordLabel.setForeground(new java.awt.Color(77, 142, 162));
-        PasswordLabel.setText("Password:");
+        PasswordLabel.setText("<html>Password: <font color='red'>*</font></html>");
 
 
         EmailLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
         EmailLabel.setForeground(new java.awt.Color(77, 142, 162));
-        EmailLabel.setText("Email:");
+        EmailLabel.setText("<html>Email: <font color='red'>*</font></html>");
 
 
         javax.swing.GroupLayout MainPanelLayout = new javax.swing.GroupLayout(MainPanel);
@@ -73,7 +150,7 @@ public class SignUp extends javax.swing.JDialog {
                 .addGap(32, 32, 32)
                 .addGroup(MainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(MainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(Password)
+                        .addComponent(PasswdWrap)
                         .addComponent(Username)
                         .addComponent(SignUp, javax.swing.GroupLayout.DEFAULT_SIZE, 280, Short.MAX_VALUE)
                         .addComponent(UsernameLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 173, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -96,9 +173,9 @@ public class SignUp extends javax.swing.JDialog {
             .addGap(29, 29, 29)
             .addComponent(PasswordLabel) // Password Label
             .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-            .addComponent(Password, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE) // Password Field
-            .addGap(40, 40, 40)
-            .addComponent(SignUp, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(PasswdWrap, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE) // Password Field + Eye
+            .addGap(20, 20, 20)
+            .addComponent(SignUp, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
             .addGap(30, 30, 30))
     );
 
@@ -129,6 +206,14 @@ public class SignUp extends javax.swing.JDialog {
         if (email.isEmpty() || username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(this,
                 "Please fill in all fields.",
+                "Sign Up Error",
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (password.length() < 6) {
+            JOptionPane.showMessageDialog(this,
+                "Password must be at least 6 characters.",
                 "Sign Up Error",
                 JOptionPane.ERROR_MESSAGE);
             return;
@@ -170,6 +255,8 @@ public class SignUp extends javax.swing.JDialog {
     private javax.swing.JLabel EmailLabel;
     private javax.swing.JPasswordField Password;
     private javax.swing.JLabel PasswordLabel;
+    private javax.swing.JPanel PasswdWrap;
+    private javax.swing.JButton ShowPasswd;
     private javax.swing.JButton SignUp;
     private javax.swing.JTextField Username;
     private javax.swing.JLabel UsernameLabel;

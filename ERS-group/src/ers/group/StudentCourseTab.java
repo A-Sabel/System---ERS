@@ -433,7 +433,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         StudentTab.setBackground(new java.awt.Color(31, 58, 95));
 
         ST_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
-        ST_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        ST_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         ST_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 480));
 
         ST_StudentID.setBackground(new java.awt.Color(240, 240, 240));
@@ -768,7 +768,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         );
 
         ST_RightPanel.setBackground(new java.awt.Color(0, 30, 58));
-        ST_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        ST_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         ST_RightPanel.setPreferredSize(new java.awt.Dimension(620, 480));
 
         ST_SearchStudentPanel.setBackground(new java.awt.Color(0, 30, 58));
@@ -994,7 +994,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CourseTab.setBackground(new java.awt.Color(31, 58, 95));
 
         CT_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
-        CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
         CT_id.setBackground(new java.awt.Color(146, 190, 219));
@@ -1143,7 +1143,7 @@ public class StudentCourseTab extends javax.swing.JFrame {
         );
 
         CT_RightPanel.setBackground(new java.awt.Color(0, 30, 58));
-        CT_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        CT_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_RightPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
         CT_SearchStudentPanel.setBackground(new java.awt.Color(0, 30, 58));

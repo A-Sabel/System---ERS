@@ -365,7 +365,7 @@ public class Marksheettab extends javax.swing.JPanel {
         Background.setBackground(new java.awt.Color(31, 58, 95));
 
         jPanel15.setBackground(new java.awt.Color(0, 30, 58));
-        jPanel15.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        jPanel15.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 30, 58), 3));
 
         StudentIDPanel.setBackground(new java.awt.Color(0, 30, 58));
         StudentIDPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(189, 216, 233), 4));
@@ -493,7 +493,7 @@ public class Marksheettab extends javax.swing.JPanel {
         );
 
         jPanel1.setBackground(new java.awt.Color(0, 30, 58));
-        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        jPanel1.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 30, 58), 3));
 
         scoretable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -507,6 +507,11 @@ public class Marksheettab extends javax.swing.JPanel {
             }
         ));
         scoretable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        scoretable.setRowHeight(24);
+        scoretable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
+        scoretable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        scoretable.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
+        scoretable.getTableHeader().setForeground(new java.awt.Color(255, 255, 255));
         
         // Apply status color renderer to the Status column (index 4)
         scoretable.getColumnModel().getColumn(4).setCellRenderer(new StatusColorRenderer());
@@ -525,18 +530,18 @@ public class Marksheettab extends javax.swing.JPanel {
         jScrollPane1.setViewportView(scoretable);
 
         jPanel2.setBackground(new java.awt.Color(0, 30, 58));
-        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 30, 58), 3));
 
         printbutton.setBackground(new java.awt.Color(73, 118, 159));
         printbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         printbutton.setText("Print");
-        printbutton.setForeground(new java.awt.Color(0, 0, 0));
+        printbutton.setForeground(new java.awt.Color(255, 255, 255));
         printbutton.addActionListener(this::printbuttonActionPerformed);
 
         clearbutton.setBackground(new java.awt.Color(73, 118, 159));
         clearbutton.setFont(new java.awt.Font("Segoe UI", 1, 24)); // NOI18N
         clearbutton.setText("Clear");
-        clearbutton.setForeground(new java.awt.Color(0, 0, 0));
+        clearbutton.setForeground(new java.awt.Color(255, 255, 255));
         clearbutton.addActionListener(this::clearbuttonActionPerformed);
 
         logoutbutton.setBackground(new java.awt.Color(40, 55, 75));
@@ -549,14 +554,14 @@ public class Marksheettab extends javax.swing.JPanel {
         torButton.setBackground(new java.awt.Color(73, 118, 159));
         torButton.setFont(new java.awt.Font("Segoe UI", 1, 24));
         torButton.setText("TOR");
-        torButton.setForeground(new java.awt.Color(0, 0, 0));
+        torButton.setForeground(new java.awt.Color(255, 255, 255));
         torButton.addActionListener(this::torButtonActionPerformed);
 
         javax.swing.JButton yearSemesterButton = new javax.swing.JButton();
         yearSemesterButton.setBackground(new java.awt.Color(73, 118, 159));
         yearSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 24));
         yearSemesterButton.setText("Year / Semester");
-        yearSemesterButton.setForeground(new java.awt.Color(0, 0, 0));
+        yearSemesterButton.setForeground(new java.awt.Color(255, 255, 255));
         yearSemesterButton.addActionListener(this::yearSemesterButtonActionPerformed);
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);

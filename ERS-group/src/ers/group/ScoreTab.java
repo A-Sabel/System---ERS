@@ -549,7 +549,7 @@ public class ScoreTab extends JPanel {
     private JPanel createLeftPanel() {
         JPanel left = new JPanel();
         left.setBackground(new Color(0, 30, 58));
-        left.setBorder(BorderFactory.createLineBorder(Color.BLACK, 3));
+        left.setBorder(BorderFactory.createLineBorder(new Color(15, 35, 65), 2));
         left.setPreferredSize(new Dimension(360, 700));
         left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
 
@@ -654,7 +654,7 @@ public class ScoreTab extends JPanel {
     private JPanel createSearchPanel() {
         JPanel search = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         search.setBackground(new Color(0, 30, 58));
-        search.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        search.setBorder(BorderFactory.createLineBorder(new Color(15, 35, 65), 2));
         searchIdField = makeField(120);
         searchIdField.setToolTipText("Search by Student ID");
         searchIdField.addActionListener(e -> searchRecord());
@@ -666,12 +666,15 @@ public class ScoreTab extends JPanel {
                 if (searchIdField.getText().equals(SCORE_ID_PH)) {
                     searchIdField.setText(""); searchIdField.setForeground(java.awt.Color.BLACK);
                 }
+                searchIdField.setBorder(BorderFactory.createLineBorder(
+                    new Color(66, 133, 244), 2));
             }
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (searchIdField.getText().isEmpty()) {
                     searchIdField.setForeground(java.awt.Color.GRAY);
                     searchIdField.setText(SCORE_ID_PH);
                 }
+                searchIdField.setBorder(null);
             }
         });
         searchSemField = new JComboBox<>(semesters);
@@ -792,7 +795,7 @@ public class ScoreTab extends JPanel {
     private JPanel createBottomButtonPanel() {
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.CENTER, 50, 25));
         bottom.setBackground(new Color(0, 30, 58));
-        bottom.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
+        bottom.setBorder(BorderFactory.createLineBorder(new Color(15, 35, 65), 2));
         saveBtn = new StyledButton("Save");
         clearBtn = new StyledButton("Clear");
         updateBtn = new StyledButton("Update");
@@ -809,6 +812,18 @@ public class ScoreTab extends JPanel {
         bottom.add(updateBtn);
         bottom.add(deleteBtn);
         bottom.add(droppedBtn);
+        StyledButton logoutBtn = new StyledButton("Logout", new Color(40, 55, 75), new Color(25, 38, 55));
+        logoutBtn.setForeground(Color.WHITE);
+        logoutBtn.addActionListener(e -> {
+            int c = javax.swing.JOptionPane.showConfirmDialog(ScoreTab.this,
+                "Are you sure you want to logout?", "Logout",
+                javax.swing.JOptionPane.YES_NO_OPTION);
+            if (c == javax.swing.JOptionPane.YES_OPTION) {
+                java.awt.Window w = javax.swing.SwingUtilities.getWindowAncestor(ScoreTab.this);
+                if (w != null) w.dispose();
+            }
+        });
+        bottom.add(logoutBtn);
         return bottom;
     }
 

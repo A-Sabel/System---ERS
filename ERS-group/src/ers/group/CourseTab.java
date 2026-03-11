@@ -255,7 +255,7 @@ public class CourseTab extends JPanel {
         this.setBackground(new java.awt.Color(31, 58, 95));
 
         CT_LeftPanel.setBackground(new java.awt.Color(0, 30, 58));
-        CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
         CT_id.setBackground(new java.awt.Color(146, 190, 219));
@@ -485,7 +485,7 @@ public class CourseTab extends JPanel {
         );
 
         CT_RightPanel.setBackground(new java.awt.Color(0, 30, 58));
-        CT_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0), 4));
+        CT_RightPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_RightPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
         CT_SearchStudentPanel.setBackground(new java.awt.Color(0, 30, 58));

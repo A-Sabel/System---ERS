@@ -393,7 +393,8 @@ public class Marksheettab extends javax.swing.JPanel {
             }
         });
 
-        Searchbutton.setForeground(new java.awt.Color(0, 0, 0));
+        Searchbutton.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        Searchbutton.setForeground(new java.awt.Color(255, 255, 255));
         Searchbutton.addActionListener(this::SearchbuttonActionPerformed);
 
         javax.swing.JLabel statusLabel = new javax.swing.JLabel();
@@ -437,7 +438,7 @@ public class Marksheettab extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(StudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(SearchbarID, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(Searchbutton))
+                    .addComponent(Searchbutton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(StudentIDPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(statusLabel)
@@ -508,7 +509,7 @@ public class Marksheettab extends javax.swing.JPanel {
         scoretable.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 13));
         scoretable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
         scoretable.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
-        scoretable.getTableHeader().setForeground(new java.awt.Color(255, 255, 255));
+        scoretable.getTableHeader().setForeground(new java.awt.Color(0, 0, 0));
         
         // Apply status color renderer to the Status column (index 4)
         scoretable.getColumnModel().getColumn(4).setCellRenderer(new StatusColorRenderer());

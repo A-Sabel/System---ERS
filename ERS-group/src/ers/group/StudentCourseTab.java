@@ -565,11 +565,15 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ST_SuggestedCoursesList.setFont(new java.awt.Font("Segoe UI", 0, 12));
         ST_SuggestedCoursesList.setModel(new javax.swing.AbstractListModel<String>() {
             String[] strings = { "Select Year Level and Semester to view suggested courses" };
+            @Override 
             public int getSize() { return strings.length; }
+            @Override
             public String getElementAt(int i) { return strings[i]; }
         });
         ST_SuggestedCoursesScrollPane.setViewportView(ST_SuggestedCoursesList);
 
+        ST_SaveAndEnroll.setFont(new java.awt.Font("Segoe UI", 1, 16));
+        ST_SaveAndEnroll.setPreferredSize(new java.awt.Dimension(160, 45));
         ST_SaveAndEnroll.setForeground(new java.awt.Color(255, 255, 255));
         ST_SaveAndEnroll.addActionListener(this::ST_SaveAndEnrollActionPerformed);
 
@@ -878,6 +882,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ));
         ST_TableScrollPane.setViewportView(ST_Table);
         ST_Table.setRowHeight(24);
+        ST_Table.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        ST_Table.getTableHeader().setForeground(java.awt.Color.BLACK);
 
         ST_StatusFilter = new javax.swing.JComboBox<>();
         ST_StatusFilter.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "All", "Active", "Graduate" }));
@@ -1235,6 +1241,8 @@ public class StudentCourseTab extends javax.swing.JFrame {
         ));
         CT_TableScrollPane.setViewportView(CT_Table);
         CT_Table.setRowHeight(24);
+        CT_Table.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 13));
+        CT_Table.getTableHeader().setForeground(java.awt.Color.BLACK);
 
         javax.swing.GroupLayout CT_RightPanelLayout = new javax.swing.GroupLayout(CT_RightPanel);
         CT_RightPanel.setLayout(CT_RightPanelLayout);

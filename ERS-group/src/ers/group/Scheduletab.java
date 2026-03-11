@@ -399,7 +399,7 @@ public class Scheduletab extends javax.swing.JPanel {
         // Header styling - match dark theme
         Scheduletable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
         Scheduletable.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
-        Scheduletable.getTableHeader().setForeground(java.awt.Color.WHITE);
+        Scheduletable.getTableHeader().setForeground(java.awt.Color.BLACK);
         Scheduletable.getTableHeader().setPreferredSize(new java.awt.Dimension(100, 40));
         ((javax.swing.table.DefaultTableCellRenderer)Scheduletable.getTableHeader().getDefaultRenderer())
             .setHorizontalAlignment(javax.swing.JLabel.CENTER);
@@ -820,6 +820,7 @@ public class Scheduletab extends javax.swing.JPanel {
         });
 
 
+        searchStudentButton.setFont(new java.awt.Font("Segoe UI", 1, 14));
         searchStudentButton.addActionListener(this::searchStudentButtonActionPerformed);
 
 
@@ -848,6 +849,7 @@ public class Scheduletab extends javax.swing.JPanel {
         studentIDLabel.setText("Student ID");
 
 
+        searchSemesterButton.setFont(new java.awt.Font("Segoe UI", 1, 14));
         searchSemesterButton.addActionListener(this::searchSemesterButtonActionPerformed);
 
 
@@ -879,13 +881,13 @@ public class Scheduletab extends javax.swing.JPanel {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(scheduleFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(studentSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(searchStudentButton))
+                    .addComponent(searchStudentButton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(semesterIDLabel)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(scheduleFiltersPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(semesterSearchField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(searchSemesterButton))
+                    .addComponent(searchSemesterButton, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(25, Short.MAX_VALUE))
         );
 
@@ -1138,7 +1140,7 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         // Header styling - match dark theme
         Scheduletable.getTableHeader().setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
         Scheduletable.getTableHeader().setBackground(new java.awt.Color(0, 30, 58));
-        Scheduletable.getTableHeader().setForeground(java.awt.Color.WHITE);
+        Scheduletable.getTableHeader().setForeground(java.awt.Color.BLACK);
         Scheduletable.getTableHeader().setPreferredSize(new java.awt.Dimension(100, 40));
         ((javax.swing.table.DefaultTableCellRenderer)Scheduletable.getTableHeader().getDefaultRenderer())
             .setHorizontalAlignment(javax.swing.JLabel.CENTER);

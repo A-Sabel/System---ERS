@@ -32,7 +32,7 @@ public class ScoreTab extends JPanel {
     private JTable table;
     private DefaultTableModel model;
 
-    private JButton saveBtn, clearBtn, updateBtn, deleteBtn, autoFillBtn, droppedBtn;
+    private StyledButton saveBtn, clearBtn, updateBtn, deleteBtn, autoFillBtn, droppedBtn;
     
     // Enrollment integration
     private Map<String, List<String>> studentEnrollments; // StudentID -> List of CourseIDs
@@ -511,13 +511,10 @@ public class ScoreTab extends JPanel {
         // Auto-Fill Button
         JPanel autoFillPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 8));
         autoFillPanel.setBackground(new Color(0, 30, 58));
-        autoFillBtn = new JButton("Auto-Fill Subjects");
+        autoFillBtn = new StyledButton("Auto-Fill Subjects", new Color(80, 160, 80), new Color(55, 120, 55));
         autoFillBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
-        autoFillBtn.setBackground(new Color(100, 180, 100));
         autoFillBtn.setForeground(Color.WHITE);
         autoFillBtn.setPreferredSize(new Dimension(200, 35));
-        autoFillBtn.setFocusPainted(false);
-        autoFillBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         autoFillBtn.addActionListener(e -> autoFillSubjects());
         autoFillPanel.add(autoFillBtn);
         left.add(autoFillPanel);
@@ -677,6 +674,7 @@ public class ScoreTab extends JPanel {
         JTableHeader header = table.getTableHeader();
         header.setBackground(new Color(224, 227, 232));
         header.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        header.setForeground(Color.BLACK);
         header.setReorderingAllowed(false); // Prevents users from dragging columns out of order
 
         // Custom Renderer for Alternating Row Colors

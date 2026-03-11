@@ -356,6 +356,8 @@ public class CourseTab extends JPanel {
         CT_Semester.addActionListener(e -> autoLoadCoursesIfValid());
 
         // Load Courses Button
+        CT_LoadCourses.setFont(new java.awt.Font("Segoe UI", 1, 14));
+        CT_LoadCourses.setPreferredSize(new java.awt.Dimension(160, 45));
         CT_LoadCourses.setForeground(new java.awt.Color(255, 255, 255));
         CT_LoadCourses.addActionListener(this::CT_LoadCoursesActionPerformed);
 
@@ -452,7 +454,7 @@ public class CourseTab extends JPanel {
                         .addComponent(CT_Semester, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(CT_SEMESTER))
                 .addGap(18, 18, 18)
-                .addComponent(CT_LoadCourses)
+                .addComponent(CT_LoadCourses, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(CT_LeftPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(CT_COURSE1)

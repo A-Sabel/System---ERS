@@ -672,6 +672,11 @@ public class Schedule {
             if (reason.length() == 0) {
                 reason.append("All time slots exhausted");
             }
+            // Append detailed conflict context from AcademicUtilities
+            String conflictContext = AcademicUtilities.buildConflictReport(existingSchedules, sectionID);
+            if (conflictContext != null && !conflictContext.isEmpty()) {
+                reason.append("\n").append(conflictContext);
+            }
             failureReason = reason.toString().trim();
         }
         return new SchedulingResult(assignedSplices, failureReason, roomConflicts, teacherConflicts, studentConflicts);

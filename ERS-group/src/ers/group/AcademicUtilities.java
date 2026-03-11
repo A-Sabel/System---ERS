@@ -2,7 +2,10 @@ package ers.group;
 
 import java.io.*;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.Locale;
 
 /**
  * Centralized Academic Utilities Class
@@ -1214,6 +1217,108 @@ public class AcademicUtilities {
             saver.save(resolvedStudentPath, allStudents);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    // ─── CONFLICT DETECTION REPORTING ───────────────────────────────────────────
+
+    /**
+     * Generates a slot-specific conflict report for a proposed time slot.
+     * Identifies exactly which currently-assigned class is blocking the teacher or room.
+     *
+     * @param existingSchedules All already-assigned schedules.
+     * @param day               Proposed day (e.g. "Monday").
+     * @param startTime         Proposed start time (e.g. "8:00 AM").
+     * @param endTime           Proposed end time.
+     * @param proposedTeacher   Teacher to check ("TBA" to skip).
+     * @param proposedRoom      Room to check ("TBA" to skip).
+     * @param proposedSection   Section being scheduled (used in the report header).
+     * @return A formatted conflict detail string, or null if no overlap was found.
+     */
+    public static String buildConflictReport(
+            List<Schedule> existingSchedules,
+            String day, String startTime, String endTime,
+            String proposedTeacher, String proposedRoom, String proposedSection) {
+        if (existingSchedules == null || day == null) return null;
+        List<String> lines = new ArrayList<>();
+        for (Schedule s : existingSchedules) {
+            if (!s.getDay().equals(day)) continue;
+            if (!timesOverlap(s.getStartTime(), s.getEndTime(), startTime, endTime)) continue;
+            boolean teacherMatch = proposedTeacher != null && !proposedTeacher.equals("TBA")
+                    && proposedTeacher.equals(s.getTeacherName());
+            boolean roomMatch = proposedRoom != null && !proposedRoom.equals("TBA")
+                    && proposedRoom.equals(s.getRoom());
+            if (teacherMatch) {
+                lines.add("  ► TEACHER: \"" + proposedTeacher + "\" is already teaching \""
+                        + s.getCourseID() + "\" on " + day
+                        + " " + s.getStartTime() + "–" + s.getEndTime()
+                        + " (Room: " + s.getRoom() + ")");
+            }
+            if (roomMatch) {
+                lines.add("  ► ROOM: \"" + proposedRoom + "\" is occupied by \""
+                        + s.getCourseID() + "\" on " + day
+                        + " " + s.getStartTime() + "–" + s.getEndTime()
+                        + " (Teacher: " + s.getTeacherName() + ")");
+            }
+        }
+        if (lines.isEmpty()) return null;
+        StringBuilder sb = new StringBuilder();
+        sb.append("Conflict for \"").append(proposedSection).append("\" on ")
+          .append(day).append(" ").append(startTime).append("–").append(endTime).append(":\n");
+        for (String line : lines) sb.append(line).append("\n");
+        sb.append("  → Please assign a different teacher, room, or time slot.");
+        return sb.toString();
+    }
+
+    /**
+     * Generates a summary conflict report listing all teachers and rooms already
+     * booked in the given schedule list. Useful when no specific slot is known.
+     *
+     * @param existingSchedules Schedules already assigned to the section or context.
+     * @param proposedSection   Section name for the report header.
+     * @return A formatted multi-line summary string.
+     */
+    public static String buildConflictReport(List<Schedule> existingSchedules, String proposedSection) {
+        if (existingSchedules == null || existingSchedules.isEmpty()) return null;
+        Map<String, List<String>> teacherSlots = new LinkedHashMap<>();
+        Map<String, List<String>> roomSlots    = new LinkedHashMap<>();
+        for (Schedule s : existingSchedules) {
+            String slot = s.getDay() + " " + s.getStartTime() + "–" + s.getEndTime()
+                        + " [" + s.getCourseID() + "]";
+            if (s.getTeacherName() != null && !s.getTeacherName().equals("TBA"))
+                teacherSlots.computeIfAbsent(s.getTeacherName(), k -> new ArrayList<>()).add(slot);
+            if (s.getRoom() != null && !s.getRoom().equals("TBA"))
+                roomSlots.computeIfAbsent(s.getRoom(), k -> new ArrayList<>()).add(slot);
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("Conflict Report for \"").append(proposedSection).append("\":\n");
+        if (!teacherSlots.isEmpty()) {
+            sb.append("  Currently Booked Teachers:\n");
+            for (Map.Entry<String, List<String>> e : teacherSlots.entrySet())
+                sb.append("    ► ").append(e.getKey()).append(": ")
+                  .append(String.join(" | ", e.getValue())).append("\n");
+        }
+        if (!roomSlots.isEmpty()) {
+            sb.append("  Currently Occupied Rooms:\n");
+            for (Map.Entry<String, List<String>> e : roomSlots.entrySet())
+                sb.append("    ► ").append(e.getKey()).append(": ")
+                  .append(String.join(" | ", e.getValue())).append("\n");
+        }
+        sb.append("  → Assign a different teacher, room, or contact the admin.");
+        return sb.toString();
+    }
+
+    /** Time overlap check: two intervals overlap when start1 < end2 AND start2 < end1. */
+    private static boolean timesOverlap(String start1, String end1, String start2, String end2) {
+        try {
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("h:mm a", Locale.US);
+            LocalTime s1 = LocalTime.parse(start1, fmt);
+            LocalTime e1 = LocalTime.parse(end1, fmt);
+            LocalTime s2 = LocalTime.parse(start2, fmt);
+            LocalTime e2 = LocalTime.parse(end2, fmt);
+            return s1.isBefore(e2) && s2.isBefore(e1);
+        } catch (Exception ignored) {
+            return false;
         }
     }
 }

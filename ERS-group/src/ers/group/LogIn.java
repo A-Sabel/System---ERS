@@ -69,14 +69,14 @@ import java.io.IOException;
             MainPanel.setBackground(new java.awt.Color(31, 58, 95));
 
 
-            University.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
+            University.setFont(new java.awt.Font("Segoe UI", 1, 36));
             University.setForeground(new java.awt.Color(255, 255, 255));
             University.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-            University.setText("Katrice Joy University");
+            University.setText("Algorithmia University");
             University.setVerticalAlignment(javax.swing.SwingConstants.TOP);
 
 
-            SMS.setFont(new java.awt.Font("Segoe UI", 0, 18)); // NOI18N
+            SMS.setFont(new java.awt.Font("Segoe UI", 0, 18));
             SMS.setForeground(new java.awt.Color(255, 255, 255));
             SMS.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
             SMS.setText("School Management System");
@@ -86,11 +86,11 @@ import java.io.IOException;
             SignInPanel.setPreferredSize(new java.awt.Dimension(350, 400));
 
 
-            Username.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+            Username.setFont(new java.awt.Font("Segoe UI", 0, 14));
             Username.addActionListener(this::SignInActionPerformed);
 
 
-            Password.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+            Password.setFont(new java.awt.Font("Segoe UI", 0, 14));
             Password.addActionListener(this::SignInActionPerformed);
 
             ShowPassword = new javax.swing.JButton() {
@@ -130,37 +130,37 @@ import java.io.IOException;
             PasswordWrap.add(Password, java.awt.BorderLayout.CENTER);
             PasswordWrap.add(ShowPassword, java.awt.BorderLayout.EAST);
 
-            UsernameLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+            UsernameLabel.setFont(new java.awt.Font("Segoe UI", 1, 14));
             UsernameLabel.setForeground(new java.awt.Color(77, 142, 162));
             UsernameLabel.setText("<html>Username or Email: <font color='red'>*</font></html>");
 
 
-            PasswordLabel.setFont(new java.awt.Font("Segoe UI", 1, 14)); // NOI18N
+            PasswordLabel.setFont(new java.awt.Font("Segoe UI", 1, 14));
             PasswordLabel.setForeground(new java.awt.Color(77, 142, 162));
             PasswordLabel.setText("<html>Password: <font color='red'>*</font></html>");
 
 
             SignIn.setBackground(new java.awt.Color(31, 58, 95));
-            SignIn.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+            SignIn.setFont(new java.awt.Font("Segoe UI", 1, 18));
             SignIn.setForeground(new java.awt.Color(255, 255, 255));
             SignIn.setText("Sign In");
             SignIn.addActionListener(this::SignInActionPerformed);
 
 
             SignUp.setBackground(new java.awt.Color(31, 58, 95));
-            SignUp.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+            SignUp.setFont(new java.awt.Font("Segoe UI", 1, 18));
             SignUp.setForeground(new java.awt.Color(255, 255, 255));
             SignUp.setText("Sign Up Here");
 
 
             SignUp.addActionListener(evt -> {
                 SignUp signUpDialog = new SignUp(this, true);
-                signUpDialog.setLocationRelativeTo(this); // center on login
+                signUpDialog.setLocationRelativeTo(this);
                 signUpDialog.setVisible(true);
             });
 
 
-            NoAccount.setFont(new java.awt.Font("Segoe UI", 0, 14)); // NOI18N
+            NoAccount.setFont(new java.awt.Font("Segoe UI", 0, 14));
             NoAccount.setForeground(new java.awt.Color(77, 142, 162));
             NoAccount.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
             NoAccount.setText("Don't have an account yet?");

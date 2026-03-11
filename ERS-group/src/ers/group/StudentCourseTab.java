@@ -1040,9 +1040,10 @@ public class StudentCourseTab extends javax.swing.JFrame {
         CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
-        CT_id.setBackground(new java.awt.Color(146, 190, 219));
+        CT_id.setBackground(new java.awt.Color(200, 200, 200)); // gray = read-only / auto-generated
         CT_id.setFont(new java.awt.Font("Segoe UI", 0, 16));
-        CT_id.addActionListener(this::CT_idActionPerformed);
+        CT_id.setEditable(false);
+        CT_id.setToolTipText("Auto-generated enrollment ID — cannot be edited");
 
         CT_StudentID.setBackground(new java.awt.Color(146, 190, 219));
         CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); 
@@ -1438,10 +1439,6 @@ public class StudentCourseTab extends javax.swing.JFrame {
     }
     
     private void CT_SearchActionPerformed(java.awt.event.ActionEvent evt) {
-        // Event handler (currently unused)
-    }
-    
-    private void CT_idActionPerformed(java.awt.event.ActionEvent evt) {
         // Event handler (currently unused)
     }
     

@@ -2,11 +2,10 @@
 
 package ers.group;
 
+import ers.group.StudentCourseTab.StyledButton;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.geom.RoundRectangle2D;
-import ers.group.StudentCourseTab.StyledButton;
 import java.io.*;
 import java.util.*;
 import java.util.List;
@@ -605,7 +604,7 @@ public class ScoreTab extends JPanel {
         searchIdField.addActionListener(e -> searchRecord());
         final String SCORE_ID_PH = "Student ID...";
         searchIdField.setText(SCORE_ID_PH);
-        searchIdField.setForeground(java.awt.Color.GRAY);
+        searchIdField.setForeground(java.awt.Color.BLACK);
         searchIdField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (searchIdField.getText().equals(SCORE_ID_PH)) {
@@ -616,7 +615,7 @@ public class ScoreTab extends JPanel {
             }
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (searchIdField.getText().isEmpty()) {
-                    searchIdField.setForeground(java.awt.Color.GRAY);
+                    searchIdField.setForeground(java.awt.Color.BLACK);
                     searchIdField.setText(SCORE_ID_PH);
                 }
                 searchIdField.setBorder(null);

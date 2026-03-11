@@ -1,12 +1,12 @@
 package ers.group;
 
+import ers.group.StudentCourseTab.StyledButton;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JOptionPane;
-import ers.group.StudentCourseTab.StyledButton;
 
 
 /**
@@ -46,6 +46,7 @@ public class Marksheettab extends javax.swing.JPanel {
     private java.util.Map<String, String> courseNameMap;
     private StudentFileLoader studentFileLoader;
     private java.util.Map<String, Student> studentMap;
+    private java.util.Map<String, String> sectionMap;
     private String selectedStatusFilter = "All";
 
 
@@ -60,11 +61,43 @@ public class Marksheettab extends javax.swing.JPanel {
         courseNameMap = new java.util.HashMap<>();
         studentFileLoader = new StudentFileLoader();
         studentMap = new java.util.HashMap<>();
+        sectionMap = new java.util.HashMap<>();
         initComponents();
         addFocusRing(SearchbarID);
         loadStudentData();
+        loadSectionData();
         loadCourseData();
         loadMarksheetData();
+    }
+
+    private void loadSectionData() {
+        try {
+            String[] paths = {
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            };
+            for (String path : paths) {
+                if (!new java.io.File(path).exists()) continue;
+                EnrollmentFileLoader el = new EnrollmentFileLoader();
+                el.load(path);
+                java.util.Map<String, java.util.Set<String>> suffixMap = new java.util.LinkedHashMap<>();
+                for (Enrollment enr : el.getAllEnrollments()) {
+                    String secID = enr.getSectionID();
+                    if (secID == null || secID.isEmpty()) continue;
+                    int sep = secID.lastIndexOf("-SEC");
+                    String suffix = sep >= 0 ? secID.substring(sep + 1) : secID;
+                    suffixMap.computeIfAbsent(enr.getStudentID(), k -> new java.util.LinkedHashSet<>()).add(suffix);
+                }
+                for (java.util.Map.Entry<String, java.util.Set<String>> e : suffixMap.entrySet()) {
+                    sectionMap.put(e.getKey(), String.join(", ", e.getValue()));
+                }
+                break;
+            }
+        } catch (Exception e) {
+            logger.warning("Could not load section data: " + e.getMessage());
+        }
     }
 
     private void loadCourseData() {
@@ -378,7 +411,7 @@ public class Marksheettab extends javax.swing.JPanel {
         SearchbarID.setToolTipText("Search by Student ID or Name");
         SearchbarID.addActionListener(this::SearchbuttonActionPerformed);
         SearchbarID.setText("Search by ID or Name...");
-        SearchbarID.setForeground(java.awt.Color.GRAY);
+        SearchbarID.setForeground(java.awt.Color.BLACK);
         SearchbarID.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (SearchbarID.getText().equals("Search by ID or Name...")) {
@@ -387,7 +420,7 @@ public class Marksheettab extends javax.swing.JPanel {
             }
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (SearchbarID.getText().isEmpty()) {
-                    SearchbarID.setForeground(java.awt.Color.GRAY);
+                    SearchbarID.setForeground(java.awt.Color.BLACK);
                     SearchbarID.setText("Search by ID or Name...");
                 }
             }
@@ -531,7 +564,7 @@ public class Marksheettab extends javax.swing.JPanel {
         jPanel2.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 30, 58), 3));
 
         printbutton.setForeground(new java.awt.Color(255, 255, 255));
-        printbutton.addActionListener(this::printbuttonActionPerformed);
+        printbutton.addActionListener(this::rprintbuttonActionPerformed);
 
         clearbutton.setForeground(new java.awt.Color(255, 255, 255));
         clearbutton.addActionListener(this::clearbuttonActionPerformed);
@@ -634,111 +667,414 @@ public class Marksheettab extends javax.swing.JPanel {
         );
     }// </editor-fold>                        
 
-    private void printbuttonActionPerformed(java.awt.event.ActionEvent evt) {                                            
-    try {
-        boolean complete = scoretable.print(
-                javax.swing.JTable.PrintMode.FIT_WIDTH,
-                new java.text.MessageFormat("Marksheet"),
-                new java.text.MessageFormat("Page {0}")
-        );
-
-        if (complete) {
-            JOptionPane.showMessageDialog(this, "Printing completed!");
-        } else {
-            JOptionPane.showMessageDialog(this, "Printing cancelled.");
+    private static final String SCHOOL_NAME = "Algorithmia University";
+    private void rprintbuttonActionPerformed(java.awt.event.ActionEvent evt) {
+        javax.swing.table.DefaultTableModel model =
+                (javax.swing.table.DefaultTableModel) scoretable.getModel();
+        if (model.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "No data to print. Please search for a student first.",
+                    "Print Rating Slip", JOptionPane.WARNING_MESSAGE);
+            return;
         }
-
-    } catch (Exception e) {
-        JOptionPane.showMessageDialog(this,
-                "Print failed: " + e.getMessage(),
-                "Print Error",
-                JOptionPane.ERROR_MESSAGE);
+        java.util.List<PrintSlipData> slips = buildSlipsFromTable();
+        if (slips.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Could not build slip data.",
+                    "Print", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+        job.setJobName("Student Rating Slip");
+        java.awt.print.PageFormat pf = job.defaultPage();
+        pf.setOrientation(java.awt.print.PageFormat.PORTRAIT);
+        job.setPrintable((g, pageFormat, pageIndex) -> {
+            if (pageIndex >= slips.size()) return java.awt.print.Printable.NO_SUCH_PAGE;
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+            g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+            drawRatingSlip(g2, (float) pageFormat.getImageableWidth(), slips.get(pageIndex));
+            return java.awt.print.Printable.PAGE_EXISTS;
+        }, pf);
+        if (job.printDialog()) {
+            try {
+                job.print();
+                JOptionPane.showMessageDialog(this, "Rating Slip printed successfully!");
+            } catch (java.awt.print.PrinterException e) {
+                JOptionPane.showMessageDialog(this,
+                        "Print failed: " + e.getMessage(), "Print Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
-}
 
     private void torButtonActionPerformed(java.awt.event.ActionEvent evt) {
+        javax.swing.table.DefaultTableModel model =
+                (javax.swing.table.DefaultTableModel) scoretable.getModel();
+        if (model.getRowCount() == 0) {
+            JOptionPane.showMessageDialog(this,
+                    "No data to print. Please search for a student first.",
+                    "Print TOR", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        java.util.List<PrintSlipData> allSlips = buildSlipsFromTable();
+        if (allSlips.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Could not build TOR data.",
+                    "Print TOR", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        // Group by studentID — one TOR page per student
+        java.util.Map<String, java.util.List<PrintSlipData>> torByStudent =
+                new java.util.LinkedHashMap<>();
+        for (PrintSlipData slip : allSlips) {
+            torByStudent.computeIfAbsent(slip.studentID,
+                    k -> new java.util.ArrayList<>()).add(slip);
+        }
+        java.util.List<java.util.List<PrintSlipData>> pages =
+                new java.util.ArrayList<>(torByStudent.values());
+
+        java.awt.print.PrinterJob job = java.awt.print.PrinterJob.getPrinterJob();
+        job.setJobName("Transcript of Records");
+        java.awt.print.PageFormat pf = job.defaultPage();
+        pf.setOrientation(java.awt.print.PageFormat.PORTRAIT);
+        job.setPrintable((g, pageFormat, pageIndex) -> {
+            if (pageIndex >= pages.size()) return java.awt.print.Printable.NO_SUCH_PAGE;
+            java.awt.Graphics2D g2 = (java.awt.Graphics2D) g;
+            g2.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+            drawTOR(g2, (float) pageFormat.getImageableWidth(), pages.get(pageIndex));
+            return java.awt.print.Printable.PAGE_EXISTS;
+        }, pf);
+        if (job.printDialog()) {
+            try {
+                job.print();
+                JOptionPane.showMessageDialog(this, "TOR printed successfully!");
+            } catch (java.awt.print.PrinterException e) {
+                JOptionPane.showMessageDialog(this,
+                        "TOR Print failed: " + e.getMessage(), "Print Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    private static final class PrintSlipData {
+        final String studentID, studentName, yearLevel, section, semester, gwa;
+        final java.util.List<String[]> courseRows; // each entry: {courseName, teacher, units, grade}
+        PrintSlipData(String id, String name, String yr, String sec, String sem,
+                    java.util.List<String[]> courses, String g) {
+            studentID  = id;   studentName = name; yearLevel = yr;
+            section    = sec;  semester    = sem;  gwa       = g;
+            courseRows = courses;
+        }
+    }
+
+
+    private java.util.List<PrintSlipData> buildSlipsFromTable() {
+        javax.swing.table.DefaultTableModel model =
+                (javax.swing.table.DefaultTableModel) scoretable.getModel();
+        java.util.Map<String, String>        teacherLookup = buildCourseToTeacherMap();
+        java.util.Map<String, CourseSubject> subjectMap    = courseFileLoader.getSubjectMap();
+        java.util.List<PrintSlipData>        slips         = new java.util.ArrayList<>();
+        java.util.Set<String>                seen          = new java.util.LinkedHashSet<>();
+
+        for (int row = 0; row < model.getRowCount(); row++) {
+            String studentID = String.valueOf(model.getValueAt(row, 1));
+            String semester  = String.valueOf(model.getValueAt(row, 2));
+            String key = studentID + "|" + semester;
+            if (seen.contains(key)) continue;
+            seen.add(key);
+
+            for (Marksheet m : marksheets) {
+                if (!m.getStudentID().equals(studentID)) continue;
+                if (!m.getSemester().equalsIgnoreCase(semester)) continue;
+
+                Student st   = studentMap.get(studentID);
+                String  name = (st != null) ? st.getStudentName() : studentID;
+                String  yr   = String.valueOf(model.getValueAt(row, 3));
+                String  sec  = sectionMap.getOrDefault(studentID, (st != null && st.getSection() != null) ? st.getSection() : "");
+
+                java.util.List<String[]> courses = new java.util.ArrayList<>();
+                String[] subjects = m.getSubjects();
+                double[] marks    = m.getMarks();
+                for (int i = 0; i < subjects.length; i++) {
+                    if (subjects[i] == null || subjects[i].isEmpty()) continue;
+                    String cid     = subjects[i];
+                    String cname   = courseNameMap.getOrDefault(cid, cid);
+                    String teacher = teacherLookup.getOrDefault(cid, "-");
+                    int    units   = subjectMap.containsKey(cid) ? subjectMap.get(cid).getUnits() : 0;
+                    String grade   = (marks[i] > 0) ? String.format("%.2f", marks[i]) : "PENDING";
+                    courses.add(new String[]{cname, teacher, String.valueOf(units), grade});
+                }
+                String gwa = String.valueOf(model.getValueAt(row, 15));
+                slips.add(new PrintSlipData(studentID, name, yr, sec, semester, courses, gwa));
+                break;
+            }
+        }
+        return slips;
+    }
+
+    private java.util.Map<String, String> buildCourseToTeacherMap() {
+        java.util.Map<String, String> map = new java.util.LinkedHashMap<>();
+
         try {
-            // Get unique students in current table
-            java.util.Set<String> uniqueStudents = new java.util.LinkedHashSet<>();
-            javax.swing.table.DefaultTableModel model = (javax.swing.table.DefaultTableModel) scoretable.getModel();
-            
-            for (int row = 0; row < model.getRowCount(); row++) {
-                uniqueStudents.add((String) model.getValueAt(row, 1)); // Student ID
-            }
-
-            if (uniqueStudents.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "No marksheet data to print!", "Print TOR", JOptionPane.INFORMATION_MESSAGE);
-                return;
-            }
-
-            // Create a new table model for TOR with aggregated information
-            javax.swing.table.DefaultTableModel torModel = new javax.swing.table.DefaultTableModel(
-                new String[]{"Student ID", "Name", "Year Level", "Status", "Total Courses", "Average GWA"}, 0
-            );
-
-            for (String studentID : uniqueStudents) {
-                Student student = studentMap.get(studentID);
-                if (student == null) continue;
-
-                String name = student.getStudentName();
-                String yearLevel = student.getYearLevel();
-                String status = (student.getStatus() != null && !student.getStatus().isEmpty()) ? student.getStatus() : student.getStudentType();
-                
-                // Calculate averages for this student
-                double totalGwa = 0.0;
-                int courseCount = 0;
-                for (Marksheet m : marksheets) {
-                    if (m.getStudentID().equals(studentID)) {
-                        double[] marks = m.getMarks();
-                        double average = 0.0;
-                        int count = 0;
-                        for (double mark : marks) {
-                            if (mark > 0) {
-                                average += mark;
-                                count++;
-                            }
-                        }
-                        if (count > 0) {
-                            totalGwa += average / count;
-                            courseCount++;
+            String[] teacherPaths = {
+                "ERS-group/src/ers/group/master files/Teachers.txt",
+                "src/ers/group/master files/Teachers.txt",
+                "master files/Teachers.txt",
+                "Teachers.txt"
+            };
+            for (String path : teacherPaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    TeacherFileLoader loader = new TeacherFileLoader();
+                    loader.load(path);
+                    for (Teachers t : loader.getAllTeachers()) {
+                        for (String subjectID : t.getQualifiedSubjectIDs()) {
+                            map.putIfAbsent(subjectID, t.getTeacherName());
                         }
                     }
+                    break;
                 }
-                
-                double finalGwa = courseCount > 0 ? totalGwa / courseCount : 0.0;
-                
-                torModel.addRow(new Object[]{
-                    studentID,
-                    name,
-                    yearLevel,
-                    status,
-                    courseCount,
-                    String.format("%.2f", finalGwa)
-                });
             }
-
-            // Create a temporary table with TOR data
-            javax.swing.JTable torTable = new javax.swing.JTable(torModel);
-            torTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_ALL_COLUMNS);
-
-            boolean complete = torTable.print(
-                    javax.swing.JTable.PrintMode.FIT_WIDTH,
-                    new java.text.MessageFormat("Transcript of Records (TOR)"),
-                    new java.text.MessageFormat("Page {0}")
-            );
-
-            if (complete) {
-                JOptionPane.showMessageDialog(this, "TOR printing completed!");
-            } else {
-                JOptionPane.showMessageDialog(this, "TOR printing cancelled.");
-            }
-
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "TOR Print failed: " + e.getMessage(),
-                    "Print Error",
-                    JOptionPane.ERROR_MESSAGE);
+            logger.warning("Could not load teachers file: " + e.getMessage());
         }
+
+        // Secondary: Schedule.txt overrides with whoever is actually scheduled for a course.
+        try {
+            String[] schedulePaths = {
+                "ERS-group/src/ers/group/master files/Schedule.txt",
+                "src/ers/group/master files/Schedule.txt",
+                "master files/Schedule.txt",
+                "Schedule.txt"
+            };
+            for (String path : schedulePaths) {
+                java.io.File f = new java.io.File(path);
+                if (f.exists()) {
+                    ScheduleFileLoader loader = new ScheduleFileLoader();
+                    loader.load(path);
+                    for (Schedule s : loader.getAllSchedules()) {
+                        if (s.getTeacherName() != null && !s.getTeacherName().isEmpty()) {
+                            map.put(s.getCourseID(), s.getTeacherName());
+                        }
+                    }
+                    break;
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("Could not load schedule for teacher lookup: " + e.getMessage());
+        }
+
+        return map;
+    }
+
+    private int drawLetterhead(java.awt.Graphics2D g2, int x, int w, String docTitle) {
+        java.awt.FontMetrics fm;
+        int y = 28;
+
+        // School name
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 16));
+        fm = g2.getFontMetrics();
+        g2.drawString(SCHOOL_NAME, x + (w - fm.stringWidth(SCHOOL_NAME)) / 2, y);
+        y += 20;
+
+        // Document title
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 13));
+        fm = g2.getFontMetrics();
+        g2.drawString(docTitle, x + (w - fm.stringWidth(docTitle)) / 2, y);
+        y += 8;
+
+        // Heavy rule
+        g2.fillRect(x, y, w, 2);
+        return y + 16; // return Y position for content below letterhead
+    }
+
+    private void drawRatingSlip(java.awt.Graphics2D g2, float pageWidth, PrintSlipData slip) {
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        final int MARGIN = 40;
+        final int LH     = 20;
+        int w = (int) pageWidth - MARGIN * 2;
+        int x = MARGIN;
+
+        int y = drawLetterhead(g2, x, w, "STUDENT'S RATING SLIP");
+
+        // Student info block
+        String[] lbls = {"Student Name", "Student ID  ", "Year Level  ", "Section     ", "Semester    "};
+        String[] vals = {
+            slip.studentName, slip.studentID, slip.yearLevel,
+            slip.section.isEmpty() ? "-" : slip.section,
+            slip.semester
+        };
+        for (int i = 0; i < lbls.length; i++) {
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD,  11));
+            g2.drawString(lbls[i] + " :", x + 4, y);
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 11));
+            g2.drawString(vals[i], x + 132, y);
+            y += LH;
+        }
+        y += 4;
+        g2.drawLine(x, y, x + w, y);
+        y += LH;
+
+        // Table header  (Subject 42% | Teacher 32% | Units 10% | Grade 16%)
+        int[] colW = {(int)(w * 0.42f), (int)(w * 0.32f), (int)(w * 0.10f), (int)(w * 0.16f)};
+        String[] hdrs = {"Subject / Course", "Teacher / Instructor", "Units", "Grade"};
+        g2.setColor(new java.awt.Color(210, 230, 245));
+        g2.fillRect(x, y - LH + 4, w, LH);
+        g2.setColor(java.awt.Color.BLACK);
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 11));
+        int cx = x + 4;
+        for (int i = 0; i < hdrs.length; i++) { g2.drawString(hdrs[i], cx, y); cx += colW[i]; }
+        y += 4;
+        g2.drawLine(x, y, x + w, y);
+        y += LH;
+
+        // Course rows (at least 5 rows shown)
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 11));
+        int drawn = 0;
+        for (String[] row : slip.courseRows) {
+            cx = x + 4;
+            g2.drawString(truncate(g2, row[0], colW[0] - 6), cx, y); cx += colW[0];
+            g2.drawString(truncate(g2, row[1], colW[1] - 6), cx, y); cx += colW[1];
+            g2.drawString(row[2], cx, y);                             cx += colW[2];
+            g2.drawString(row[3], cx, y);
+            y += LH;
+            drawn++;
+        }
+        while (drawn < 5) { y += LH; drawn++; }
+
+        g2.drawLine(x, y, x + w, y);
+        y += LH;
+
+        // GWA (right-aligned)
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 12));
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        String gwaStr = "General Weighted Average (GWA) :  " + slip.gwa;
+        g2.drawString(gwaStr, x + w - fm.stringWidth(gwaStr), y);
+        y += LH * 2 + 10;
+
+        // Signature lines
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 10));
+        int sigW = (int)(w * 0.35f);
+        g2.drawLine(x,            y, x + sigW, y);
+        g2.drawLine(x + w - sigW, y, x + w,    y);
+        fm = g2.getFontMetrics();
+        g2.drawString("Student's Signature", x, y + 14);
+        String reg = "Registrar / Authorized Signatory";
+        g2.drawString(reg, x + w - fm.stringWidth(reg), y + 14);
+        y += 30;
+        g2.fillRect(x, y, w, 2);
+    }
+
+    private void drawTOR(java.awt.Graphics2D g2, float pageWidth, java.util.List<PrintSlipData> slips) {
+        g2.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        final int MARGIN = 40;
+        final int LH     = 18;
+        int w = (int) pageWidth - MARGIN * 2;
+        int x = MARGIN;
+
+        int y = drawLetterhead(g2, x, w, "TRANSCRIPT OF RECORDS");
+
+        PrintSlipData first = slips.get(0);
+
+        // Student info block
+        String[] lbls = {"Student Name", "Student ID  ", "Year Level  ", "Section     "};
+        String[] vals = {
+            first.studentName, first.studentID, first.yearLevel,
+            first.section.isEmpty() ? "-" : first.section
+        };
+        for (int i = 0; i < lbls.length; i++) {
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD,  11));
+            g2.drawString(lbls[i] + " :", x + 4, y);
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 11));
+            g2.drawString(vals[i], x + 132, y);
+            y += LH;
+        }
+        y += 4;
+        g2.drawLine(x, y, x + w, y);
+        y += LH;
+
+        // Column widths: Subject 38% | Teacher 31% | Units 10% | Grade 21%
+        int[] colW = {(int)(w * 0.38f), (int)(w * 0.31f), (int)(w * 0.10f), (int)(w * 0.21f)};
+        String[] hdrs = {"Subject / Course", "Teacher / Instructor", "Units", "Grade"};
+
+        double totalGwa = 0;
+        int    gwaCount = 0;
+
+        for (PrintSlipData slip : slips) {
+            // Semester heading in navy
+            y += 2;
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 11));
+            g2.setColor(new java.awt.Color(10, 50, 110));
+            g2.drawString(slip.semester + "  —  " + slip.yearLevel, x + 4, y);
+            g2.setColor(java.awt.Color.BLACK);
+            y += 4;
+            g2.drawLine(x, y, x + w, y);
+            y += LH - 2;
+
+            // Table header with blue-tinted background
+            g2.setColor(new java.awt.Color(210, 230, 245));
+            g2.fillRect(x, y - LH + 4, w, LH);
+            g2.setColor(java.awt.Color.BLACK);
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 10));
+            int cx = x + 4;
+            for (int i = 0; i < hdrs.length; i++) { g2.drawString(hdrs[i], cx, y); cx += colW[i]; }
+            y += 4;
+            g2.drawLine(x, y, x + w, y);
+            y += LH - 2;
+
+            // Course rows
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 10));
+            for (String[] row : slip.courseRows) {
+                cx = x + 4;
+                g2.drawString(truncate(g2, row[0], colW[0] - 6), cx, y); cx += colW[0];
+                g2.drawString(truncate(g2, row[1], colW[1] - 6), cx, y); cx += colW[1];
+                g2.drawString(row[2], cx, y);                             cx += colW[2];
+                g2.drawString(row[3], cx, y);
+                y += LH;
+            }
+
+            // Semester GWA (right-aligned)
+            g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 10));
+            java.awt.FontMetrics fm = g2.getFontMetrics();
+            String semGwa = "Semester GWA :  " + slip.gwa;
+            g2.drawString(semGwa, x + w - fm.stringWidth(semGwa), y);
+            y += LH + 4;
+            g2.drawLine(x, y, x + w, y);
+            y += LH;
+
+            try { totalGwa += Double.parseDouble(slip.gwa); gwaCount++; }
+            catch (NumberFormatException ignored) {}
+        }
+
+        // Overall GWA (right-aligned)
+        y += 4;
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 12));
+        java.awt.FontMetrics fm2 = g2.getFontMetrics();
+        String ov = gwaCount > 0
+                ? String.format("Overall GWA :  %.2f", totalGwa / gwaCount)
+                : "Overall GWA :  N/A";
+        g2.drawString(ov, x + w - fm2.stringWidth(ov), y);
+        y += LH * 2 + 10;
+
+        // Signature lines
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 10));
+        int sigW = (int)(w * 0.35f);
+        g2.drawLine(x,            y, x + sigW, y);
+        g2.drawLine(x + w - sigW, y, x + w,    y);
+        fm2 = g2.getFontMetrics();
+        g2.drawString("Student's Signature", x, y + 14);
+        String reg = "Registrar / Authorized Signatory";
+        g2.drawString(reg, x + w - fm2.stringWidth(reg), y + 14);
+        y += 30;
+        g2.fillRect(x, y, w, 2);
+    }
+
+    // Clip text that is too wide for its column; appends "..." if cut
+    private String truncate(java.awt.Graphics2D g2, String text, int maxWidth) {
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        if (fm.stringWidth(text) <= maxWidth) return text;
+        while (text.length() > 1 && fm.stringWidth(text + "...") > maxWidth) {
+            text = text.substring(0, text.length() - 1);
+        }
+        return text + "...";
     }
 
     private void yearSemesterButtonActionPerformed(java.awt.event.ActionEvent evt) {

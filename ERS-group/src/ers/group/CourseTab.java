@@ -1,5 +1,6 @@
 package ers.group;
 
+import ers.group.StudentCourseTab.StyledButton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -7,7 +8,6 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.table.DefaultTableModel;
-import ers.group.StudentCourseTab.StyledButton;
 
 public class CourseTab extends JPanel {
 
@@ -258,9 +258,10 @@ public class CourseTab extends JPanel {
         CT_LeftPanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(15, 35, 65), 2));
         CT_LeftPanel.setPreferredSize(new java.awt.Dimension(460, 703));
 
-        CT_id.setBackground(new java.awt.Color(146, 190, 219));
+        CT_id.setBackground(new java.awt.Color(200, 200, 200)); // gray = read-only / auto-generated
         CT_id.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N
-        CT_id.addActionListener(this::CT_idActionPerformed);
+        CT_id.setEditable(false);
+        CT_id.setToolTipText("Auto-generated enrollment ID — cannot be edited");
 
         CT_StudentID.setBackground(new java.awt.Color(146, 190, 219));
         CT_StudentID.setFont(new java.awt.Font("Segoe UI", 0, 16)); // NOI18N

@@ -1,12 +1,12 @@
 
 package ers.group;
 
+import ers.group.StudentCourseTab.StyledButton;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.table.DefaultTableModel;
-import ers.group.StudentCourseTab.StyledButton;
 
 /**
  *
@@ -15,6 +15,7 @@ import ers.group.StudentCourseTab.StyledButton;
 public class Scheduletab extends javax.swing.JPanel {
    
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(Scheduletab.class.getName());
+    private static final String SCHOOL_NAME = "Algorithmia University";
     private ArrayList<Student> students;
     private StudentFileLoader studentFileLoader;
     private ArrayList<Schedule> schedules;
@@ -804,7 +805,7 @@ public class Scheduletab extends javax.swing.JPanel {
         studentSearchField.setToolTipText("Enter Student ID to search");
         studentSearchField.addActionListener(this::searchStudentButtonActionPerformed);
         studentSearchField.setText("Student ID...");
-        studentSearchField.setForeground(java.awt.Color.GRAY);
+        studentSearchField.setForeground(java.awt.Color.BLACK);
         studentSearchField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (studentSearchField.getText().equals("Student ID...")) {
@@ -813,7 +814,7 @@ public class Scheduletab extends javax.swing.JPanel {
             }
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (studentSearchField.getText().isEmpty()) {
-                    studentSearchField.setForeground(java.awt.Color.GRAY);
+                    studentSearchField.setForeground(java.awt.Color.BLACK);
                     studentSearchField.setText("Student ID...");
                 }
             }
@@ -828,7 +829,7 @@ public class Scheduletab extends javax.swing.JPanel {
         semesterSearchField.setToolTipText("Enter Section ID (e.g. CS101-SEC1)");
         semesterSearchField.addActionListener(this::searchSemesterButtonActionPerformed);
         semesterSearchField.setText("Section ID...");
-        semesterSearchField.setForeground(java.awt.Color.GRAY);
+        semesterSearchField.setForeground(java.awt.Color.BLACK);
         semesterSearchField.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent e) {
                 if (semesterSearchField.getText().equals("Section ID...")) {
@@ -837,7 +838,7 @@ public class Scheduletab extends javax.swing.JPanel {
             }
             public void focusLost(java.awt.event.FocusEvent e) {
                 if (semesterSearchField.getText().isEmpty()) {
-                    semesterSearchField.setForeground(java.awt.Color.GRAY);
+                    semesterSearchField.setForeground(java.awt.Color.BLACK);
                     semesterSearchField.setText("Section ID...");
                 }
             }
@@ -1333,56 +1334,164 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         attr.add(javax.print.attribute.standard.OrientationRequested.PORTRAIT);
         attr.add(javax.print.attribute.standard.MediaSizeName.ISO_A4);
 
+        // Load course subjects for legend
+        java.util.Map<String, CourseSubject> subjectMap = new java.util.LinkedHashMap<>();
+        try {
+            CourseSubjectFileLoader csLoader = new CourseSubjectFileLoader();
+            csLoader.load(FilePathResolver.resolveCourseSubjectFilePath());
+            subjectMap.putAll(csLoader.getSubjectMap());
+        } catch (Exception ignored) {}
+
+        // Derive section from enrollment records (same logic as StudentCourseTab)
+        java.util.Map<String, String> sectionMap = new java.util.LinkedHashMap<>();
+        try {
+            String[] enrollPaths = {
+                "ERS-group/src/ers/group/master files/enrollment.txt",
+                "src/ers/group/master files/enrollment.txt",
+                "master files/enrollment.txt",
+                "enrollment.txt"
+            };
+            for (String path : enrollPaths) {
+                if (!new java.io.File(path).exists()) continue;
+                EnrollmentFileLoader el = new EnrollmentFileLoader();
+                el.load(path);
+                java.util.Map<String, java.util.Set<String>> suffixMap = new java.util.LinkedHashMap<>();
+                for (Enrollment enr : el.getAllEnrollments()) {
+                    String secID = enr.getSectionID();
+                    if (secID == null || secID.isEmpty()) continue;
+                    int sep = secID.lastIndexOf("-SEC");
+                    String suffix = sep >= 0 ? secID.substring(sep + 1) : secID;
+                    suffixMap.computeIfAbsent(enr.getStudentID(), k -> new java.util.LinkedHashSet<>()).add(suffix);
+                }
+                for (java.util.Map.Entry<String, java.util.Set<String>> e : suffixMap.entrySet()) {
+                    sectionMap.put(e.getKey(), String.join(", ", e.getValue()));
+                }
+                break;
+            }
+        } catch (Exception ignored) {}
+
         job.setPrintable((graphics, pageFormat, pageIndex) -> {
             if (pageIndex > 0) return java.awt.print.Printable.NO_SUCH_PAGE;
 
             java.awt.Graphics2D g2d = (java.awt.Graphics2D) graphics;
+            g2d.setRenderingHint(java.awt.RenderingHints.KEY_TEXT_ANTIALIASING,
+                    java.awt.RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
 
-            // Scale calculation to ensure everything fits the width
             double scale = pageFormat.getImageableWidth() / Math.max(Scheduletable.getWidth(), 600);
             g2d.scale(scale, scale);
 
-            // DRAW HEADER
-            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 18));
-            g2d.drawString("OFFICIAL CLASS SCHEDULE", 0, 30);
-            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 12));
-            g2d.drawString("Student ID: " + studentID, 0, 50);
-            g2d.drawString("Generated on: " + new java.text.SimpleDateFormat("MMM dd, yyyy HH:mm").format(new java.util.Date()), 0, 65);
+            final int MARGIN = 40;
+            int w = (int)(pageFormat.getImageableWidth() / scale) - MARGIN * 2;
+            int x = MARGIN;
+            final int LH = 20;
 
-            // DRAW TABLE (Capture full height)
-            g2d.translate(0, 80);
+            int y = drawScheduleLetterhead(g2d, x, w);
+
+            // Find student record
+            Student foundStudent = null;
+            for (Student stud : students) {
+                if (stud.getStudentID().equals(studentID)) {
+                    foundStudent = stud;
+                    break;
+                }
+            }
+            String sName  = foundStudent != null ? foundStudent.getStudentName()      : studentID;
+            String sYear  = foundStudent != null ? foundStudent.getYearLevel()         : "-";
+            String sSec   = sectionMap.getOrDefault(studentID,
+                            foundStudent != null && !foundStudent.getSection().isEmpty()
+                            ? foundStudent.getSection() : "-");
+            if (sSec.isEmpty()) sSec = "-";
+            String sSem   = foundStudent != null ? foundStudent.getCurrentSemester()   : "-";
+
+            String[] lbls = {"Student Name", "Student ID  ", "Year Level  ", "Section     ", "Semester    "};
+            String[] vals = {sName, studentID, sYear, sSec, sSem};
+            for (int i = 0; i < lbls.length; i++) {
+                g2d.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD,  11));
+                g2d.setColor(java.awt.Color.BLACK);
+                g2d.drawString(lbls[i] + " :", x + 4, y);
+                g2d.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 11));
+                g2d.drawString(vals[i], x + 132, y);
+                y += LH;
+            }
+
+            String genOn = "Generated on: " + new java.text.SimpleDateFormat("MMM dd, yyyy  HH:mm").format(new java.util.Date());
+            g2d.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 9));
+            g2d.setColor(new java.awt.Color(120, 120, 120));
+            java.awt.FontMetrics fmSmall = g2d.getFontMetrics();
+            g2d.drawString(genOn, x + w - fmSmall.stringWidth(genOn), y);
+            y += 6;
+
+            // Separator line
+            g2d.setColor(java.awt.Color.BLACK);
+            g2d.drawLine(x, y, x + w, y);
+            y += LH;
+
+            // ── CLASS SCHEDULE TABLE ──────────────────────────────────────────
+            g2d.translate(0, y);
             Scheduletable.getTableHeader().setSize(Scheduletable.getWidth(), Scheduletable.getTableHeader().getHeight());
             Scheduletable.getTableHeader().paint(g2d);
             g2d.translate(0, Scheduletable.getTableHeader().getHeight());
-            
-            // This ensures every single row is painted even if scrolled
             Scheduletable.setSize(Scheduletable.getWidth(), Scheduletable.getRowHeight() * Scheduletable.getRowCount());
             Scheduletable.paint(g2d);
 
-            // DRAW LEGEND (Underneath the table)
-            g2d.translate(0, Scheduletable.getHeight() + 20);
-            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.BOLD, 14));
-            g2d.drawString("SCHEDULE LEGEND / DETAILS", 0, 0);
-            g2d.drawLine(0, 5, 200, 5);
-            
-            g2d.setFont(new java.awt.Font("Segoe UI", java.awt.Font.PLAIN, 11));
-            int yOffset = 25;
-            
-            // Loop through enrolled courses to build the legend text
+            // ── ENROLLED SUBJECTS (legend mini-table) ─────────────────────────
+            g2d.translate(0, Scheduletable.getHeight() + 24);
+
+            // Section heading
+            g2d.setColor(java.awt.Color.BLACK);
+            g2d.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 12));
+            g2d.drawString("ENROLLED SUBJECTS", 0, 0);
+            g2d.fillRect(0, 4, w, 2);
+  
+            int[] cw = {(int)(w*0.05f),(int)(w*0.13f),(int)(w*0.27f),(int)(w*0.07f),(int)(w*0.22f),(int)(w*0.11f),(int)(w*0.15f)};
+            String[] hdrs = {"#", "Code", "Subject Name", "Units", "Instructor", "Room", "Day / Time"};
+            final int TLH = 18;
+
+            int ty = 18;
+            g2d.setColor(new java.awt.Color(210, 230, 245));
+            g2d.fillRect(0, ty - TLH + 4, w, TLH);
+            g2d.setColor(java.awt.Color.BLACK);
+            g2d.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 11));
+            int cx = 4;
+            for (int i = 0; i < hdrs.length; i++) { g2d.drawString(hdrs[i], cx, ty); cx += cw[i]; }
+            ty += 4;
+            g2d.drawLine(0, ty, w, ty);
+            ty += TLH;
+
+            g2d.setFont(new java.awt.Font("SansSerif", java.awt.Font.PLAIN, 10));
+            int rowNum = 1;
             ArrayList<String> courses = studentCourses.getOrDefault(studentID, new ArrayList<>());
             for (String cID : courses) {
-                // Find teacher/room info from your schedules list
                 for (Schedule s : schedules) {
                     if (s.getCourseID().startsWith(cID)) {
-                        String info = String.format("\u2022 %-10s | Room: %-8s | Instructor: %s | %s %s-%s", 
-                                    cID, s.getRoom(), s.getTeacherName(), s.getDay(), s.getStartTime(), s.getEndTime());
-                        g2d.drawString(info, 10, yOffset);
-                        yOffset += 15;
-                        break; 
+                        CourseSubject cs = subjectMap.get(s.getCourseID());
+                        if (cs == null) {
+                            // try matching by cID prefix if courseID differs
+                            for (Map.Entry<String, CourseSubject> e : subjectMap.entrySet()) {
+                                if (e.getKey().startsWith(cID) || cID.startsWith(e.getKey())) {
+                                    cs = e.getValue(); break;
+                                }
+                            }
+                        }
+                        String subjName  = cs != null ? cs.getCourseSubjectName() : cID;
+                        String units     = cs != null ? String.valueOf(cs.getUnits()) : "-";
+                        String dayTime   = s.getDay() + " " + s.getStartTime() + "-" + s.getEndTime();
+                        cx = 4;
+                        g2d.drawString(String.valueOf(rowNum), cx, ty);               cx += cw[0];
+                        g2d.drawString(truncateSched(g2d, s.getCourseID(), cw[1]-4),  cx, ty); cx += cw[1];
+                        g2d.drawString(truncateSched(g2d, subjName,        cw[2]-4),  cx, ty); cx += cw[2];
+                        g2d.drawString(units,                               cx, ty);               cx += cw[3];
+                        g2d.drawString(truncateSched(g2d, s.getTeacherName(), cw[4]-4), cx, ty); cx += cw[4];
+                        g2d.drawString(truncateSched(g2d, s.getRoom(),       cw[5]-4), cx, ty); cx += cw[5];
+                        g2d.drawString(truncateSched(g2d, dayTime,           cw[6]-4), cx, ty);
+                        ty += TLH;
+                        rowNum++;
+                        break;
                     }
                 }
             }
+            g2d.drawLine(0, ty, w, ty);
 
             return java.awt.print.Printable.PAGE_EXISTS;
         });
@@ -1401,6 +1510,33 @@ private void monthComboBoxActionPerformed(java.awt.event.ActionEvent evt) {
         }
     }
     
+    private int drawScheduleLetterhead(java.awt.Graphics2D g2, int x, int w) {
+        java.awt.FontMetrics fm;
+        int y = 28;
+        g2.setColor(java.awt.Color.BLACK);
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 16));
+        fm = g2.getFontMetrics();
+        g2.drawString(SCHOOL_NAME, x + (w - fm.stringWidth(SCHOOL_NAME)) / 2, y);
+        y += 20;
+        g2.setFont(new java.awt.Font("SansSerif", java.awt.Font.BOLD, 13));
+        fm = g2.getFontMetrics();
+        String title = "OFFICIAL CLASS SCHEDULE";
+        g2.drawString(title, x + (w - fm.stringWidth(title)) / 2, y);
+        y += 8;
+        g2.fillRect(x, y, w, 2);
+        return y + 16;
+    }
+
+    private String truncateSched(java.awt.Graphics2D g2, String text, int maxWidth) {
+        if (text == null) return "";
+        java.awt.FontMetrics fm = g2.getFontMetrics();
+        if (fm.stringWidth(text) <= maxWidth) return text;
+        String ellipsis = "\u2026";
+        while (text.length() > 0 && fm.stringWidth(text + ellipsis) > maxWidth)
+            text = text.substring(0, text.length() - 1);
+        return text + ellipsis;
+    }
+
     /**
      * Prints a master schedule for an entire section including the schedule grid,
      * legend of subjects, and masterlist of enrolled students.

@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.Locale;
 
 /**
  * Centralized Academic Utilities Class
@@ -112,27 +111,31 @@ public class AcademicUtilities {
     }
     
     // SEMESTER END PROCESSING
-    // 1 -> 1st Semester, 2 -> 2nd Semester, 3 -> Summer
+    // All internal semester comparisons use compressed format: "1", "2", "3".
+    // Only expand to full strings ("1st Semester") in the GUI layer.
     private static String expandSemester(String abbrev) {
         switch (abbrev) {
             case "1": return "1st Semester";
             case "2": return "2nd Semester";
             case "3": return "Summer";
-            default: return abbrev; 
+            default: return abbrev;
         }
     }
 
     private static String compressSemester(String full) {
+        if (full == null) return "1";
         switch (full) {
             case "1st Semester": return "1";
             case "2nd Semester": return "2";
             case "Summer": return "3";
-            default: return full;
+            default: return full; // already compressed
         }
     }
     // Process end of semester - update enrollment statuses based on grades
     public static void processEndOfSemester(String semester, String academicYear) {
-        Map<String, Map<String, Double>> studentGrades = loadGradesFromMarksheet(semester);
+        // Normalize semester to compressed format used in files ("1","2","3")
+        String semesterKey = compressSemester(semester);
+        Map<String, Map<String, Double>> studentGrades = loadGradesFromMarksheet(semesterKey);
         Set<String> processedStudents = new HashSet<>();
         String enrollmentPath = FilePathResolver.resolveEnrollmentFilePath();
         File inputFile = new File(enrollmentPath);
@@ -141,13 +144,13 @@ public class AcademicUtilities {
             PrintWriter pw = new PrintWriter(new FileWriter(tempFile))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 6) {
                     String studentID = parts[0];
-                    String enrolledSemester = expandSemester(parts[3]);
                     String status = parts[4];
-                    // Only process ENROLLED records from specified semester
-                    if (enrolledSemester.equals(semester) && "ENROLLED".equals(status)) {
+                    // Files store semester as "1"/"2"/"3" — compare directly
+                    if (parts[3].equals(semesterKey) && "ENROLLED".equals(status)) {
                         processedStudents.add(studentID);
                         String[] courses = parts[1].split(";");
                         boolean allPassed = true;
@@ -187,7 +190,7 @@ public class AcademicUtilities {
                         }
                     }
                 }
-                pw.println(String.join(",", parts));
+                pw.println(Encryption.encrypt(String.join(",", parts)));
             }
         } catch (Exception e) {
             ErrorLogger.logError("Failed to update student year level in file", e);
@@ -200,14 +203,16 @@ public class AcademicUtilities {
         }
     }
     
-    private static Map<String, Map<String, Double>> loadGradesFromMarksheet(String semester) {
+    private static Map<String, Map<String, Double>> loadGradesFromMarksheet(String semesterKey) {
         Map<String, Map<String, Double>> result = new HashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(
                 FilePathResolver.resolveMarksheetFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
-                if (parts.length >= 14 && expandSemester(parts[2]).equals(semester)) {
+                // Files store semester as "1"/"2"/"3" — compare directly with semesterKey
+                if (parts.length >= 14 && parts[2].equals(semesterKey)) {
                     String studentID = parts[1];
                     result.putIfAbsent(studentID, new HashMap<>());
                     for (int i = 0; i < 5; i++) {
@@ -236,6 +241,7 @@ public class AcademicUtilities {
         try (BufferedReader br = new BufferedReader(new FileReader(FilePathResolver.resolveCourseSubjectFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 6) {
                     String courseID = parts[0].trim();
@@ -272,6 +278,7 @@ public class AcademicUtilities {
         try (BufferedReader br = new BufferedReader(new FileReader(FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 // We ignore parts[4] ("FAILED") and target parts[7]
                 if (parts.length > 7 && parts[0].trim().equals(studentID)) {
@@ -310,6 +317,7 @@ public class AcademicUtilities {
                 FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 2 && parts[0].equals(studentID)) {
                     String[] courses = parts[1].split(";");
@@ -331,6 +339,7 @@ public class AcademicUtilities {
                 FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 5 && parts[0].equals(studentID)) {
                     String[] courses = parts[1].split(";");
@@ -354,6 +363,7 @@ public class AcademicUtilities {
             // Track latest status for each course across all enrollments
             Map<String, String> latestCourseStatus = new HashMap<>();
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 8 && parts[0].equals(studentID)) {
                     String detailedStatuses = parts[7];
@@ -461,6 +471,7 @@ public class AcademicUtilities {
                 FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 5 && parts[0].equals(studentID)) {
                     String status = parts[4];
@@ -475,49 +486,51 @@ public class AcademicUtilities {
         return false;
     }
     
-    private static int getCourseUnits(String courseCode) {
-        try {
-            String coursePath = FilePathResolver.resolveFilePath(new String[] {
-                "ERS-group/src/ers/group/master files/courseSubject.txt",
-                "src/ers/group/master files/courseSubject.txt",
-                "master files/courseSubject.txt",
-                "courseSubject.txt"
-            });
-            CourseSubjectFileLoader loader = new CourseSubjectFileLoader();
-            loader.load(coursePath);
-            Map<String, CourseSubject> courseMap = loader.getSubjectMap();
-            CourseSubject course = courseMap.get(courseCode);
-            if (course != null) {
-                return course.getUnits();
+    // Static course map cache — loaded once, reused across all calls to getCourseUnits.
+    private static Map<String, CourseSubject> courseSubjectCache = null;
+
+    private static Map<String, CourseSubject> getCourseSubjectCache() {
+        if (courseSubjectCache == null) {
+            courseSubjectCache = new HashMap<>();
+            try {
+                String coursePath = FilePathResolver.resolveFilePath(new String[] {
+                    "ERS-group/src/ers/group/master files/courseSubject.txt",
+                    "src/ers/group/master files/courseSubject.txt",
+                    "master files/courseSubject.txt",
+                    "courseSubject.txt"
+                });
+                CourseSubjectFileLoader loader = new CourseSubjectFileLoader();
+                loader.load(coursePath);
+                courseSubjectCache = loader.getSubjectMap();
+            } catch (Exception e) {
+                ErrorLogger.logError("Failed to load course subject cache", e);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return 3;
+        return courseSubjectCache;
+    }
+
+    private static int getCourseUnits(String courseCode) {
+        CourseSubject course = getCourseSubjectCache().get(courseCode);
+        if (course != null) {
+            return course.getUnits();
+        }
+        // Return 0 (not a default guess) so that missing courses surface as errors,
+        // not silently inflate/deflate unit totals.
+        ErrorLogger.logError("Course '" + courseCode + "' not found in master file — counted as 0 units", null);
+        return 0;
     }
     
     private static int getTotalUnitsEarned(String studentID) {
         int totalUnits = 0;
-        Map<String, CourseSubject> courseMap = new HashMap<>();
-        try {
-            String coursePath = FilePathResolver.resolveFilePath(new String[] {
-                "ERS-group/src/ers/group/master files/courseSubject.txt",
-                "src/ers/group/master files/courseSubject.txt",
-                "master files/courseSubject.txt",
-                "courseSubject.txt"
-            });
-            CourseSubjectFileLoader loader = new CourseSubjectFileLoader();
-            loader.load(coursePath);
-            courseMap = loader.getSubjectMap();
-        } catch (Exception e) {
-            ErrorLogger.logError("Failed to load course subjects for unit calculation", e);
-        }
+        // Use the shared cache instead of reloading the file on each call
+        Map<String, CourseSubject> courseMap = getCourseSubjectCache();
         // Count units from individual PASSED courses (not enrollment status)
         Map<String, String> latestCourseStatus = new HashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(
                 FilePathResolver.resolveEnrollmentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 8 && parts[0].equals(studentID)) {
                     String detailedStatuses = parts[7];
@@ -545,12 +558,11 @@ public class AcademicUtilities {
                 if (course != null) {
                     totalUnits += course.getUnits();
                 } else {
-                    // Fallback to 3 units if course not found in courseSubject.txt
-                    totalUnits += 3;
+                    // Log and treat as 0 — do NOT guess 3, which would mask file errors
+                    ErrorLogger.logError("Course '" + courseCode + "' not in master file; 0 units counted for student " + studentID, null);
                 }
             }
         }
-        
         return totalUnits;
     }
     
@@ -559,9 +571,12 @@ public class AcademicUtilities {
                 FilePathResolver.resolveStudentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
-                if (parts.length >= 9 && parts[0].equals(studentID)) {
-                    return Double.parseDouble(parts[8]);
+                // Student format: ID(0),Name(1),Age(2),DOB(3),YearLevel(4),Sem(5),
+                //                 Section(6),Type(7),Status(8),Subjects(9),GWA(10),...
+                if (parts.length >= 11 && parts[0].equals(studentID)) {
+                    try { return Double.parseDouble(parts[10]); } catch (NumberFormatException ignored) {}
                 }
             }
         } catch (Exception e) {
@@ -575,6 +590,7 @@ public class AcademicUtilities {
                 FilePathResolver.resolveStudentFilePath()))) {
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 2 && parts[0].equals(studentID)) {
                     return parts[1];
@@ -596,21 +612,22 @@ public class AcademicUtilities {
             PrintWriter pw = new PrintWriter(new FileWriter(tempFile));
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",", -1);
                 if (parts.length >= 16 && parts[0].equals(studentID)) {
                     String currentYearLevel = parts[4];
                     String nextYearLevel = getNextYearLevel(currentYearLevel);
                     if (nextYearLevel != null) {
                         parts[4] = nextYearLevel;
-                        pw.println(String.join(",", parts));
+                        pw.println(Encryption.encrypt(String.join(",", parts)));
                         promoted = true;
                         System.out.println("Promoted " + studentID + " from " + currentYearLevel + " to " + nextYearLevel);
                     } else {
-                        pw.println(line);
+                        pw.println(Encryption.encrypt(line));
                         System.out.println("Student " + studentID + " is at maximum year level: " + currentYearLevel);
                     }
                 } else {
-                    pw.println(line);
+                    pw.println(Encryption.encrypt(line));
                 }
             }
             br.close();
@@ -658,6 +675,7 @@ public class AcademicUtilities {
             
             List<String> eligibleStudents = new ArrayList<>();
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 5 && parts[4].equals(currentYearLevel)) {
                     eligibleStudents.add(parts[0]);
@@ -688,6 +706,7 @@ public class AcademicUtilities {
             BufferedReader br = new BufferedReader(new FileReader(enrollmentPath));
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 7) {
                     String sid = parts[0];
@@ -711,6 +730,7 @@ public class AcademicUtilities {
             Map<String, String> courseStatusMap = new HashMap<>();
             br = new BufferedReader(new FileReader(enrollmentPath));
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 8 && parts[0].equals(studentID)) {
                     String detailedStatuses = parts[7];
@@ -750,6 +770,7 @@ public class AcademicUtilities {
             String line;
             Map<String, String> courseStatusMap = new HashMap<>();
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 8 && parts[0].equals(studentID)) {
                     String detailedStatuses = parts[7];
@@ -790,6 +811,7 @@ public class AcademicUtilities {
             BufferedReader br = new BufferedReader(new FileReader(enrollmentPath));
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 8 && parts[0].equals(studentID)) {
                     String detailedStatuses = parts[7];
@@ -835,6 +857,7 @@ public class AcademicUtilities {
             BufferedReader br = new BufferedReader(new FileReader(studentPath));
             String line;
             while ((line = br.readLine()) != null) {
+                line = Encryption.decrypt(line);
                 String[] parts = line.split(",");
                 if (parts.length >= 5 && parts[0].equals(studentID)) {
                     br.close();
